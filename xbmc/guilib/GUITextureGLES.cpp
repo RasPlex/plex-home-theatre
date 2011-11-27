@@ -96,7 +96,9 @@ void CGUITextureGLES::Begin(color_t color)
   GLint posLoc  = g_Windowing.GUIShaderGetPos();
   GLint colLoc  = g_Windowing.GUIShaderGetCol();
   GLint tex0Loc = g_Windowing.GUIShaderGetCoord0();
+  GLint uniColLoc= g_Windowing.GUIShaderGetUniCol();
 
+  glUniform4f(uniColLoc,(m_col[0][0] / 255.0), (m_col[0][1] / 255.0), (m_col[0][2] / 255.0), (m_col[0][3] / 255.0));
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, 0, 0, m_vert);
   if(colLoc >= 0)
     glVertexAttribPointer(colLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, m_col);
@@ -239,6 +241,7 @@ void CGUITextureGLES::DrawQuad(const CRect &rect, color_t color, CBaseTexture *t
   GLint posLoc   = g_Windowing.GUIShaderGetPos();
   GLint colLoc   = g_Windowing.GUIShaderGetCol();
   GLint tex0Loc  = g_Windowing.GUIShaderGetCoord0();
+  GLint uniColLoc= g_Windowing.GUIShaderGetUniCol();
 
   glVertexAttribPointer(posLoc,  3, GL_FLOAT, 0, 0, ver);
   if(colLoc >= 0)
@@ -260,6 +263,8 @@ void CGUITextureGLES::DrawQuad(const CRect &rect, color_t color, CBaseTexture *t
     col[i][2] = (GLubyte)GET_B(color);
     col[i][3] = (GLubyte)GET_A(color);
   }
+
+  glUniform4f(uniColLoc,col[0][0] / 255, col[0][1] / 255, col[0][2] / 255, col[0][3] / 255);
 
   // Setup vertex position values
   #define ROUND_TO_PIXEL(x) (float)(MathUtils::round_int(x))
