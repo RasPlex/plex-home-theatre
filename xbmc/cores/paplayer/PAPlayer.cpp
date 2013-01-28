@@ -95,9 +95,9 @@ void PAPlayer::SoftStart(bool wait/* = false */)
     if (si->m_fadeOutTriggered)
       continue;
 
+    si->m_stream->Resume();
     // PLEX 1.0 -> Getmax
     si->m_stream->FadeVolume(0.0f, GetMaxVolume(), FAST_XFADE_TIME);
-    si->m_stream->Resume();
   }
   
   if (wait)
