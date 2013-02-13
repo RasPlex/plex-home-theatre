@@ -218,7 +218,7 @@ class CAdvancedSettings
     /*! \brief the maximal size to cache thumbs at, assuming square
      Used for actual thumbs (eg bookmark thumbs, picture thumbs) rather than cover art which uses m_imageRes instead
      */
-    unsigned int GetThumbSize() const { return m_imageRes / 2; };
+    unsigned int GetThumbSize() const { return m_imageRes / 4; };
     bool m_useDDSFanart;
 
     int m_sambaclienttimeout;
