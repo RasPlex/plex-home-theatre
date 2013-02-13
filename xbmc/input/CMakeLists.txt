@@ -5,7 +5,8 @@ elseif(TARGET_WIN32)
 endif(TARGET_COMMON_LINUX)
 
 find_all_sources(. input_SRCS)
-if(TARGET_WIN32)
+list(REMOVE_ITEM input_SRCS ./SDLJoystick.cpp)
+if(WIN32)
   list(REMOVE_ITEM input_SRCS ./SDLJoystick.cpp)
 endif(TARGET_WIN32)
 

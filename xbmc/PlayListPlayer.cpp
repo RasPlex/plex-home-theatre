@@ -36,7 +36,7 @@
 #include "interfaces/AnnouncementManager.h"
 
 /* PLEX */
-#include "PlexAsyncUrlResolver.h"
+//#include "PlexAsyncUrlResolver.h"
 /* END PLEX */
 
 using namespace PLAYLIST;

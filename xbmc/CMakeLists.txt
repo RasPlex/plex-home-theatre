@@ -1,6 +1,6 @@
-set(subdirs cores addons cdrip dbwrappers dialogs filesystem guilib input interfaces music network
+set(subdirs windowing cores addons cdrip dbwrappers dialogs filesystem guilib input interfaces music network
 peripherals pictures playlists powermanagement programs rendering settings storage threads
-utils video windowing windows pvr commons epg main)
+utils video windows pvr commons epg main)
 
 if(TARGET_COMMON_DARWIN)
 	list(APPEND subdirs osx)
@@ -32,7 +32,7 @@ ADD_MSVC_PRECOMPILED_HEADER("pch.h" "win32/pch.cpp" SRCS)
 #ADD_MSVC_PRECOMPILED_HEADER("${root}/xbmc/win32/pch.h" "${root}/xbmc/win32/pch.cpp" ALL_SRCS)
 
 add_library(xbmc STATIC ${SRCS})
-add_dependencies(xbmc cpluff ffmpeg cximage)
+add_dependencies(xbmc cpluff ffmpeg cximage windowing)
 
 # reset this so we can use add_sources later on.
 set_property(GLOBAL PROPERTY SRCS_LIST "")

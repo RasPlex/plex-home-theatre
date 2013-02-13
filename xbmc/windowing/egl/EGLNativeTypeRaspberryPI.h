@@ -26,6 +26,19 @@
 #include <bcm_host.h>
 #endif
 
+
+#include "interface/vmcs_host/vc_dispmanx.h" 
+/* TODO: EGLNativeWindowType is really one of these but I'm leaving it 
+ *  * as void* for now, in case changing it would cause problems 
+ *   */ 
+
+// Hack for now
+typedef struct {
+       DISPMANX_ELEMENT_HANDLE_T element;
+       int width;   /* This is necessary because dispmanx elements are not queriable. */
+       int height;
+} EGL_DISPMANX_WINDOW_T;
+
 class DllBcmHost;
 class CEGLNativeTypeRaspberryPI : public CEGLNativeType
 {

@@ -259,15 +259,15 @@ void CPlexSectionFanout::Show()
 //////////////////////////////////////////////////////////////////////////////
 bool CPlexSectionFanout::NeedsRefresh()
 {
-  int refreshTime = 5;
+  int refreshTime = 1;
   if (m_sectionType == PLEX_METADATA_ALBUM ||
       m_sectionType == PLEX_METADATA_MIXED ||
       (m_sectionType >= PLEX_METADATA_CHANNEL_VIDEO &&
        m_sectionType <= PLEX_METADATA_CHANNEL_APPLICATION))
-    refreshTime = 20;
+    refreshTime = 5;
 
   if (m_sectionType == PLEX_METADATA_GLOBAL_IMAGES)
-    refreshTime = 100;
+    refreshTime = 20;
 
   CLog::Log(LOGDEBUG, "GUIWindowHome:SectionFanout:NeedsRefresh %s, age %f, refresh %s", m_url.c_str(), m_age.elapsed(), m_age.elapsed() > refreshTime ? "yes" : "no");
   return m_age.elapsed() > refreshTime;

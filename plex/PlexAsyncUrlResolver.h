@@ -1,9 +1,14 @@
+
+
+
 #pragma once
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 class PlexAsyncUrlResolver;
 typedef boost::shared_ptr<PlexAsyncUrlResolver> PlexAsyncUrlResolverPtr;
+
 
 #include "FileItem.h"
 #include "PlexLog.h"
@@ -12,7 +17,6 @@ typedef boost::shared_ptr<PlexAsyncUrlResolver> PlexAsyncUrlResolverPtr;
 #include "filesystem/CurlFile.h"
 #include "FileSystem/PlexDirectory.h"
 #include "Application.h"
-#include <boost/thread.hpp>
 #include "URL.h"
 
 class PlexAsyncUrlResolver
@@ -69,7 +73,9 @@ class PlexAsyncUrlResolver
     return m_indirect;
   }
 
-  bool Success()
+  // There is some sort of weird macro replacement going on 
+  // with the word "Success", so i just changed the casing as a workaround
+  bool success()
   {
     return m_bSuccess;
   }
@@ -187,3 +193,5 @@ class PlexAsyncUrlResolver
   CFileItem  m_item;
   PlexAsyncUrlResolverPtr m_me;
 };
+
+

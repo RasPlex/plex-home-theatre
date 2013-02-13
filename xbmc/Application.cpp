@@ -329,6 +329,7 @@
   #include "input/windows/IRServerSuite.h"
 #endif
 
+#undef HAS_SDL_JOYSTICK
 #if defined(TARGET_WINDOWS)
 #include "input/windows/WINJoystick.h"
 #elif defined(HAS_SDL_JOYSTICK) || defined(HAS_EVENT_SERVER)
@@ -3169,6 +3170,7 @@ void CApplication::FrameMove(bool processEvents, bool processGUI)
 
 bool CApplication::ProcessGamepad(float frameTime)
 {
+#undef HAS_SDL_JOYSTICK
 #ifdef HAS_SDL_JOYSTICK
   if (!m_AppFocused)
     return false;

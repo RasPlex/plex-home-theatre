@@ -1,5 +1,7 @@
 set(TARGET_NAME waveform)
 if(TARGET_WIN32)
+add_definitions(-DHAS_SDL -DHAS_SDL_OPENGL)
+if(WIN32)
   set(TARGET_NAME waveform_win32)
 endif(TARGET_WIN32)
 add_library(${TARGET_NAME} MODULE Main.cpp)
