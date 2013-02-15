@@ -60,6 +60,7 @@
 
 #include "powermanagement/PowerManager.h"
 
+#include "Application.h" // needed for rasplex only
 #include "ApplicationMessenger.h"
 
 #include "AdvancedSettings.h"
@@ -259,15 +260,26 @@ void CPlexSectionFanout::Show()
 //////////////////////////////////////////////////////////////////////////////
 bool CPlexSectionFanout::NeedsRefresh()
 {
-  int refreshTime = 20;
+
+  bool isPlaying = g_application.IsPlayingVideo(); 
+  int scaleFactor = 1; // for desktop
+
+  CLog::Log(LOGDEBUG, "GUIWindowHome:SectionFanout:NeedsRefresh is playing: %s", isPlaying ?  "true" : "false");
+
+  if ( isPlaying ) // bail out if playing on raspberry pi
+      return false;
+
+  scaleFactor = 4; // only on rpi
+
+  int refreshTime = 5 * scaleFactor;
   if (m_sectionType == PLEX_METADATA_ALBUM ||
       m_sectionType == PLEX_METADATA_MIXED ||
       (m_sectionType >= PLEX_METADATA_CHANNEL_VIDEO &&
        m_sectionType <= PLEX_METADATA_CHANNEL_APPLICATION))
-    refreshTime = 80;
+    refreshTime = 20 * scaleFactor;
 
   if (m_sectionType == PLEX_METADATA_GLOBAL_IMAGES)
-    refreshTime = 400;
+    refreshTime = 100 * scaleFactor;
 
   CLog::Log(LOGDEBUG, "GUIWindowHome:SectionFanout:NeedsRefresh %s, age %f, refresh %s", m_url.c_str(), m_age.elapsed(), m_age.elapsed() > refreshTime ? "yes" : "no");
   return m_age.elapsed() > refreshTime;
