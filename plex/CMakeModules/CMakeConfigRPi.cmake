@@ -159,6 +159,8 @@ plex_find_library(bcm_host 0 0  system/opt/vc/lib 1)
 plex_find_library(vchiq_arm 0 0  system/opt/vc/lib 1)
 
 
+plex_find_library(python2.7 0 1 ${RPI_EXTERNAL_PYTHON_HOME}/lib 1)
+
 #needed for the commandline flag CMAKE_INCLUDE_PATH
 foreach(path ${CMAKE_INCLUDE_PATH})
     include_directories(${path})
