@@ -52,7 +52,6 @@ public:
   bool SendMessage(int message, int senderID, int destID, int param1 = 0, int param2 = 0);
   bool SendMessage(CGUIMessage& message, int window);
  /* PLEX */
-  int  RemoveThreadMessageByMessageIds(int *pMessageIDList);
   void setRetrictedAccess(bool restricted) { m_restrictedAccessMode = restricted; }
   bool isAccessRestricted() { return m_restrictedAccessMode; }
   /* END PLEX */
@@ -126,6 +125,9 @@ public:
 
   void SendThreadMessage(CGUIMessage& message, int window = 0);
   void DispatchThreadMessages();
+  // method to removed queued messages with message id in the requested message id list.
+  // pMessageIDList: point to first integer of a 0 ends integer array.
+  int RemoveThreadMessageByMessageIds(int *pMessageIDList);
   void AddMsgTarget( IMsgTargetCallback* pMsgTarget );
   int GetActiveWindow() const;
   int GetFocusedWindow() const;
