@@ -493,6 +493,11 @@
 					</control>
 				</focusedlayout>
 				<content>
+                   <item id="101">
+                       <description>Addons Button</description>
+                       <label>Addons</label>
+                       <onclick>ActivateWindow(Programs,Addons,return)</onclick>
+                   </item>
 					<item id="10">
 						<description>DVD Button</description>
 						<label>DVD</label>
