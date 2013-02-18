@@ -408,7 +408,7 @@ bool CGUIMediaWindow::OnMessage(CGUIMessage& message)
       }
       else if (message.GetParam1()==GUI_MSG_UPDATE_SOURCES)
       /* PLEX */
-#ifndef __PLEX__
+
       { // State of the sources changed, so update our view
         if ((m_vecItems->IsVirtualDirectoryRoot() ||
              m_vecItems->IsSourcesPath()) && IsActive())
@@ -417,13 +417,11 @@ bool CGUIMediaWindow::OnMessage(CGUIMessage& message)
           Refresh();
           m_viewControl.SetSelectedItem(iItem);
         }
-        return true;
-      }
-#endif
-      {
         RefreshShares(true);
         return true;
-      }
+      
+
+     }
       else if (message.GetParam1() == GUI_MSG_UPDATE_REMOTE_SOURCES)
       {
         RefreshShares(true);
@@ -805,13 +803,7 @@ bool CGUIMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItemList
       m_history.RemoveParentPath();
   }
 
-  /* PLEX - Default to plug-in stream for top-level */
-  if (strDirectory.size() == 0)
-  {
-    int viewMode = 131131;
-    items.SetDefaultViewMode(viewMode);
-  }
-  /* END PLEX */
+
 
   if (m_guiState.get() && !m_guiState->HideParentDirItems() && !items.GetPath().IsEmpty())
   {
@@ -898,9 +890,9 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory, bool updateFilterPa
   if (strDirectory == strCurrentDirectory)
     items.SetDefaultViewMode(m_vecItems->GetDefaultViewMode());
 
-#ifndef __PLEX__
+
   if (!GetDirectory(directory, items))
-#endif
+
   if (!GetDirectory(strDirectory, items) || (items.m_displayMessage && items.Size() == 0))
   {
     if (items.m_displayMessage)
@@ -1025,7 +1017,7 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory, bool updateFilterPa
     showLabel = 999;
   if (showLabel && (m_vecItems->Size() == 0 || !m_guiState->DisableAddSourceButtons())) // add 'add source button'
   {
-#ifndef __PLEX__
+
     CStdString strLabel = g_localizeStrings.Get(showLabel);
     CFileItemPtr pItem(new CFileItem(strLabel));
     pItem->SetPath("add");
@@ -1035,7 +1027,7 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory, bool updateFilterPa
     pItem->m_bIsFolder = true;
     pItem->SetSpecialSort(SortSpecialOnBottom);
     m_vecItems->Add(pItem);
-#endif
+
   }
   m_iLastControl = GetFocusedControlID();
 
@@ -1097,10 +1089,7 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory, bool updateFilterPa
 
   //m_history.DumpPathHistory();
 
-  /* PLEX */
-  // Make sure root directories end up with a content type of "plugins".
-  if (m_vecItems->IsVirtualDirectoryRoot())
-    m_vecItems->SetContent("plugins");
+
 
   // Last, but not least, make sure the filter list is bound.
   CGUIBaseContainer* control = (CGUIBaseContainer* )GetControl(CONTENT_LIST_FILTERS);
@@ -1184,15 +1173,15 @@ bool CGUIMediaWindow::OnClick(int iItem)
     GoParentFolder();
     return true;
   }
-#ifndef __PLEX__
+
   if (pItem->GetPath() == "add" || pItem->GetPath() == "sources://add/") // 'add source button' in empty root
   {
     OnContextButton(iItem, CONTEXT_BUTTON_ADD_SOURCE);
     return true;
   }
-#endif
 
-#ifndef __PLEX__
+
+
   if (!pItem->m_bIsFolder && pItem->IsFileFolder())
   {
     XFILE::IFileDirectory *pFileDirectory = NULL;
@@ -1218,7 +1207,7 @@ bool CGUIMediaWindow::OnClick(int iItem)
       return true;
     }
   }
-#endif
+
 
   if (pItem->m_bIsFolder)
   {
@@ -1910,7 +1899,7 @@ void CGUIMediaWindow::GetContextButtons(int itemNumber, CContextButtons &buttons
     buttons.Add((CONTEXT_BUTTON)i, item->GetProperty(label).asString());
   }
 
-#ifndef __PLEX__
+
   if (item->GetProperty("pluginreplacecontextitems").asBoolean())
     return;
 
@@ -1923,21 +1912,21 @@ void CGUIMediaWindow::GetContextButtons(int itemNumber, CContextButtons &buttons
     else
       buttons.Add(CONTEXT_BUTTON_ADD_FAVOURITE, 14076);     // Add To Favourites;
   }
-#endif
+
 }
 
 bool CGUIMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 {
   switch (button)
   {
-#ifndef __PLEX__
+
   case CONTEXT_BUTTON_ADD_FAVOURITE:
     {
       CFileItemPtr item = m_vecItems->Get(itemNumber);
       CFavourites::AddOrRemove(item.get(), GetID());
       return true;
     }
-#endif
+
   case CONTEXT_BUTTON_PLUGIN_SETTINGS:
     {
       CURL plugin(m_vecItems->Get(itemNumber)->GetPath());
@@ -2000,12 +1989,7 @@ const CGUIViewState *CGUIMediaWindow::GetViewState() const
 
 const CFileItemList& CGUIMediaWindow::CurrentDirectory() const
 {
-  /* PLEX */
-  if (m_vecItems->GetContent().IsEmpty())
-  {
-    m_vecItems->SetContent("plugins");
-  }
-  /* END PLEX */
+
   return *m_vecItems;
 }
 

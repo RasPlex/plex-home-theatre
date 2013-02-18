@@ -1025,7 +1025,7 @@ void CGUISettings::Initialize()
 
   AddPath(NULL,"system.playlistspath",20006,"set default",BUTTON_CONTROL_PATH_INPUT,false);
 
-#ifndef __PLEX__
+
   // tv settings (access over TV menu from home window)
   AddGroup(SETTINGS_PVR, 19180);
   CSettingsCategory* pvr = AddCategory(SETTINGS_PVR, "pvrmanager", 128);
@@ -1094,7 +1094,7 @@ void CGUISettings::Initialize()
   AddSeparator(pvrpa, "pvrparental.sep1");
   AddString(pvrpa, "pvrparental.pin", 19261, "", EDIT_CONTROL_HIDDEN_NUMBER_VERIFY_NEW, true);
   AddInt(pvrpa, "pvrparental.duration", 19260, 300, 5, 5, 1200, SPIN_CONTROL_INT_PLUS, MASK_SECS);
-#endif
+
 
   // Add the UUID.
   boost::uuids::uuid uuid = boost::uuids::random_generator()();

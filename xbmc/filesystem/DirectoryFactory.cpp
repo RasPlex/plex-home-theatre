@@ -45,6 +45,8 @@
 #include "addons/Addon.h"
 #include "utils/log.h"
 
+#include "FileSystem/PlexDirectory.h"
+
 #ifdef HAS_FILESYSTEM_SMB
 #ifdef _WIN32
 #include "windows/WINSMBDirectory.h"
@@ -115,7 +117,7 @@
 
 using namespace XFILE;
 
-#ifndef __PLEX__
+
 /*!
  \brief Create a IDirectory object of the share type specified in \e strPath .
  \param strPath Specifies the share type to access, can be a share or share with path.
@@ -170,10 +172,12 @@ IDirectory* CDirectoryFactory::Create(const CStdString& strPath)
 
   if( g_application.getNetwork().IsAvailable(true) )  // true to wait for the network (if possible)
   {
+    if (strProtocol == "http" || strProtocol == "https" || strProtocol == "plex") return new CPlexDirectory();
+
     if (strProtocol == "lastfm") return new CLastFMDirectory();
     if (strProtocol == "tuxbox") return new CTuxBoxDirectory();
     if (strProtocol == "ftp" || strProtocol == "ftps") return new CFTPDirectory();
-    if (strProtocol == "http" || strProtocol == "https") return new CHTTPDirectory();
+    //if (strProtocol == "http" || strProtocol == "https") return new CHTTPDirectory();
     if (strProtocol == "dav" || strProtocol == "davs") return new CDAVDirectory();
 #ifdef HAS_FILESYSTEM_SFTP
     if (strProtocol == "sftp" || strProtocol == "ssh") return new CSFTPDirectory();
@@ -222,9 +226,7 @@ IDirectory* CDirectoryFactory::Create(const CStdString& strPath)
 #ifdef HAS_FILESYSTEM_AFP
       if (strProtocol == "afp") return new CAFPDirectory();
 #endif
-#ifdef HAVE_LIBBLURAY
-      if (strProtocol == "bluray") return new CBlurayDirectory();
-#endif
+
 #if defined(TARGET_ANDROID)
       if (strProtocol == "androidapp") return new CAndroidAppDirectory();
 #endif
@@ -233,41 +235,6 @@ IDirectory* CDirectoryFactory::Create(const CStdString& strPath)
   CLog::Log(LOGWARNING, "%s - Unsupported protocol(%s) in %s", __FUNCTION__, strProtocol.c_str(), url.Get().c_str() );
   return NULL;
 }
-#else
-#include "FileSystem/PlexDirectory.h"
-
-IDirectory* CDirectoryFactory::Create(const CStdString& strPath)
-{
-  CURL url(strPath);
-
-  CFileItem item(strPath, false);
-  IFileDirectory* pDir=CFileDirectoryFactory::Create(strPath, &item);
-  if (pDir)
-    return pDir;
-
-  CStdString strProtocol = url.GetProtocol();
-
-  if (strProtocol.size() == 0 || strProtocol == "file") return new CHDDirectory();
-  if (strProtocol == "special") return new CSpecialProtocolDirectory();
-  if (strProtocol == "zip") return new CZipDirectory();
-#if defined(HAS_FILESYSTEM_CDDA) && defined(HAS_DVD_DRIVE)
-  if (strProtocol == "cdda") return new CCDDADirectory();
-#endif
-#ifdef HAS_FILESYSTEM
-  if (strProtocol == "iso9660") return new CISO9660Directory();
-#endif
-  if (strProtocol == "udf") return new CUDFDirectory();
 
 
-  if( g_application.getNetwork().IsAvailable(true) )  // true to wait for the network (if possible)
-  {
-    if (strProtocol == "http" || strProtocol == "https" || strProtocol == "plex")
-    {
-      return new CPlexDirectory();
-    }
-  }
-  CLog::Log(LOGWARNING, "%s - Unsupported protocol(%s) in %s", __FUNCTION__, strProtocol.c_str(), url.Get().c_str() );
-  return NULL;
-}
-#endif
 
