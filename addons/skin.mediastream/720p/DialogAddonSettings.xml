@@ -2,42 +2,37 @@
 	<defaultcontrol always="true">9</defaultcontrol>
 	<coordinates>
 		<system>1</system>
-		<posx>240</posx>
+		<posx>137.5</posx>
 		<posy>60</posy>
 	</coordinates>
 	<!--include>dialogeffect</include-->
 	<controls>
+		
+		
+		
 		<control type="image">
 			<description>background image</description>
 			<posx>0</posx>
 			<posy>0</posy>
-			<width>800</width>
-			<height>600</height>
-			<texture border="40">plex-search-active-section-background.png</texture>
+			<width>1005</width>
+			<height>601</height>
+			<texture>VideoInfoBG.png</texture>
 			<visible>![Window.IsVisible(FullscreenVideo) | Window.IsVisible(Visualisation)]</visible>
 		</control>
 		<control type="image">
 			<description>background image</description>
 			<posx>0</posx>
 			<posy>0</posy>
-			<width>800</width>
-			<height>600</height>
-			<texture border="40">plex-search-active-section-background.png</texture>
+			<width>1005</width>
+			<height>601</height>
+			<texture>VideoInfoBG.png</texture>
 			<visible>Window.IsVisible(FullscreenVideo) | Window.IsVisible(Visualisation)</visible>
 		</control>
-		<!--control type="image">
-			<description>Dialog Header image</description>
-			<posx>40</posx>
-			<posy>16</posy>
-			<width>720</width>
-			<height>40</height>
-			<texture>-</texture>
-		</control-->
 		<control type="label" id="20">
 			<description>header label</description>
-			<posx>40</posx>
-			<posy>20</posy>
-			<width>720</width>
+			<posx>440</posx>
+			<posy>79</posy>
+			<width>500</width>
 			<height>30</height>
 			<font>font13_title</font>
 			<label>-</label>
@@ -46,19 +41,20 @@
 			<textcolor>Focused</textcolor>
 			<shadowcolor>black</shadowcolor>
 		</control>
+		
 		<control type="grouplist" id="9">
 			<description>button area</description>
-			<posx>45</posx>
-			<posy>70</posy>
-			<width>710</width>
-			<height>40</height>
+			<posx>70</posx>
+			<posy>55</posy>
+			<width>320</width>
+			<height>505</height>
 			<itemgap>5</itemgap>
 			<align>center</align>
-			<orientation>horizontal</orientation>
-			<onleft>9</onleft>
-			<onright>9</onright>
-			<onup>2</onup>
-			<ondown>2</ondown>
+			<orientation>vertical</orientation>
+			<onleft>-</onleft>
+			<onright>2</onright>
+			<onup>-</onup>
+			<ondown>-</ondown>
 		</control>
 		<control type="image">
 			<description>Has Previous</description>
@@ -80,55 +76,50 @@
 		</control>
 		<control type="grouplist" id="2">
 			<description>control area</description>
-			<posx>40</posx>
+			<posx>435</posx>
 			<posy>120</posy>
-			<width>720</width>
+			<width>500</width>
 			<height>380</height>
 			<itemgap>5</itemgap>
 			<pagecontrol>30</pagecontrol>
-			<onup>9</onup>
+			<onup>-</onup>
 			<ondown>9001</ondown>
-			<onleft>2</onleft>
+			<onleft>9</onleft>
 			<onright>30</onright>
 		</control>
 		<control type="scrollbar" id="30">
-			<posx>765</posx>
+			<posx>940</posx>
 			<posy>120</posy>
 			<width>25</width>
 			<height>380</height>
-			<texturesliderbackground border="0,14,0,14">ScrollBarV.png</texturesliderbackground>
-			<texturesliderbar border="2,16,2,16">-</texturesliderbar>
-			<texturesliderbarfocus border="2,16,2,16">ScrollBarNibVFO.png</texturesliderbarfocus>
-			<textureslidernib>ScrollBarNibVNF.png</textureslidernib>
-			<textureslidernibfocus>ScrollBarNibVNF.png</textureslidernibfocus>
 			<onleft>2</onleft>
-			<onright>9</onright>
+			<onright>-</onright>
 			<showonepage>false</showonepage>
 			<orientation>vertical</orientation>
 		</control>
 		<control type="group" id="9001">
-			<posy>535</posy>
-			<posx>90</posx>
+			<posy>520</posy>
+			<posx>405</posx>
 			<control type="button" id="10">
 				<description>OK Button</description>
 				<posx>0</posx>
 				<posy>0</posy>
-				<width>200</width>
+				<width>180</width>
 				<height>40</height>
 				<align>center</align>
 				<aligny>center</aligny>
 				<font>font12_title</font>
 				<label>186</label>
-				<onleft>12</onleft>
+				<onleft>9</onleft>
 				<onright>11</onright>
 				<onup>2</onup>
-				<ondown>9</ondown>
+				<ondown>-</ondown>
 			</control>
 			<control type="button" id="11">
 				<description>Cancel Button</description>
-				<posx>210</posx>
+				<posx>190</posx>
 				<posy>0</posy>
-				<width>200</width>
+				<width>180</width>
 				<height>40</height>
 				<align>center</align>
 				<aligny>center</aligny>
@@ -137,13 +128,13 @@
 				<onleft>10</onleft>
 				<onright>12</onright>
 				<onup>2</onup>
-				<ondown>9</ondown>
+				<ondown>-</ondown>
 			</control>
 			<control type="button" id="12">
 				<description>Defaults Button</description>
-				<posx>420</posx>
+				<posx>380</posx>
 				<posy>0</posy>
-				<width>200</width>
+				<width>180</width>
 				<height>40</height>
 				<align>center</align>
 				<aligny>center</aligny>
@@ -152,24 +143,31 @@
 				<onleft>11</onleft>
 				<onright>10</onright>
 				<onup>2</onup>
-				<ondown>9</ondown>
+				<ondown>-</ondown>
 			</control>
+			<control type="button" id="13">
+			<height>50</height>
+			<width>300</width>
+			<align>right</align>
+			<aligny>center</aligny>
+			<font>HomeMenuFocusFont</font>
+			<textcolor>Focused</textcolor>
+			<shadowcolor>HomeShadow</shadowcolor>
+			<texturefocus>-</texturefocus>
+			<texturenofocus>-</texturenofocus>
+			<focusedcolor>orange</focusedcolor>
+		</control>
 		</control>
 
-		<control type="button" id="13">
-			<description>Default Category Button</description>
-			<height>40</height>
-			<width>173</width>
-			<align>center</align>
-			<aligny>center</aligny>
-			<font>font12_title</font>
-			<textcolor>Focused</textcolor>
-			<pulseonselect>false</pulseonselect>
-		</control>
+
+		
 		<control type="button" id="3">
 			<description>Default Button</description>
 			<height>40</height>
 			<font>font13</font>
+			<align>left</align>
+			<aligny>center</aligny>
+			<textoffsetx>12</textoffsetx>
 			<textcolor>Unfocused</textcolor>
 			<focusedcolor>Focused</focusedcolor>
 			<texturefocus border="5">plex-orange-button.png</texturefocus>
@@ -178,6 +176,9 @@
 			<description>Default RadioButton</description>
 			<height>40</height>
 			<font>font13</font>
+			<align>left</align>
+			<aligny>center</aligny>
+			<textoffsetx>12</textoffsetx>
 			<textcolor>Unfocused</textcolor>
 			<focusedcolor>Focused</focusedcolor>
 			<texturefocus border="5">plex-orange-button.png</texturefocus>
@@ -190,17 +191,21 @@
 			<texturenofocus border="5">button-nofocus.png</texturenofocus>
 			<texturefocus border="5">plex-orange-button.png</texturefocus>
 			<font>font13</font>
+			<align>left</align>
 			<aligny>center</aligny>
+			<textoffsetx>12</textoffsetx>
 			<reverse>yes</reverse>
 		</control>
 		<control type="label" id="7">
 			<height>35</height>
+			<posx>500</posx>
 			<font>font13_title</font>
 			<label>-</label>
 			<textcolor>orange</textcolor>
 			<shadowcolor>black</shadowcolor>
 			<align>left</align>
 			<aligny>center</aligny>
+			<textoffsetx>12</textoffsetx>
 		</control>
 		<control type="image" id="6">
 			<description>Default Seperator</description>
@@ -211,9 +216,14 @@
 			<description>Default Slider</description>
 			<height>40</height>
 			<font>font13</font>
+			<align>left</align>
+			<aligny>center</aligny>
+			<textoffsetx>12</textoffsetx>
 			<textcolor>Unfocused</textcolor>
 			<focusedcolor>Focused</focusedcolor>
 			<texturefocus border="5">plex-orange-button.png</texturefocus>
 		</control>
+	
+
 	</controls>
 </window>
