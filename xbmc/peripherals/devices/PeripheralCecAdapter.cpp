@@ -427,7 +427,7 @@ void CPeripheralCecAdapter::Process(void)
       ProcessStandbyDevices();
 
     if (!m_bStop)
-      Sleep(5);
+      Sleep(50);
   }
 
   delete m_queryThread;
@@ -496,7 +496,7 @@ void CPeripheralCecAdapter::ScheduleVolumeUp(void)
     CSingleLock lock(m_critSection);
     m_volumeChangeQueue.push(VOLUME_CHANGE_UP);
   }
-  Sleep(5);
+  Sleep(50);
 }
 
 void CPeripheralCecAdapter::ScheduleVolumeDown(void)
@@ -505,7 +505,7 @@ void CPeripheralCecAdapter::ScheduleVolumeDown(void)
     CSingleLock lock(m_critSection);
     m_volumeChangeQueue.push(VOLUME_CHANGE_DOWN);
   }
-  Sleep(5);
+  Sleep(50);
 }
 
 void CPeripheralCecAdapter::ScheduleMute(void)
@@ -514,7 +514,7 @@ void CPeripheralCecAdapter::ScheduleMute(void)
     CSingleLock lock(m_critSection);
     m_volumeChangeQueue.push(VOLUME_CHANGE_MUTE);
   }
-  Sleep(5);
+  Sleep(50);
 }
 
 void CPeripheralCecAdapter::ProcessVolumeChange(void)
