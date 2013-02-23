@@ -269,7 +269,7 @@ bool CPlexSectionFanout::NeedsRefresh()
   if ( isPlaying ) // bail out if playing on raspberry pi
       return false;
 
-  scaleFactor = 4; // only on rpi
+  scaleFactor = 1; // only on rpi
 
   int refreshTime = 5 * scaleFactor;
   if (m_sectionType == PLEX_METADATA_ALBUM ||

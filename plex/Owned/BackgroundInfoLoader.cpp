@@ -26,7 +26,7 @@
 #define MAX_THREAD_COUNT 2
 #else
 #define ITEMS_PER_THREAD 5
-#define MAX_THREAD_COUNT 4
+#define MAX_THREAD_COUNT 5
 #endif
 
 // Static initializers.
