@@ -275,14 +275,9 @@
 						</item>
 						<item id="101">
                        					<description>Addons Button</description>
-                      					<label> OpenELEC Settings</label>
+                      					<label>Rasplex Settings</label>
                        					<onclick>RunAddon(os.openelec.settings)</onclick>
-                  				</item>
-						<item id="102">
-                       					<description>Addons Button</description>
-                       					<label> Fallback Button</label>
-                       					<onclick>ActivateWindow(Programs,Addons,return)</onclick>
-                   				</item>
+                        </item>
 					</content>
 				</control>
 			</control>
