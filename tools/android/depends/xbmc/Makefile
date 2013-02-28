@@ -19,7 +19,7 @@ CONFIGURE=cp -f $(CONFIG_SUB) $(CONFIG_GUESS) build-aux/ ;\
   ./configure --prefix=$(PREFIX) --host=$(HOST) \
   --enable-neon --enable-gles --enable-debug \
   --disable-sdl --disable-x11 --disable-xrandr \
-  --disable-optical-drive --disable-joystick \
+  --disable-optical-drive --disable-joystick --disable-optimizations \
   --enable-shared-lib --disable-alsa
 
 
