@@ -29,6 +29,7 @@
 #include "utils/log.h"
 #include "utils/MathUtils.h"
 #include "settings/AdvancedSettings.h"
+#include "cores/VideoRenderers/RenderFlags.h"
 
 
 CBaseRenderer::CBaseRenderer()
@@ -192,31 +193,90 @@ void CBaseRenderer::FindResolutionFromFpsMatch(float fps, float& weight)
 
 RESOLUTION CBaseRenderer::FindClosestResolution(float fps, float multiplier, RESOLUTION current, float& weight)
 {
+  RESOLUTION_INFO &curr = g_settings.m_ResInfo[current];
+
+  int iScreenWidth  = curr.iScreenWidth;
+  int iScreenHeight = curr.iScreenHeight;
+  float fRefreshRate = fps;
+
+  /*
+   * For 3D modes the following is assumed :
+   *
+   * side-by-side :
+   *
+   * width is width / 2 : 1920 -> 960
+   *
+   * tob-bottom :
+   *
+   * height is height / 2 : 1080 -> 540
+   *
+   */
+
+  // work out current non-3D resolution (in case we are currently in 3D mode)
+  if (curr.dwFlags & D3DPRESENTFLAG_MODE3DSBS)
+  {
+    iScreenWidth *= 2;
+  }
+  else if (curr.dwFlags & D3DPRESENTFLAG_MODE3DTB)
+  {
+    iScreenHeight *= 2;
+  }
+  // work out resolution if we switch to 3D mode
+  if(m_iFlags & CONF_FLAGS_FORMAT_SBS)
+  {
+    iScreenWidth /= 2;
+  }
+  else if(m_iFlags & CONF_FLAGS_FORMAT_TB)
+  {
+    iScreenHeight /= 2;
+  }
+
+  float last_diff = fRefreshRate;
+
   // Find closest refresh rate
   for (size_t i = (int)RES_DESKTOP; i < g_settings.m_ResInfo.size(); i++)
   {
-    RESOLUTION_INFO &curr = g_settings.m_ResInfo[current];
     RESOLUTION_INFO &info = g_settings.m_ResInfo[i];
     RESOLUTION_INFO &best = g_settings.m_ResInfo[current];
 
     //discard resolutions that are not the same width and height
     //or have a too low refreshrate
-    if (info.iWidth  != curr.iWidth
-    ||  info.iHeight != curr.iHeight
+    if (info.iScreenWidth  != iScreenWidth
+    ||  info.iScreenHeight != iScreenHeight
     ||  info.iScreen != curr.iScreen
-    ||  info.fRefreshRate < (fps * multiplier / 1.001) - 0.001)
+    ||  info.fRefreshRate < (fRefreshRate * multiplier / 1.001) - 0.001)
       continue;
 
-    int c_weight = MathUtils::round_int(RefreshWeight(curr.fRefreshRate, fps * multiplier) * 1000.0);
-    int i_weight = MathUtils::round_int(RefreshWeight(info.fRefreshRate, fps * multiplier) * 1000.0);
+    // For 3D choose the closest refresh rate 
+    if(m_iFlags & CONF_FLAGS_FORMAT_SBS || m_iFlags & CONF_FLAGS_FORMAT_TB)
+    {
+      float diff = (info.fRefreshRate - fRefreshRate);
+      if(diff < 0)
+        diff *= -1.0f;
 
-    // Closer the better, prefer higher refresh rate if the same
-    if ((i_weight <  c_weight)
-    ||  (i_weight == c_weight && info.fRefreshRate > curr.fRefreshRate))
-      current = (RESOLUTION)i;
+      if(diff < last_diff)
+      {
+        last_diff = diff;
+        current = (RESOLUTION)i;
+      }
+    }
+    else
+    {
+      int c_weight = MathUtils::round_int(RefreshWeight(best.fRefreshRate, fRefreshRate * multiplier) * 1000.0);
+      int i_weight = MathUtils::round_int(RefreshWeight(info.fRefreshRate, fRefreshRate * multiplier) * 1000.0);
+
+      // Closer the better, prefer higher refresh rate if the same
+      if ((i_weight <  c_weight)
+      ||  (i_weight == c_weight && info.fRefreshRate > best.fRefreshRate))
+        current = (RESOLUTION)i;
+    }
   }
 
-  weight = RefreshWeight(g_settings.m_ResInfo[current].fRefreshRate, fps * multiplier);
+  // For 3D overwrite weight
+  if(m_iFlags & CONF_FLAGS_FORMAT_SBS || m_iFlags & CONF_FLAGS_FORMAT_TB)
+    weight = 0;
+  else
+    weight = RefreshWeight(g_settings.m_ResInfo[current].fRefreshRate, fRefreshRate * multiplier);
 
   return current;
 }
@@ -527,6 +587,11 @@ void CBaseRenderer::SetViewMode(int viewMode)
   RESOLUTION res = GetResolution();
   float screenWidth = (float)(g_settings.m_ResInfo[res].Overscan.right - g_settings.m_ResInfo[res].Overscan.left);
   float screenHeight = (float)(g_settings.m_ResInfo[res].Overscan.bottom - g_settings.m_ResInfo[res].Overscan.top);
+
+  if(m_iFlags & CONF_FLAGS_FORMAT_SBS)
+    screenWidth /= 2;
+  else if(m_iFlags & CONF_FLAGS_FORMAT_TB)
+    screenHeight /= 2;
   // and the source frame ratio
   float sourceFrameRatio = GetAspectRatio();
 
