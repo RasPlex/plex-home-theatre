@@ -437,7 +437,7 @@ void CPeripheralCecAdapter::Process(void)
   }
 }
 
-bool CPeripheralCecAdapter::HasConnectedAudioSystem(void)
+bool CPeripheralCecAdapter::HasAudioControl(void)
 {
   CSingleLock lock(m_critSection);
   return m_bHasConnectedAudioSystem;
@@ -515,7 +515,7 @@ void CPeripheralCecAdapter::ProcessVolumeChange(void)
 
 void CPeripheralCecAdapter::VolumeUp(void)
 {
-  if (HasConnectedAudioSystem())
+  if (HasAudioControl())
   {
     CSingleLock lock(m_critSection);
     m_volumeChangeQueue.push(VOLUME_CHANGE_UP);
@@ -524,7 +524,7 @@ void CPeripheralCecAdapter::VolumeUp(void)
 
 void CPeripheralCecAdapter::VolumeDown(void)
 {
-  if (HasConnectedAudioSystem())
+  if (HasAudioControl())
   {
     CSingleLock lock(m_critSection);
     m_volumeChangeQueue.push(VOLUME_CHANGE_DOWN);
@@ -533,7 +533,7 @@ void CPeripheralCecAdapter::VolumeDown(void)
 
 void CPeripheralCecAdapter::ToggleMute(void)
 {
-  if (HasConnectedAudioSystem())
+  if (HasAudioControl())
   {
     CSingleLock lock(m_critSection);
     m_volumeChangeQueue.push(VOLUME_CHANGE_MUTE);
@@ -542,7 +542,7 @@ void CPeripheralCecAdapter::ToggleMute(void)
 
 bool CPeripheralCecAdapter::IsMuted(void)
 {
-  if (HasConnectedAudioSystem())
+  if (HasAudioControl())
   {
     CSingleLock lock(m_critSection);
     return m_bIsMuted;
