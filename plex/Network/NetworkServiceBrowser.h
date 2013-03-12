@@ -18,6 +18,9 @@
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 #include <boost/timer.hpp>
+#if BOOST_VERSION >= 104900
+#include <boost/asio/steady_timer.hpp>
+#endif
 
 #include "NetworkInterface.h"
 #include "NetworkServiceBase.h"
@@ -339,7 +342,7 @@ class NetworkServiceBrowser : public NetworkServiceBase
     sendSearch();
     
     // Wait again.
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::milliseconds(m_refreshTime));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(m_refreshTime));
     m_timer.async_wait(boost::bind(&NetworkServiceBrowser::handleTimeout, this));
   }
   
@@ -378,7 +381,11 @@ class NetworkServiceBrowser : public NetworkServiceBase
   udp_socket_ptr                   m_multicastSocket;
   std::set<std::string>            m_ignoredAddresses;
   boost::mutex                     m_mutex;
+#if BOOST_VERSION < 104900
   boost::asio::deadline_timer      m_timer;
+#else
+  boost::asio::steady_timer        m_timer;
+#endif
   boost::asio::deadline_timer      m_deletionTimer;
   int                              m_refreshTime;
   boost::asio::ip::udp::endpoint   m_endpoint;
