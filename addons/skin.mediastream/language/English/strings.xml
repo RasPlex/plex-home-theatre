@@ -227,7 +227,11 @@
   <string id="31858">[COLOR=orange]FreeType[/COLOR]: This code is responsible for the beautiful rendering of fonts within the application.</string>
   <string id="31859">[COLOR=orange]Python[/COLOR]: The media center embeds the Python interpreter to provide powerful scripting functionality.</string>
   <string id="31860">Please visit http://www.plexapp.com/credits.php for links and more information.</string>
-  
+
+<!--  RasPlex  -->
+  <string id="41000">RasPlex Settings</string>
+  <string id="41001">RasPlex Updater</string> 
+
 <!--  Profiles  -->
   <string id="31900">Login As</string>
   <string id="31901">Modify Your</string>
