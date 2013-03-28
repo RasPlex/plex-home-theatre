@@ -982,8 +982,10 @@ bool CSoftAE::Suspend()
 {
   CLog::Log(LOGDEBUG, "CSoftAE::Suspend - Suspending AE processing");
   m_isSuspended = true;
+
+  StopAllSounds();
+
   CSingleLock streamLock(m_streamLock);
-  
   for (StreamList::iterator itt = m_playingStreams.begin(); itt != m_playingStreams.end(); ++itt)
   {
     CSoftAEStream *stream = *itt;
@@ -992,7 +994,6 @@ bool CSoftAE::Suspend()
   streamLock.Leave();
   #if defined(TARGET_LINUX)
   /*workaround sinks not playing sound after resume */
-    StopAllSounds();
     bool ret = true;
     if(m_sink)
     {
