@@ -228,8 +228,8 @@
 							<include>HomeSideMenuFOBGImage</include>
 							<animation effect="slide" start="0,245" end="0,0" time="500" reversible="false" tween="quadratic" easing="out" condition="Container(506).OnNext + Container(506).Position(0)">focus</animation>
 							<animation effect="slide" start="0,-43" end="0,0" time="400" reversible="false" tween="quadratic" easing="out" condition="Container(506).OnNext + !Container(506).Position(0)">focus</animation>
-							<animation effect="slide" start="0,-245" end="0,0" time="500" reversible="false" tween="quadratic" easing="out" condition="Container(506).OnPrevious + Container(506).Position(9)">focus</animation>
-							<animation effect="slide" start="0,43" end="0,0" time="400" reversible="false" tween="quadratic" easing="out" condition="Container(506).OnPrevious + !Container(506).Position(9)">focus</animation>
+							<animation effect="slide" start="0,-245" end="0,0" time="500" reversible="false" tween="quadratic" easing="out" condition="Container(506).OnPrevious + Container(506).Position(8)">focus</animation>
+							<animation effect="slide" start="0,43" end="0,0" time="400" reversible="false" tween="quadratic" easing="out" condition="Container(506).OnPrevious + !Container(506).Position(8)">focus</animation>
 						</control>
 						<control type="label">
 							<include>HomeSideMenuFOBGLabel</include>
@@ -274,15 +274,15 @@
 							<onclick>XBMC.ActivateWindow(4)</onclick>
 						</item>
 						<item id="101">
-                            <description>Addons Button</description>
-                                <label> $LOCALIZE[41000] </label>
-                            <onclick>RunAddon(service.openelec.settings)</onclick>
-                        </item>
-                        <item id="102">
-                            <description>Update button Button</description>
-                            <label> $LOCALIZE[41001] </label>
-                            <onclick>RunAddon(script.rasplex.update)</onclick>
-                        </item>
+			                                <description>RasPlex Settings Button</description>
+                                		        <label> $LOCALIZE[41000] </label>
+                            			        <onclick>RunAddon(service.openelec.settings)</onclick>
+                        			</item>
+                        			<item id="102">
+                            			        <description>Update Button</description>
+                            				<label> $LOCALIZE[41001] </label>
+                            				<onclick>RunAddon(script.rasplex.update)</onclick>
+                        			</item>
 					</content>
 				</control>
 			</control>
