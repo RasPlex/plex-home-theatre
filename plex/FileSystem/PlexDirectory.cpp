@@ -836,8 +836,9 @@ class PlexMediaNode
            if (!CTextureCache::Get().HasCachedImage(url))
              CTextureCache::Get().BackgroundCacheImage(url);
          }
-       }
 #endif
+       }
+
 
        string value = val;
 
