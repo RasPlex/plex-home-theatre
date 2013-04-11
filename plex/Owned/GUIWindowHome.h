@@ -94,6 +94,7 @@ class CPlexSectionFanout : public IJobCallback
     CFileItemListPtr GetContentList(int type);
     void Refresh();
     void Show();
+    void CancelJobs();
 
     bool NeedsRefresh();
     static CStdString GetBestServerUrl(const CStdString& extraUrl="");
