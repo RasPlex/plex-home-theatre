@@ -45,6 +45,8 @@ CStopWatch::CStopWatch(bool useFrameTime /*=false*/)
   m_timerPeriod = 1.0f / 1000.0f; // we want seconds
 #endif
   }
+
+  clock_gettime(CLOCK_REALTIME, &start);
 }
 
 CStopWatch::~CStopWatch()
@@ -67,6 +69,7 @@ void CStopWatch::Start()
   if (!m_isRunning)
     m_startTick = GetTicks();
   m_isRunning = true;
+  clock_gettime(CLOCK_REALTIME, &start);
 }
 
 void CStopWatch::Stop()
@@ -93,6 +96,14 @@ float CStopWatch::GetElapsedSeconds() const
 float CStopWatch::GetElapsedMilliseconds() const
 {
   return GetElapsedSeconds() * 1000.0f;
+}
+
+double CStopWatch::GetElapsedMicroseconds() const
+{
+	struct timespec now;
+	clock_gettime(CLOCK_REALTIME, &now);
+
+	return ((now.tv_sec - start.tv_sec) * 1000000L + (double)(now.tv_nsec - start.tv_nsec)/1000);
 }
 
 int64_t CStopWatch::GetTicks() const
