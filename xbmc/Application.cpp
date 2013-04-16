@@ -2525,7 +2525,7 @@ void CApplication::Render()
   if (limitFrames || !flip)
   {
     if (!limitFrames)
-      singleFrameTime = 66; //if not flipping, loop at 15 fps
+      singleFrameTime = 100; //if not flipping, loop at 15 fps
 
     unsigned int frameTime = now - m_lastFrameTime;
     if (frameTime < singleFrameTime)

@@ -152,6 +152,18 @@ CStdString CPlexSectionFanout::GetBestServerUrl(const CStdString& extraUrl)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+void CPlexSectionFanout::CancelJobs()
+{
+    BOOST_FOREACH(int PrevJob,m_outstandingJobs)
+    {
+    	CLog::Log(LOGNOTICE,"Canceling Job %d",PrevJob);
+    	CJobManager::GetInstance().CancelJob(PrevJob);
+    }
+    m_outstandingJobs.clear();
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
 void CPlexSectionFanout::Refresh()
 {
   CPlexDirectory dir(true, false);
@@ -344,6 +356,15 @@ bool CGUIWindowHome::OnAction(const CAction &action)
       CGUIListItemPtr pItem = pControl->GetListItem(0);
       if (pItem)
       {
+
+    	#if defined(TARGET_RPI)
+    	// In order to avoid to spawn to many jobs on RPi when scrolling quickly
+    	// between the menu items, we eventually cancel the current item Jobs if they
+    	// are not yet completed
+        if (m_sections.find(m_lastSelectedItem)!= m_sections.end())
+      	  	  m_sections[m_lastSelectedItem]->CancelJobs();
+		#endif
+
         m_lastSelectedItem = GetCurrentItemName();
         if (!ShowSection(pItem->GetProperty("sectionPath").asString()) && !m_globalArt)
         {
