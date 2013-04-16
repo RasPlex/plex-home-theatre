@@ -183,8 +183,6 @@ bool CFileCache::Open(const CURL& url)
 
 void CFileCache::Process()
 {
-  CStopWatch timer;
-  timer.Start();
 
   if (!m_pCache)
   {
@@ -313,8 +311,6 @@ void CFileCache::Process()
     // avoid uncertainty at start of caching
     m_writeRateActual = average.Rate(m_writePos, 1000);
   }
-
-  CLog::Log(LOGNOTICE,"CFileCache::Process() took %fms",timer.GetElapsedMilliseconds());
 
 }
 
