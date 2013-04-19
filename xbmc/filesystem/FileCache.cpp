@@ -24,7 +24,6 @@
 #include "threads/Thread.h"
 #include "File.h"
 #include "URL.h"
-#include "Stopwatch.h"
 
 #include "CircularCache.h"
 #include "threads/SingleLock.h"
@@ -183,7 +182,6 @@ bool CFileCache::Open(const CURL& url)
 
 void CFileCache::Process()
 {
-
   if (!m_pCache)
   {
     CLog::Log(LOGERROR,"CFileCache::Process - sanity failed. no cache strategy");
@@ -252,7 +250,6 @@ void CFileCache::Process()
       m_pCache->EndOfInput();
 
       // The thread event will now also cause the wait of an event to return a false.
-      #if !defined(TARGET_RPI)
       if (AbortableWait(m_seekEvent) == WAIT_SIGNALED)
       {
         m_pCache->ClearEndOfInput();
@@ -260,13 +257,6 @@ void CFileCache::Process()
       }
       else
         break;
-     #else
-	// On RPI the abortable wait timeouts and is then released by the Thread deletion
-	// therefore we do not wait for it as it's not doing anything after this point.
-	m_pCache->ClearEndOfInput();
-	m_seekEvent.Set();
-	break;
-     #endif
     }
     else if (iRead < 0)
       m_bStop = true;
@@ -311,7 +301,6 @@ void CFileCache::Process()
     // avoid uncertainty at start of caching
     m_writeRateActual = average.Rate(m_writePos, 1000);
   }
-
 }
 
 void CFileCache::OnExit()
