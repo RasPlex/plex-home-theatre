@@ -42,6 +42,7 @@
 #include "MediaSource.h"
 #include "AlarmClock.h"
 #include "Key.h"
+#include "GUILargeTextureManager.h"
 
 #include "MyPlexManager.h"
 #include "PlexDirectory.h"
@@ -116,10 +117,36 @@ std::vector<contentListPair> CPlexSectionFanout::GetContentLists()
 }
 
 //////////////////////////////////////////////////////////////////////////////
+CStdString CPlexSectionFanout::GetContent(const CStdString& url)
+{
+	CURL check_url(url);
+	bool bReload = true;
+
+	m_http.UseOldHttpVersion(true);
+	m_http.SetTimeout(1000);
+
+	CStdString Answer;
+
+	m_http.Get(check_url.Get(), Answer);
+
+	return Answer;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 int CPlexSectionFanout::LoadSection(const CStdString& url, int contentType)
 {
-  CPlexSectionLoadJob* job = new CPlexSectionLoadJob(url, contentType);
-  return CJobManager::GetInstance().AddJob(job, this, CJob::PRIORITY_HIGH);
+	std::map<CStdString,CStdString>::iterator it;
+
+	CStdString Content = GetContent(url);
+	it = m_UrlCache.find(url);
+
+	if (it!=m_UrlCache.end())
+		it->second = Content;
+	else
+		m_UrlCache.insert( std::pair<CStdString,CStdString>(url,Content));
+
+	CPlexSectionLoadJob* job = new CPlexSectionLoadJob(url, contentType);
+	return CJobManager::GetInstance().AddJob(job, this, CJob::PRIORITY_HIGH);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -239,8 +266,23 @@ void CPlexSectionFanout::OnJobComplete(unsigned int jobID, bool success, CJob *j
     m_fileLists[load->GetContentType()] = load->GetFileItemList();
     
     /* Pre-cache stuff */
-    if (load->GetContentType() != CONTENT_LIST_FANART)
-      m_videoThumb.Load(*m_fileLists[load->GetContentType()].get());
+	if (load->GetContentType() != CONTENT_LIST_FANART)
+	m_videoThumb.Load(*m_fileLists[load->GetContentType()].get());
+
+#if defined(TARGET_RPI)
+	// On RPi, we want to preload the images for fanouts as it takes time
+	// therefore we will Queue them to the LargeTextureManager
+    CFileItemPtr it;
+    for (int i=0;i<m_fileLists[load->GetContentType()]->Size();i++)
+    {
+    	it = m_fileLists[load->GetContentType()]->Get(i);
+    	if (it->HasArt("thumb"))
+    	{
+    		CLog::Log(LOGDEBUG,"Queueing %s ",it->GetArt("thumb").c_str());
+    		g_largeTextureManager.QueueImage(it->GetArt("thumb"));
+    	}
+    }
+#endif
   }
 
   m_age.restart();
@@ -287,6 +329,24 @@ bool CPlexSectionFanout::NeedsRefresh()
 
   bool isPlaying = g_application.IsPlayingVideo(); 
   int scaleFactor = 1; // for desktop
+
+#if (defined(TARGET_RPI))
+  // On RPI check if content has changed, based on PMS answer
+  CStdString Content;
+  for (std::map<CStdString,CStdString>::iterator it = m_UrlCache.begin();it!=m_UrlCache.end();++it)
+  {
+	  Content = GetContent(it->first);
+	  if (it->second != Content)
+	  {
+		  CLog::Log(LOGDEBUG, "GUIWindowHome:SectionFanout:NeedsRefresh is Needed.");
+		  return true;
+	  }
+  }
+
+  CLog::Log(LOGDEBUG, "GUIWindowHome:SectionFanout:NeedsRefresh is NOT Needed.");
+
+  return false;
+#endif
 
   CLog::Log(LOGDEBUG, "GUIWindowHome:SectionFanout:NeedsRefresh is playing: %s", isPlaying ?  "true" : "false");
 
