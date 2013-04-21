@@ -551,7 +551,12 @@ string CPlexDirectory::BuildImageURL(const string& parentURL, const string& imag
   }
   
   url.SetOptions("");
-  url.SetFileName("photo/:/transcode?width=" + width + "&height=" + height + "&format=jpg" + "&url=" + encodedUrl + token);
+
+  // Convert all arts to jpeg except mediaflags (.png)
+  if (url.Get().find("media%2fflag")>0)
+	  url.SetFileName("photo/:/transcode?width=" + width + "&height=" + height + "&url=" + encodedUrl + token);
+  else
+	  url.SetFileName("photo/:/transcode?width=" + width + "&height=" + height + "&format=jpg" + "&url=" + encodedUrl + token);
   return url.Get();
 }
 
