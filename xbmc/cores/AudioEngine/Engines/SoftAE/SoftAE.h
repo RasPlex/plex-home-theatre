@@ -245,5 +245,7 @@ private:
 
   void         RemoveStream(StreamList &streams, CSoftAEStream *stream);
   void         PrintSinks();
+
+  unsigned int WriteSink(CAEBuffer& src, uint8_t *data, bool hasAudio);
 };
 
