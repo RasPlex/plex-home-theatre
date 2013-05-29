@@ -1221,7 +1221,7 @@ bool CSoftAE::FinalizeSamples(float *buffer, unsigned int samples, bool hasAudio
   return true;
 }
 
-unsigned int CSoftAE::WriteSink(CAEBuffer& src, uint8_t *data, bool hasAudio)
+unsigned int CSoftAE::WriteSink(CAEBuffer& src, int src_len, uint8_t *data, bool hasAudio)
 {
   CExclusiveLock lock(m_sinkLock); /* lock to maintain delay consistency */
   while(m_sink)
@@ -1238,7 +1238,7 @@ unsigned int CSoftAE::WriteSink(CAEBuffer& src, uint8_t *data, bool hasAudio)
 
     if (frames)
     {
-      m_buffer.Shift(NULL, frames * m_sinkFormat.m_frameSize);
+      m_buffer.Shift(NULL, src_len);
       return frames;
     }
 
@@ -1268,7 +1268,7 @@ int CSoftAE::RunOutputStage(bool hasAudio)
     data = m_converted;
   }
 
-  return WriteSink(m_buffer, (uint8_t*)data, hasAudio);
+  return WriteSink(m_buffer, needBytes, (uint8_t*)data, hasAudio);
 }
 
 int CSoftAE::RunRawOutputStage(bool hasAudio)
@@ -1296,7 +1296,7 @@ int CSoftAE::RunRawOutputStage(bool hasAudio)
     data = m_converted;
   }
 
-  return WriteSink(m_buffer, (uint8_t*)data, hasAudio);
+  return WriteSink(m_buffer, m_sinkBlockSize, (uint8_t*)data, hasAudio);
 }
 
 int CSoftAE::RunTranscodeStage(bool hasAudio)
@@ -1342,7 +1342,7 @@ int CSoftAE::RunTranscodeStage(bool hasAudio)
 
   /* if we have enough data to write */
   if (m_encodedBuffer.Used() >= sinkBlock)
-    WriteSink(m_encodedBuffer, (uint8_t*)m_encodedBuffer.Raw(sinkBlock), hasAudio);
+    WriteSink(m_encodedBuffer, sinkBlock, (uint8_t*)m_encodedBuffer.Raw(sinkBlock), hasAudio);
 
   return encodedFrames;
 }
