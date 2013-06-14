@@ -152,7 +152,6 @@ int CDVDAudioCodecFFmpeg::Decode(BYTE* pData, int iSize)
   int iBytesUsed, got_frame;
   if (!m_pCodecContext) return -1;
 
-  m_iBufferSize1 = AVCODEC_MAX_AUDIO_FRAME_SIZE ;
   m_iBufferSize2 = 0;
 
   AVPacket avpkt;
