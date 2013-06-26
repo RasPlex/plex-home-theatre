@@ -192,8 +192,8 @@ bool CAESinkALSA::Initialize(AEAudioFormat &format, std::string &device)
   if (!InitializeHW(format) || !InitializeSW(format))
     return false;
 
-  snd_pcm_nonblock(m_pcm, 1);
   snd_pcm_prepare (m_pcm);
+  snd_pcm_nonblock(m_pcm, 1);
 
   m_format              = format;
   m_formatSampleRateMul = 1.0 / (double)m_format.m_sampleRate;
@@ -432,10 +432,10 @@ bool CAESinkALSA::InitializeSW(AEAudioFormat &format)
 
 void CAESinkALSA::Deinitialize()
 {
-  Stop();
-
   if (m_pcm)
   {
+    snd_pcm_nonblock(m_pcm, 0);
+    Stop();
     snd_pcm_close(m_pcm);
     m_pcm = NULL;
   }
