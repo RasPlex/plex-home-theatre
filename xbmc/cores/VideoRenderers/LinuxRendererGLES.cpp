@@ -78,7 +78,6 @@ CLinuxRendererGLES::CLinuxRendererGLES()
   m_textureTarget = GL_TEXTURE_2D;
   for (int i = 0; i < NUM_BUFFERS; i++)
   {
-    m_eventTexturesDone[i] = new CEvent(false,true);
 #if defined(HAVE_LIBOPENMAX)
     m_buffers[i].openMaxBuffer = 0;
 #endif
@@ -125,8 +124,6 @@ CLinuxRendererGLES::CLinuxRendererGLES()
 CLinuxRendererGLES::~CLinuxRendererGLES()
 {
   UnInit();
-  for (int i = 0; i < NUM_BUFFERS; i++)
-    delete m_eventTexturesDone[i];
 
   if (m_rgbBuffer != NULL) {
     delete [] m_rgbBuffer;
@@ -246,12 +243,7 @@ int CLinuxRendererGLES::GetImage(YV12Image *image, int source, bool readonly)
   if( readonly )
     im.flags |= IMAGE_FLAG_READING;
   else
-  {
-    if( !m_eventTexturesDone[source]->WaitMSec(500) )
-      CLog::Log(LOGWARNING, "%s - Timeout waiting for texture %d", __FUNCTION__, source);
-
     im.flags |= IMAGE_FLAG_WRITING;
-  }
 
   // copy the image - should be operator of YV12Image
   for (int p=0;p<MAX_PLANES;p++)
@@ -274,9 +266,6 @@ int CLinuxRendererGLES::GetImage(YV12Image *image, int source, bool readonly)
 void CLinuxRendererGLES::ReleaseImage(int source, bool preserve)
 {
   YV12Image &im = m_buffers[source].image;
-
-  if( im.flags & IMAGE_FLAG_WRITING )
-    m_eventTexturesDone[source]->Set();
 
   im.flags &= ~IMAGE_FLAG_INUSE;
   im.flags |= IMAGE_FLAG_READY;
@@ -399,8 +388,6 @@ void CLinuxRendererGLES::Reset()
   {
     /* reset all image flags, this will cleanup textures later */
     m_buffers[i].image.flags = 0;
-    /* reset texture locks, a bit ugly, could result in tearing */
-    m_eventTexturesDone[i]->Set();
   }
 }
 
@@ -466,19 +453,7 @@ void CLinuxRendererGLES::RenderUpdate(bool clear, DWORD flags, DWORD alpha)
 
   g_graphicsContext.BeginPaint();
 
-  if( !m_eventTexturesDone[index]->WaitMSec(500))
-  {
-    CLog::Log(LOGWARNING, "%s - Timeout waiting for texture %d", __FUNCTION__, index);
-
-    // render the previous frame if this one isn't ready yet
-    if (m_iLastRenderBuffer > -1)
-    {
-      m_iYV12RenderBuffer = m_iLastRenderBuffer;
-      index = m_iYV12RenderBuffer;
-    }
-  }
-  else
-    m_iLastRenderBuffer = index;
+  m_iLastRenderBuffer = index;
 
   if (clear)
   {
@@ -1395,7 +1370,6 @@ void CLinuxRendererGLES::UploadYV12Texture(int source)
   if (!(im->flags&IMAGE_FLAG_READY))
 #endif
   {
-    m_eventTexturesDone[source]->Set();
     return;
   }
 
@@ -1522,8 +1496,6 @@ void CLinuxRendererGLES::UploadYV12Texture(int source)
                , im->stride[2], im->plane[2] );
     }
   }
-  m_eventTexturesDone[source]->Set();
-
   CalculateTextureSourceRects(source, 3);
 
   glDisable(m_textureTarget);
@@ -1667,7 +1639,6 @@ bool CLinuxRendererGLES::CreateYV12Texture(int index)
     }
   }
   glDisable(m_textureTarget);
-  m_eventTexturesDone[index]->Set();
   return true;
 }
 
@@ -1726,8 +1697,6 @@ void CLinuxRendererGLES::UploadCVRefTexture(int index)
 
     plane.flipindex = m_buffers[index].flipindex;
   }
-
-  m_eventTexturesDone[index]->Set();
 #endif
 }
 void CLinuxRendererGLES::DeleteCVRefTexture(int index)
@@ -1799,8 +1768,6 @@ bool CLinuxRendererGLES::CreateCVRefTexture(int index)
   #endif
   glBindTexture(m_textureTarget, 0);
   glDisable(m_textureTarget);
-
-  m_eventTexturesDone[index]->Set();
 #endif
   return true;
 }
@@ -1810,14 +1777,12 @@ bool CLinuxRendererGLES::CreateCVRefTexture(int index)
 //********************************************************************************************************
 void CLinuxRendererGLES::UploadBYPASSTexture(int index)
 {
-  m_eventTexturesDone[index]->Set();
 }
 void CLinuxRendererGLES::DeleteBYPASSTexture(int index)
 {
 }
 bool CLinuxRendererGLES::CreateBYPASSTexture(int index)
 {
-  m_eventTexturesDone[index]->Set();
   return true;
 }
 
