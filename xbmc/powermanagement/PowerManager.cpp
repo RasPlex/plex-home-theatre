@@ -51,7 +51,7 @@
 #elif defined(_LINUX) && defined(HAS_DBUS)
 #include "linux/ConsoleUPowerSyscall.h"
 #include "linux/ConsoleDeviceKitPowerSyscall.h"
-#include "linux/SystemdUPowerSyscall.h"
+#include "linux/LogindUPowerSyscall.h"
 #include "linux/UPowerSyscall.h"
 #ifdef HAS_HAL
 #include "linux/HALPowerSyscall.h"
@@ -86,8 +86,8 @@ void CPowerManager::Initialize()
     m_instance = new CConsoleUPowerSyscall();
   else if (CConsoleDeviceKitPowerSyscall::HasDeviceConsoleKit())
     m_instance = new CConsoleDeviceKitPowerSyscall();
-  else if (CSystemdUPowerSyscall::HasSystemdAndUPower())
-    m_instance = new CSystemdUPowerSyscall();
+  else if (CLogindUPowerSyscall::HasLogind())
+    m_instance = new CLogindUPowerSyscall();
   else if (CUPowerSyscall::HasUPower())
     m_instance = new CUPowerSyscall();
 #ifdef HAS_HAL
