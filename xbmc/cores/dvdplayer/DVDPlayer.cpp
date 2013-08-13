@@ -851,25 +851,13 @@ bool CDVDPlayer::OpenDemuxStream()
   RelinkPlexStreams();
   /* END PLEX */
 
-#if 0
   int64_t len = m_pInputStream->GetLength();
   int64_t tim = m_pDemuxer->GetStreamLength();
-  if(len > 0 && tim > 0)
-    //m_pInputStream->SetReadRate(len * 1000 / tim);
-  {
-    //cap to intital read rate to 40 megabits/second if less than average bitrate * 1.25
-    m_readRate = std::min((unsigned int)((len * 1000 / tim) * 1.25), (unsigned int) (40000000 / 8));
-    m_pInputStream->SetReadRate(m_readRate);
-  }
-#else
-  /* There is probably a good reason why we limit the readRate in upsteam
-   * But I am just going to ignore that until I run into any problems.
-   */
-  m_readRate = g_advancedSettings.m_cacheReadRate;
-  m_pInputStream->SetReadRate(m_readRate);
-#endif
+  if(len > 0 && tim > 0)  
+    m_pInputStream->SetReadRate(g_advancedSettings.m_readBufferFactor * len * 1000 / tim);
 
   return true;
+
 }
 
 #ifndef __PLEX__

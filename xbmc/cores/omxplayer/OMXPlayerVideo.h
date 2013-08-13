@@ -127,5 +127,20 @@ public:
   static void RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect);
   void ResolutionUpdateCallBack(uint32_t width, uint32_t height, float pixel_aspect);
   static void ResolutionUpdateCallBack(void *ctx, uint32_t width, uint32_t height, float pixel_aspect);
+
+  inline int GetCacheLevel()
+  {
+    if (m_omxVideo.GetInputBufferSize() > 0)
+      return 100 - ((100 * m_omxVideo.GetFreeSpace()) / m_omxVideo.GetInputBufferSize());
+    else
+      return 0;
+  }
 };
+
+/* PLEX */
+extern CEvent g_CacheSyncEvent;
+extern double g_VideoCachePts;
+extern double g_AudioCachePts;
+/* END PLEX */
+
 #endif

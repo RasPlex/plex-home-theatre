@@ -139,6 +139,10 @@
 #include "Client/PlexTranscoderClient.h"
 #include "PlexApplication.h"
 #include "FileSystem/PlexFile.h"
+
+CEvent g_CacheSyncEvent;
+double g_VideoCachePts;
+double g_AudioCachePts;
 /* END PLEX */
 
 // video not playing from clock, but stepped
@@ -901,18 +905,10 @@ bool COMXPlayer::OpenDemuxStream()
   RelinkPlexStreams();
   /* END PLEX */
 
-#if 0
   int64_t len = m_pInputStream->GetLength();
   int64_t tim = m_pDemuxer->GetStreamLength();
   if(len > 0 && tim > 0)
-    m_pInputStream->SetReadRate(len * 1000 / tim);
-#else
-  /* There is probably a good reason why we limit the readRate in upsteam
-   * But I am just going to ignore that until I run into any problems.
-   */
-  m_readRate = g_advancedSettings.m_cacheReadRate;
-  m_pInputStream->SetReadRate(m_readRate);
-#endif
+    m_pInputStream->SetReadRate(g_advancedSettings.m_readBufferFactor * len * 1000 / tim);
 
   return true;
 }
@@ -1891,9 +1887,11 @@ bool COMXPlayer::GetCachingTimes(double& level, double& delay, double& offset)
 
   delay = cache_left - play_left;
 
+#ifndef __PLEX__
   if (full && (currate < maxrate) )
     level = -1.0;                          /* buffer is full & our read rate is too low  */
   else
+#endif
     level = (cached + queued) / (cache_need + queued);
 
   return true;
@@ -1949,8 +1947,17 @@ void COMXPlayer::HandlePlaySpeed()
   {
     bool bGotAudio(m_pDemuxer->GetNrOfAudioStreams() > 0);
     bool bGotVideo(m_pDemuxer->GetNrOfVideoStreams() > 0);
+
+    /* PLEX */
+    #ifndef TARGET_RASPBERRY_PI
     bool bAudioLevelOk(m_omxPlayerAudio.GetLevel() > g_advancedSettings.m_iPVRMinAudioCacheLevel);
     bool bVideoLevelOk(m_omxPlayerVideo.GetLevel() > g_advancedSettings.m_iPVRMinVideoCacheLevel);
+    #else
+    bool bAudioLevelOk((m_omxPlayerAudio.GetCacheTime() > 0.9 * AUDIO_BUFFER_SECONDS) && (m_omxPlayerAudio.GetLevel() > 80));
+    bool bVideoLevelOk((m_omxPlayerVideo.GetCacheLevel() > 90) && (m_omxPlayerVideo.GetLevel() > 80));
+    #endif
+    /* END PLEX */
+
     bool bAudioFull(!m_omxPlayerAudio.AcceptsData());
     bool bVideoFull(!m_omxPlayerVideo.AcceptsData());
 
@@ -2786,14 +2793,11 @@ void COMXPlayer::SetCaching(ECacheState state)
 {
   if(state == CACHESTATE_FLUSH)
   {
-#ifndef __PLEX__ // This makes little sense for streams, ask it to always fill my buffer instead
     double level, delay, offset;
     if(GetCachingTimes(level, delay, offset))
       state = CACHESTATE_FULL;
     else
       state = CACHESTATE_INIT;
-#endif
-    state = CACHESTATE_FULL;
   }
 
   if(m_caching == state)
@@ -3135,7 +3139,13 @@ float COMXPlayer::GetCachePercentage()
 
 void COMXPlayer::SetAVDelay(float fValue)
 {
-  m_omxPlayerVideo.SetDelay(fValue * DVD_TIME_BASE);
+#ifndef __PLEX__
+  m_omxPlayerVideo.SetDelay( (fValue * DVD_TIME_BASE) ) ;
+#else
+  // Start with the global delay and offset from there.
+  float totalDelay = g_guiSettings.GetInt("audiooutput.defaultdelay")/1000.0 + fValue;
+  m_omxPlayerVideo.SetDelay( (totalDelay * DVD_TIME_BASE) ) ;
+#endif
 }
 
 float COMXPlayer::GetAVDelay()

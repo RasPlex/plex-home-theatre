@@ -89,10 +89,19 @@ OMXPlayerVideo::OMXPlayerVideo(OMXClock *av_clock,
   m_iVideoDelay           = 0;
   m_fForcedAspectRatio    = 0.0f;
   bool small_mem = g_RBP.GetArmMem() < 256;
+#ifdef TARGET_RASPBERRY_PI_1
+  m_messageQueue.SetMaxDataSize(5 * 1024 * 1024);
+#else
   m_messageQueue.SetMaxDataSize((small_mem ? 10:40) * 1024 * 1024);
+#endif
   m_messageQueue.SetMaxTimeSize(8.0);
 
   m_dst_rect.SetRect(0, 0, 0, 0);
+
+  /* PLEX */
+  g_VideoCachePts = INFINITY;
+  /* END PLEX */
+
   m_started = false;
   m_iCurrentPts = DVD_NOPTS_VALUE;
   m_nextOverlay = DVD_NOPTS_VALUE;
@@ -417,6 +426,13 @@ void OMXPlayerVideo::Process()
       CLog::Log(LOGINFO, "Video: dts:%.0f pts:%.0f size:%d (s:%d f:%d d:%d l:%d) s:%d %d/%d late:%d\n", pPacket->dts, pPacket->pts, 
           (int)pPacket->iSize, m_started, m_flush, bPacketDrop, m_stalled, m_speed, 0, 0, 0);
       #endif
+
+      /* PLEX */
+      // if Video is ahead Audio, they yield to other thread
+      if (pPacket->pts > g_AudioCachePts)
+        Sleep(0);
+      /* END PLEX */
+
       if (m_messageQueue.GetDataSize() == 0
       ||  m_speed < 0)
       {
@@ -476,6 +492,12 @@ void OMXPlayerVideo::Process()
       bRequestDrop = false;
 
       m_videoStats.AddSampleBytes(pPacket->iSize);
+
+      /* PLEX */
+      // update out position
+      g_VideoCachePts = pPacket->pts;
+      /* END PLEX */
+
     }
     pMsg->Release();
 
