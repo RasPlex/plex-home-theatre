@@ -802,7 +802,7 @@ unsigned int CAEConvert::Float_S24NE4(float *data, const unsigned int samples, u
   /* work around invalid alignment */
   while ((((uintptr_t)data & 0xF) || ((uintptr_t)dest & 0xF)) && count > 0)
   {
-    dst[0] = safeRound(data[0] * ((float)INT24_MAX+.5f));
+    dst[0] = (safeRound(data[0] * ((float)INT24_MAX+.5f)) & 0xFFFFFF) << 8;
     ++data;
     ++dst;
     --count;
@@ -817,11 +817,11 @@ unsigned int CAEConvert::Float_S24NE4(float *data, const unsigned int samples, u
     memcpy(dst, &con, sizeof(int32_t) * 4);
   }
 
-  if (samples != even)
+  if (count != even)
   {
-    const uint32_t odd = samples - even;
+    const uint32_t odd = count - even;
     if (odd == 1)
-      dst[0] = safeRound(data[0] * ((float)INT24_MAX+.5f));
+      dst[0] = (safeRound(data[0] * ((float)INT24_MAX+.5f)) & 0xFFFFFF) << 8;
     else
     {
       __m128 in;
@@ -891,9 +891,9 @@ unsigned int CAEConvert::Float_S24NE3(float *data, const unsigned int samples, u
     *((uint32_t*)(dest + 9)) = (dst[3] & 0xFFFFFF) << leftShift;
   }
 
-  if (samples != even)
+  if (count != even)
   {
-    const uint32_t odd = samples - even;
+    const uint32_t odd = count - even;
     if (odd == 1)
       dst[0] = safeRound(data[0] * ((float)INT24_MAX+.5f)) & 0xFFFFFF;
     else
@@ -963,9 +963,9 @@ unsigned int CAEConvert::Float_S32LE(float *data, const unsigned int samples, ui
     dst[3] = Endian_SwapLE32(dst[3]);
   }
 
-  if (samples != even)
+  if (count != even)
   {
-    const uint32_t odd = samples - even;
+    const uint32_t odd = count - even;
     if (odd == 1)
     {
       dst[0] = safeRound(data[0] * MUL32);
@@ -1072,9 +1072,9 @@ unsigned int CAEConvert::Float_S32BE(float *data, const unsigned int samples, ui
     dst[3] = Endian_SwapBE32(dst[3]);
   }
 
-  if (samples != even)
+  if (count != even)
   {
-    const uint32_t odd = samples - even;
+    const uint32_t odd = count - even;
     if (odd == 1)
     {
       dst[0] = safeRound(data[0] * MUL32);
