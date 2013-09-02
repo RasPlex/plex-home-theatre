@@ -143,9 +143,11 @@ static void AddResolution(vector<RESOLUTION_WHR> &resolutions, unsigned int addi
 
 static bool resSortPredicate(RESOLUTION_WHR i, RESOLUTION_WHR j)
 {
+  // note: this comparison must obey "strict weak ordering"
+  // a "!=" on the interlaced comparison resulted in memory corruption
   return (    i.width < j.width
           || (i.width == j.width && i.height < j.height)
-          || (i.width == j.width && i.height == j.height && i.interlaced != j.interlaced) );
+          || (i.width == j.width && i.height == j.height && i.interlaced < j.interlaced) );
 }
 
 vector<RESOLUTION_WHR> CWinSystemBase::ScreenResolutions(int screen)
