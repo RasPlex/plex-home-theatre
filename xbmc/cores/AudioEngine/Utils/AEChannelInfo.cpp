@@ -240,7 +240,7 @@ const enum AEChannel CAEChannelInfo::operator[](unsigned int i) const
   return m_channels[i];
 }
 
-CAEChannelInfo::operator std::string()
+CAEChannelInfo::operator std::string() const
 {
   if (m_channelCount == 0)
     return "NULL";
