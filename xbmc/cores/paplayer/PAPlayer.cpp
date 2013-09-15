@@ -301,7 +301,11 @@ void PAPlayer::UpdateCrossfadeTime(const CFileItem& file)
   }
   /* END PLEX */
 
-  m_upcomingCrossfadeMS = m_defaultCrossfadeMS = g_guiSettings.GetInt("musicplayer.crossfade") * 1000;
+  // we explicitely disable crossfading for audio cds
+  if(file.IsCDDA())
+   m_upcomingCrossfadeMS = 0;
+  else
+    m_upcomingCrossfadeMS = m_defaultCrossfadeMS = g_guiSettings.GetInt("musicplayer.crossfade") * 1000;
   if (m_upcomingCrossfadeMS)
   {
     if (m_streams.size() == 0 ||
