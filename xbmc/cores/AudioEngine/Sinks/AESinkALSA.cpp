@@ -37,7 +37,7 @@
 #include "cores/amlplayer/AMLUtils.h"
 #endif
 
-#define ALSA_OPTIONS (SND_PCM_NONBLOCK | SND_PCM_NO_AUTO_FORMAT | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE)
+#define ALSA_OPTIONS (SND_PCM_NO_AUTO_FORMAT | SND_PCM_NO_AUTO_CHANNELS | SND_PCM_NO_AUTO_RESAMPLE)
 
 #define ALSA_MAX_CHANNELS 16
 static enum AEChannel ALSAChannelMap[ALSA_MAX_CHANNELS + 1] = {
@@ -192,7 +192,8 @@ bool CAESinkALSA::Initialize(AEAudioFormat &format, std::string &device)
   if (!InitializeHW(format) || !InitializeSW(format))
     return false;
 
-  snd_pcm_nonblock(m_pcm, 1);
+  // we want it blocking
+  snd_pcm_nonblock(m_pcm, 0);
   snd_pcm_prepare (m_pcm);
 
   m_format              = format;
@@ -442,7 +443,6 @@ void CAESinkALSA::Deinitialize()
 {
   if (m_pcm)
   {
-    snd_pcm_nonblock(m_pcm, 0);
     Stop();
     snd_pcm_close(m_pcm);
     m_pcm = NULL;
@@ -512,19 +512,7 @@ unsigned int CAESinkALSA::AddPackets(uint8_t *data, unsigned int frames, bool ha
     CLog::Log(LOGDEBUG, "CAESinkALSA - the grAEken is hunger, feed it (I am the downmost fallback - fix your code)");
   }
 
-  int ret;
-
-  ret = snd_pcm_avail(m_pcm);
-  if (ret < 0) 
-  {
-    HandleError("snd_pcm_avail", ret);
-    ret = 0;
-  }
-
-  if ((unsigned int)ret < frames)
-    return 0;
-
-  ret = snd_pcm_writei(m_pcm, (void*)data, frames);
+  int ret = snd_pcm_writei(m_pcm, (void*)data, frames);
   if (ret < 0)
   {
     HandleError("snd_pcm_writei(1)", ret);
@@ -576,10 +564,8 @@ void CAESinkALSA::Drain()
   if (!m_pcm)
     return;
 
-  snd_pcm_nonblock(m_pcm, 0);
   snd_pcm_drain(m_pcm);
   snd_pcm_prepare(m_pcm);
-  snd_pcm_nonblock(m_pcm, 1);
 }
 
 void CAESinkALSA::AppendParams(std::string &device, const std::string &params)
