@@ -386,22 +386,18 @@ void CRenderSystemGLES::SetCameraPosition(const CPoint &camera, int screenWidth,
   
   CPoint offset = camera - CPoint(screenWidth*0.5f, screenHeight*0.5f);
   
-  GLint viewport[4];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-
-  float w = (float)viewport[2]*0.5f;
-  float h = (float)viewport[3]*0.5f;
+  float w = (float)m_viewPort[2]*0.5f;
+  float h = (float)m_viewPort[3]*0.5f;
 
   g_matrices.MatrixMode(MM_MODELVIEW);
   g_matrices.LoadIdentity();
-  g_matrices.Translatef(-(viewport[0] + w + offset.x), +(viewport[1] + h + offset.y), 0);
+  g_matrices.Translatef(-(m_viewPort[0] + w + offset.x), +(m_viewPort[1] + h + offset.y), 0);
   g_matrices.LookAt(0.0, 0.0, -2.0*h, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0);
   g_matrices.MatrixMode(MM_PROJECTION);
   g_matrices.LoadIdentity();
   g_matrices.Frustum( (-w - offset.x)*0.5f, (w - offset.x)*0.5f, (-h + offset.y)*0.5f, (h + offset.y)*0.5f, h, 100*h);
   g_matrices.MatrixMode(MM_MODELVIEW);
 
-  glGetIntegerv(GL_VIEWPORT, m_viewPort);
   GLfloat* matx;
   matx = g_matrices.GetMatrix(MM_MODELVIEW);
   memcpy(m_view, matx, 16 * sizeof(GLfloat));
@@ -511,14 +507,11 @@ void CRenderSystemGLES::GetViewPort(CRect& viewPort)
 {
   if (!m_bRenderCreated)
     return;
-  
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  
-  viewPort.x1 = glvp[0];
-  viewPort.y1 = m_height - glvp[1] - glvp[3];
-  viewPort.x2 = glvp[0] + glvp[2];
-  viewPort.y2 = viewPort.y1 + glvp[3];
+
+  viewPort.x1 = m_viewPort[0];
+  viewPort.y1 = m_height - m_viewPort[1] - m_viewPort[3];
+  viewPort.x2 = m_viewPort[0] + m_viewPort[2];
+  viewPort.y2 = viewPort.y1 + m_viewPort[3];
 }
 
 // FIXME make me const so that I can accept temporary objects
@@ -529,6 +522,10 @@ void CRenderSystemGLES::SetViewPort(CRect& viewPort)
 
   glScissor((GLint) viewPort.x1, (GLint) (m_height - viewPort.y1 - viewPort.Height()), (GLsizei) viewPort.Width(), (GLsizei) viewPort.Height());
   glViewport((GLint) viewPort.x1, (GLint) (m_height - viewPort.y1 - viewPort.Height()), (GLsizei) viewPort.Width(), (GLsizei) viewPort.Height());
+  m_viewPort[0] = viewPort.x1;
+  m_viewPort[1] = viewPort.y1;
+  m_viewPort[2] = viewPort.x2;
+  m_viewPort[3] = viewPort.y2;
 }
 
 void CRenderSystemGLES::SetScissors(const CRect &rect)
