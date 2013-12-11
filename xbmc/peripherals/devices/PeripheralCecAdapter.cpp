@@ -139,7 +139,7 @@ void CPeripheralCecAdapter::ResetMembers(void)
 
   m_currentButton.iButton    = 0;
   m_currentButton.iDuration  = 0;
-  m_screensaverLastActivated.SetValid(false);
+  m_standbySent.SetValid(false);
   m_configuration.Clear();
 }
 
@@ -175,7 +175,6 @@ void CPeripheralCecAdapter::Announce(AnnouncementFlag flag, const char *sender, 
     // Don't put devices to standby if application is currently playing
     if ((!g_application.IsPlaying() && !g_application.IsPaused()) && m_configuration.bPowerOffScreensaver == 1)
     {
-      m_screensaverLastActivated = CDateTime::GetCurrentDateTime();
       // only power off when we're the active source
       if (m_cecAdapter->IsLibCECActiveSource())
         StandbyDevices();
@@ -412,6 +411,7 @@ void CPeripheralCecAdapter::Process(void)
       if (!m_configuration.powerOffDevices.IsEmpty())
       {
         CLog::Log(LOGDEBUG, "%s - sending standby commands", __FUNCTION__);
+        m_standbySent = CDateTime::GetCurrentDateTime();
         m_cecAdapter->StandbyDevices();
       }
       else if (m_configuration.bSendInactiveSource == 1)
@@ -625,7 +625,7 @@ int CPeripheralCecAdapter::CecCommand(void *cbParam, const cec_command command)
       /* a device was put in standby mode */
       if (command.initiator == CECDEVICE_TV &&
           (adapter->m_configuration.bPowerOffOnStandby == 1 || adapter->m_configuration.bShutdownOnStandby == 1) &&
-          (!adapter->m_screensaverLastActivated.IsValid() || CDateTime::GetCurrentDateTime() - adapter->m_screensaverLastActivated > CDateTimeSpan(0, 0, 0, SCREENSAVER_TIMEOUT)))
+          (!adapter->m_standbySent.IsValid() || CDateTime::GetCurrentDateTime() - adapter->m_standbySent > CDateTimeSpan(0, 0, 0, SCREENSAVER_TIMEOUT)))
       {
         adapter->m_bStarted = false;
         if (adapter->m_configuration.bPowerOffOnStandby == 1)
