@@ -43,7 +43,6 @@ CDVDAudioCodecFFmpeg::CDVDAudioCodecFFmpeg() : CDVDAudioCodec()
   m_layout = 0;
   
   m_bLpcmMode = false;
-  m_bNeedConversion = false;
 
   m_pFrame1 = NULL;
   m_iSampleFormat = AV_SAMPLE_FMT_NONE;
@@ -116,8 +115,6 @@ bool CDVDAudioCodecFFmpeg::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
   m_bOpenedCodec = true;
   m_iSampleFormat = AV_SAMPLE_FMT_NONE;
 
-  // check if conversion is needed
-  GetDataFormat();
   return true;
 }
 
@@ -183,8 +180,23 @@ int CDVDAudioCodecFFmpeg::Decode(BYTE* pData, int iSize)
     m_iBuffered += iBytesUsed;
   else
     m_iBuffered = 0;
-    
-  if(m_bLpcmMode || m_bNeedConversion)
+  
+  bool convert = false;
+  switch(m_pCodecContext->sample_fmt)
+  {
+    case AV_SAMPLE_FMT_U8:
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S32:
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_DBL:
+      break;
+    case AV_SAMPLE_FMT_NONE:
+      CLog::Log(LOGERROR, "CDVDAudioCodecFFmpeg::Decode - invalid data format");
+      return -1;
+    default:
+      convert = true;
+  }
+  if(m_bLpcmMode || convert)
     ConvertToFloat();
 
   return iBytesUsed;
@@ -303,10 +315,9 @@ enum AEDataFormat CDVDAudioCodecFFmpeg::GetDataFormat()
       case AV_SAMPLE_FMT_FLT: return AE_FMT_FLOAT;
       case AV_SAMPLE_FMT_DBL: return AE_FMT_DOUBLE;
       case AV_SAMPLE_FMT_NONE:
-        assert(false);
+        CLog::Log(LOGERROR, "CDVDAudioCodecFFmpeg::GetDataFormat - invalid data format");
         return AE_FMT_INVALID;
       default:
-        m_bNeedConversion = true;
         return AE_FMT_FLOAT;
     }
   }
