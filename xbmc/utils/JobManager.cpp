@@ -53,6 +53,7 @@ CJobWorker::~CJobWorker()
 
 void CJobWorker::Process()
 {
+  CLog::Log(LOGNOTICE, "REACHING JOB PROCESS");
   SetPriority( GetMinPriority() );
   while (true)
   {
@@ -61,10 +62,12 @@ void CJobWorker::Process()
     if (!job)
       break;
 
+    CLog::Log(LOGNOTICE, "PROCESSING JOB: ", job->GetType());
     bool success = false;
     try
     {
       success = job->DoWork();
+      CLog::Log(LOGNOTICE, "JOB DO_WORK SUCCEEDED");
     }
     catch (...)
     {
@@ -92,6 +95,8 @@ CJobQueue::~CJobQueue()
 
 void CJobQueue::OnJobComplete(unsigned int jobID, bool success, CJob *job)
 {
+  CLog::Log(LOGNOTICE, "Job: ", job->GetType());
+  CLog::Log(LOGNOTICE, "Success?", success);
   CSingleLock lock(m_section);
   // check if this job is in our processing list
   Processing::iterator i = find(m_processing.begin(), m_processing.end(), job);
@@ -122,6 +127,8 @@ void CJobQueue::CancelJob(const CJob *job)
 void CJobQueue::AddJob(CJob *job)
 {
   CSingleLock lock(m_section);
+
+  CLog::Log(LOGNOTICE, "New job queued: ", job->GetType());
   // check if we have this job already.  If so, we're done.
   if (find(m_jobQueue.begin(), m_jobQueue.end(), job) != m_jobQueue.end() ||
       find(m_processing.begin(), m_processing.end(), job) != m_processing.end())
@@ -142,6 +149,7 @@ void CJobQueue::QueueNextJob()
   CSingleLock lock(m_section);
   if (m_jobQueue.size() && m_processing.size() < m_jobsAtOnce)
   {
+    CLog::Log(LOGNOTICE, "Queue is not overwhelmed.  Next job queued");
     CJobPointer &job = m_jobQueue.back();
     job.m_id = CJobManager::GetInstance().AddJob(job.m_job, this, m_priority);
     m_processing.push_back(job);
@@ -202,7 +210,7 @@ CJobManager::~CJobManager()
 unsigned int CJobManager::AddJob(CJob *job, IJobCallback *callback, CJob::PRIORITY priority)
 {
   CSingleLock lock(m_section);
-
+  CLog::Log(LOGNOTICE, "Job is being added");
   if (!m_running)
     return 0;
 
@@ -215,6 +223,7 @@ unsigned int CJobManager::AddJob(CJob *job, IJobCallback *callback, CJob::PRIORI
   CWorkItem work(job, m_jobCounter, callback);
   m_jobQueue[priority].push_back(work);
 
+  CLog::Log(LOGNOTICE, "Job worker starting");
   StartWorkers(priority);
   return work.m_id;
 }
@@ -351,6 +360,7 @@ CJob *CJobManager::GetNextJob(const CJobWorker *worker)
   {
     // grab a job off the queue if we have one
     CJob *job = PopJob();
+    CLog::Log(LOGNOTICE, "Next job: ", job->GetType());
     if (job)
       return job;
     // no jobs are left - sleep for 30 seconds to allow new jobs to come in
