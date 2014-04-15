@@ -7,12 +7,13 @@
 			<posy>110</posy>
 			<posx>100</posx>
 			<!-- left side -->
+			<!-- guydev cosmetic fix = height change to line up left side and right side -->
 			<control type="group">
 				<control type="image">
 					<posx>-1</posx>
 					<posy>-1</posy>
 					<width>342</width>
-					<height>402</height>
+					<height>452</height>
 					<texture>transparent.png</texture>
 					<bordertexture border="10">border-black.png</bordertexture>
 					<bordersize>1</bordersize>
@@ -21,7 +22,7 @@
 				</control>
 				<control type="image">
 					<width>340</width>
-					<height>400</height>
+					<height>450</height>
 					<texture border="10">base-rounded.png</texture>
 					<colordiffuse>FF000000</colordiffuse>
 					<animation effect="fade" start="0" end="50" time="0" condition="true">Conditional</animation>
@@ -76,6 +77,7 @@
 		<value condition="Window.IsActive(skinsettings)">Skin</value>
 	</variable>
 	<!-- settings menu (left) -->
+	<!-- guydev wrap around onup scrolling fix -->
 	<include name="SettingsMenu">
 		<control type="group" id="302">
 			<include>FadeDialog</include>
@@ -85,7 +87,7 @@
 				<width>350</width>
 				<onleft>997</onleft>
 				<onright>301</onright>
-				<onup>-</onup>
+				<onup>3</onup>
 				<ondown>3</ondown>
 				<itemgap>0</itemgap>
 				<orientation>vertical</orientation>
