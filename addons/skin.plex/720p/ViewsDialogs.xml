@@ -1602,7 +1602,7 @@
 			</control>
 		</control>
 	</include>
-	<!-- 2014 Apr 12 KeyboardNumeric fix by guyldn for RaspPlex -->
+	<!-- 2014 Apr 12 KeyboardNumeric fix by guydev for RaspPlex -->
 	<include name="KeyboardNumeric">
 		<control type="group">
 			<include>KeyboardBG</include>
