@@ -82,7 +82,7 @@
 #include "GUI/GUIPlexMediaWindow.h"
 #include "PlayListPlayer.h"
 #include "playlists/PlayList.h"
-#include "PlayQueueManager.h"
+#include "PlexPlayQueueManager.h"
 #include "music/tags/MusicInfoTag.h"
 
 using namespace std;
@@ -378,7 +378,10 @@ void CGUIWindowHome::RemoveFromPlayQueue()
 {
   CFileItemPtr fileItem = GetCurrentFanoutItem();
   if (fileItem)
-    g_plexApplication.playQueueManager->removeItemFromCurrentPlayQueue(fileItem);
+  {
+    if (g_plexApplication.playQueueManager->current())
+      g_plexApplication.playQueueManager->current()->removeItem(fileItem);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -481,8 +484,7 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
       return true;
     }
 
-    case GUI_MSG_PLAYLIST_CHANGED:
-    case GUI_MSG_PLAYLISTPLAYER_CHANGED:
+    case GUI_MSG_PLEX_PLAYQUEUE_UPDATED:
     {
       RefreshSection("plexserver://playqueue/", CPlexSectionFanout::SECTION_TYPE_PLAYQUEUE);
       return true;
@@ -492,9 +494,6 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
     case GUI_MSG_PLEX_SERVER_DATA_LOADED:
     case GUI_MSG_PLEX_SERVER_DATA_UNLOADED:
     case GUI_MSG_UPDATE:
-    case GUI_MSG_PLAYLISTPLAYER_STARTED:
-    case GUI_MSG_PLAYLISTPLAYER_STOPPED:
-    case GUI_MSG_PLAYBACK_STARTED:
     {
       UpdateSections();
       
@@ -610,13 +609,7 @@ bool CGUIWindowHome::OnClick(const CGUIMessage& message)
          currentContainer == CONTENT_LIST_PLAYQUEUE_PHOTO ||
          currentContainer == CONTENT_LIST_PLAYQUEUE_VIDEO))
     {
-      int playlist = GetPlayQueueType();
-      if (playlist != PLAYLIST_NONE)
-      {
-        g_playlistPlayer.SetCurrentPlaylist(playlist);
-        CApplicationMessenger::Get().PlayListPlayerPlaySongId(
-              fileItem->GetMusicInfoTag()->GetDatabaseId());
-      }
+      g_plexApplication.playQueueManager->playCurrentId(fileItem->GetMusicInfoTag()->GetDatabaseId());
     }
     else
     {
@@ -692,21 +685,7 @@ static bool _sortLabels(const CGUIListItemPtr& item1, const CGUIListItemPtr& ite
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 int CGUIWindowHome::GetPlayQueueType()
 {
-  int playlist = g_playlistPlayer.GetCurrentPlaylist();
-
-  if (playlist == PLAYLIST_NONE)
-  {
-    // playlistPlayer gives use PLAYLIST_NONE if we stop
-    // playback, but we want to show something still, so
-    // ask the playQueueManager if it knows what was playing
-    // recently
-    playlist = g_plexApplication.playQueueManager->getCurrentPlayQueueType();
-  }
-
-  if (g_playlistPlayer.GetPlaylist(playlist).size() > 0)
-    return playlist;
-
-  return PLAYLIST_NONE;
+  return g_plexApplication.playQueueManager->getCurrentPlayQueuePlaylist();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -887,9 +866,10 @@ void CGUIWindowHome::AddPlayQueue(std::vector<CGUIListItemPtr>& list, bool& upda
 
   item->SetLabel("Play Queue");
   item->SetProperty("playqueue", true);
-  item->SetPath("XBMC.ActivateWindow(MyVideos," + path + ",return)");
+  item->SetPath("XBMC.ActivateWindow(PlexPlayQueue," + path + ",return)");
   item->SetClickActions(CGUIAction("", item->GetPath()));
   item->SetProperty("sectionPath", path);
+  item->SetProperty("navigateDirectly", true);
 
   AddSection(path, CPlexSectionFanout::SECTION_TYPE_PLAYQUEUE, true);
 

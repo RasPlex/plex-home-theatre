@@ -3,7 +3,7 @@
  *  XBMC
  *
  *  Created by Jamie Kirkpatrick on 20/01/2011.
- *  Copyright 2011 Plex Inc. All rights reserved.
+ *  Copyright 2014 Plex Inc. All rights reserved.
  *
  */
 
@@ -39,7 +39,7 @@
 #include "DNSNameCache.h"
 
 #include "Client/PlexExtraInfoLoader.h"
-#include "Playlists/PlayQueueManager.h"
+#include "Playlists/PlexPlayQueueManager.h"
 
 #ifdef ENABLE_AUTOUPDATE
 #include "AutoUpdate/PlexAutoUpdate.h"
@@ -66,7 +66,7 @@ void PlexApplication::Start()
   filterManager = CPlexFilterManagerPtr(new CPlexFilterManager);
   profiler = CPlexProfilerPtr(new CPlexProfiler);
   extraInfo = new CPlexExtraInfoLoader;
-  playQueueManager = CPlayQueueManagerPtr(new CPlayQueueManager);
+  playQueueManager = CPlexPlayQueueManagerPtr(new CPlexPlayQueueManager);
   directoryCache = CPlexDirectoryCachePtr(new CPlexDirectoryCache);
 
   serverManager->load();
@@ -102,31 +102,7 @@ void PlexApplication::Start()
   myPlexManager->Create();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-bool PlexApplication::OnMessage(CGUIMessage& message)
-{
-  switch (message.GetMessage())
-  {
-    case GUI_MSG_APP_ACTIVATED:
-    case GUI_MSG_APP_DEACTIVATED:
-    {
-      CLog::Log(LOGDEBUG, "Plex Application: Handling message %d", message.GetMessage());
-      return true;
-    }
-    case GUI_MSG_BG_MUSIC_SETTINGS_UPDATED:
-    {
-      return true;
-    }
-    case GUI_MSG_BG_MUSIC_THEME_UPDATED:
-    {
-      //      g_plexApplication.backgroundMusicPlayer->SetTheme(message.GetStringParam());
-      return true;
-    }
-  }
-
-  return false;
-}
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef TARGET_DARWIN_OSX
 // Hack
 class CRemoteRestartThread : public CThread

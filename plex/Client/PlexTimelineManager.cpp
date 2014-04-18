@@ -18,7 +18,7 @@
 
 #include "Client/PlexServer.h"
 #include "Client/PlexServerManager.h"
-#include "Playlists/PlayQueueManager.h"
+#include "Playlists/PlexPlayQueueManager.h"
 
 #include "FileItem.h"
 #include "DirectoryCache.h"
@@ -154,13 +154,7 @@ void CPlexTimelineManager::ReportProgress(const CFileItemPtr &newItem, ePlexMedi
 
       ReportProgress(oldTimeline, true);
     }
-
-    if (timeline->getItem()->GetProperty("playQueueID").asBoolean())
-    {
-      // we got a new item with playQueueID so we need to refresh the PlayQueue
-      g_plexApplication.playQueueManager->refreshPlayQueue(timeline->getItem());
-    }
-  }
+ }
 
   /* now we need to check the other types because we can start
    * playing a video when music is playing which will stop the music
@@ -194,7 +188,7 @@ void CPlexTimelineManager::ReportProgress(const CFileItemPtr &newItem, ePlexMedi
     if (timeline->getItem())
       g_directoryCache.ClearDirWithFile(timeline->getItem()->GetProperty("key").asString());
 
-    ResetTimeline(type);
+     ResetTimeline(type);
   }
 }
 

@@ -18,12 +18,16 @@
 #include "FileSystem/PlexDirectory.h"
 #include "threads/CriticalSection.h"
 
+
 #ifdef TARGET_RASPBERRY_PI
 #include "dialogs/GUIDialogKaiToast.h"
 #include "PlexAutoUpdate.h"
 #include "filesystem/SpecialProtocol.h"
 #include "xbmc/Util.h"
 #endif
+
+class IPlexPlayQueueBase;
+typedef boost::shared_ptr<IPlexPlayQueueBase> IPlexPlayQueueBasePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 class CPlexHTTPFetchJob : public CJob
@@ -73,13 +77,18 @@ public:
 class CPlexPlayQueueFetchJob : public CPlexDirectoryFetchJob
 {
 public:
-  CPlexPlayQueueFetchJob(const CURL& url, bool startPlaying = true)
-    : CPlexDirectoryFetchJob(url), m_startPlaying(startPlaying)
+  CPlexPlayQueueFetchJob(const CURL& url, bool startPlaying = true, bool shuffle = false,
+                         const CStdString& startItem = "")
+    : CPlexDirectoryFetchJob(url), m_startPlaying(startPlaying), m_shuffle(shuffle),
+      m_startItem(startItem)
   {
 
   }
 
   bool m_startPlaying;
+  bool m_shuffle;
+  CStdString m_startItem;
+  IPlexPlayQueueBasePtr m_caller;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -109,6 +118,8 @@ public:
 
   virtual void Cancel() { m_http.Cancel(); }
 
+  virtual const char* GetType() const { return "mediaServerClientJob"; }
+
   /* set this to the shared ptr if we are calling this from the
    * mediaServerClient, otherwise just don't bother */
   CPlexMediaServerClientPtr m_mediaServerClient;
@@ -120,6 +131,18 @@ public:
       return true;
     return false;
   }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+class CPlexMediaServerClientTimelineJob : public CPlexMediaServerClientJob
+{
+public:
+  CPlexMediaServerClientTimelineJob(const CURL& url, const CFileItemPtr& item)
+    : CPlexMediaServerClientJob(url), m_item(item)
+  {}
+
+  virtual const char* GetType() const { return "mediaServerClientTimelineJob"; }
+  CFileItemPtr m_item;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////

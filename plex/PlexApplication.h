@@ -64,8 +64,8 @@ typedef boost::shared_ptr<CPlexProfiler> CPlexProfilerPtr;
 
 class CPlexExtraInfoLoader;
 
-class CPlayQueueManager;
-typedef boost::shared_ptr<CPlayQueueManager> CPlayQueueManagerPtr;
+class CPlexPlayQueueManager;
+typedef boost::shared_ptr<CPlexPlayQueueManager> CPlexPlayQueueManagerPtr;
 
 class CPlexDirectoryCache;
 typedef boost::shared_ptr<CPlexDirectoryCache> CPlexDirectoryCachePtr;
@@ -89,7 +89,7 @@ public:
   }
 
   /// Handle internal messages.
-  virtual bool OnMessage(CGUIMessage& message);
+  virtual bool OnMessage(CGUIMessage& message) { return false; };
 
   void OnWakeUp();
 
@@ -119,7 +119,7 @@ public:
   CPlexProfilerPtr profiler;
   CPlexGlobalTimerPtr timer;
   CPlexExtraInfoLoader* extraInfo;
-  CPlayQueueManagerPtr playQueueManager;
+  CPlexPlayQueueManagerPtr playQueueManager;
   CPlexDirectoryCachePtr directoryCache;
 
   void setNetworkLogging(bool);

@@ -35,6 +35,7 @@
 
 #include "Client/PlexServerDataLoader.h"
 #include "Client/MyPlex/MyPlexManager.h"
+#include "Playlists/PlexPlayQueueManager.h"
 
 #include "GUIViewState.h"
 
@@ -54,9 +55,8 @@ using namespace XFILE;
 using namespace rapidxml;
 #endif
 
-/* IDirectory Interface */
-bool
-CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+bool CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
 {
   m_url = url;
 
@@ -77,6 +77,10 @@ CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
   else if (url.GetHostName() == "channeldirectory")
   {
     return GetOnlineChannelDirectory(fileItems);
+  }
+  else if (url.GetHostName() == "playqueue")
+  {
+    return GetPlayQueueDirectory(fileItems);
   }
 
   if (boost::starts_with(m_url.GetFileName(), "library/metadata") && !boost::ends_with(m_url.GetFileName(), "children"))
@@ -200,8 +204,8 @@ CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
   return true;
 }
 
-void
-CPlexDirectory::CancelDirectory()
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void CPlexDirectory::CancelDirectory()
 {
   m_file.Cancel();
 }
@@ -346,8 +350,8 @@ static AttributeMap g_attributeMap = boost::assign::list_of<AttributePair>
 
 static CPlexAttributeParserBase* g_defaultAttr = new CPlexAttributeParserBase;
 
-void
-CPlexDirectory::CopyAttributes(XML_ELEMENT* el, CFileItem* item, const CURL &url)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void CPlexDirectory::CopyAttributes(XML_ELEMENT* el, CFileItem* item, const CURL &url)
 {
 #ifndef USE_RAPIDXML
   XML_ATTRIBUTE *attr = el->FirstAttribute();
@@ -465,8 +469,8 @@ CFileItemPtr CPlexDirectory::NewPlexElement(XML_ELEMENT *element, const CFileIte
   return newItem;
 }
 
-void
-CPlexDirectory::ReadChildren(XML_ELEMENT* root, CFileItemList& container)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void CPlexDirectory::ReadChildren(XML_ELEMENT* root, CFileItemList& container)
 {
 #ifdef USE_RAPIDXML
   for (XML_ELEMENT *element = root->first_node(); element; element = element->next_sibling())
@@ -510,8 +514,8 @@ CPlexDirectory::ReadChildren(XML_ELEMENT* root, CFileItemList& container)
   }
 }
 
-bool
-CPlexDirectory::ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContainer)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+bool CPlexDirectory::ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContainer)
 {
 #ifndef USE_RAPIDXML
   if (root->ValueStr() != "MediaContainer" && root->ValueStr() != "ASContainer")
@@ -577,6 +581,9 @@ CPlexDirectory::ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContai
       boost::starts_with(m_url.GetFileName(), "music") ||
       boost::starts_with(m_url.GetFileName(), "photos"))
   {
+    // store the original value somewhere.
+    mediaContainer.SetProperty("channelType", (int)mediaContainer.GetPlexDirectoryType());
+
     if (mediaContainer.HasProperty("message"))
       mediaContainer.SetPlexDirectoryType(PLEX_DIR_TYPE_MESSAGE);
     else
@@ -599,9 +606,8 @@ CPlexDirectory::ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContai
   return true;
 }
 
-
-EPlexDirectoryType
-CPlexDirectory::GetDirectoryType(const CStdString &typeStr)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+EPlexDirectoryType CPlexDirectory::GetDirectoryType(const CStdString &typeStr)
 {
   DirectoryTypeMap::right_const_iterator it = g_typeMap.right.find(typeStr);
   if (it != g_typeMap.right.end())
@@ -609,8 +615,8 @@ CPlexDirectory::GetDirectoryType(const CStdString &typeStr)
   return PLEX_DIR_TYPE_UNKNOWN;
 }
 
-CStdString
-CPlexDirectory::GetDirectoryTypeString(EPlexDirectoryType typeNr)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+CStdString CPlexDirectory::GetDirectoryTypeString(EPlexDirectoryType typeNr)
 {
   DirectoryTypeMap::left_const_iterator it = g_typeMap.left.find(typeNr);
   if (it != g_typeMap.left.end())
@@ -824,7 +830,8 @@ bool CPlexDirectory::GetChannelDirectory(CFileItemList &items)
     channel->SetPlexDirectoryType(GetDirectoryType(type));
     channel->SetLabel2(channel->GetProperty("serverName").asString());
 
-    CLog::Log(LOGDEBUG, "CPlexDirectory::GetChannelDirectory channel %s from server %s", channel->GetLabel().c_str(), channel->GetLabel2().c_str());
+    CLog::Log(LOGDEBUG, "CPlexDirectory::GetChannelDirectory channel %s from server %s",
+              channel->GetLabel().c_str(), channel->GetLabel2().c_str());
     
     items.Add(channel);
   }
@@ -847,4 +854,12 @@ bool CPlexDirectory::GetOnlineChannelDirectory(CFileItemList &items)
     items.SetPath("plexserver://channeldirectory");
   
   return success;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+bool CPlexDirectory::GetPlayQueueDirectory(CFileItemList& items)
+{
+  if (g_plexApplication.playQueueManager->current())
+    return g_plexApplication.playQueueManager->current()->getCurrent(items);
+  return false;
 }

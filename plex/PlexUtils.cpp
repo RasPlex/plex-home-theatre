@@ -5,6 +5,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/random.hpp>
 
 #include "Utility/sha1.hpp"
 
@@ -653,6 +654,11 @@ void PlexUtils::LogStackTrace(char *FuncName) {}
 ePlexMediaType PlexUtils::GetMediaTypeFromItem(const CFileItem& item)
 {
   EPlexDirectoryType plexType = item.GetPlexDirectoryType();
+
+  // If we get a channel here we need to check the property channelType for
+  // the real type (video/music etc)
+  if (plexType == PLEX_DIR_TYPE_CHANNEL && item.HasProperty("channelType"))
+    plexType = (EPlexDirectoryType)item.GetProperty("channelType").asInteger();
 
   switch(plexType)
   {
