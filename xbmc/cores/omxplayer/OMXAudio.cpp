@@ -794,7 +794,10 @@ unsigned int COMXAudio::AddPackets(const void* data, unsigned int len, double dt
 
   m_vizBufferSamples = 0;
 
-  if (m_pCallback && len)
+  // we want to update vizualisations only every 50 packets
+  static int vizCounter = 0;
+  vizCounter = (vizCounter+1)%50;
+  if (m_pCallback && len & (vizCounter==0))
   {
     /* input samples */
     m_vizBufferSamples = len / (CAEUtil::DataFormatToBits(AE_FMT_S16LE) >> 3);
