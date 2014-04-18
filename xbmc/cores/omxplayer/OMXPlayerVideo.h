@@ -139,4 +139,11 @@ public:
 
   inline int GetCacheLevel() { return 100 - ((100 * m_omxVideo.GetFreeSpace()) / m_omxVideo.GetInputBufferSize()); }
 };
+
+/* PLEX */
+extern CEvent g_CacheSyncEvent;
+extern double g_VideoCachePts;
+extern double g_AudioCachePts;
+/* END PLEX */
+
 #endif

@@ -110,6 +110,10 @@
 #include "ApplicationMessenger.h"
 #include "Client/PlexTranscoderClient.h"
 #include "PlexApplication.h"
+
+CEvent g_CacheSyncEvent;
+double g_VideoCachePts;
+double g_AudioCachePts;
 /* END PLEX */
 
 
@@ -1357,6 +1361,11 @@ void COMXPlayer::Process()
     if (CheckDelayedChannelEntry())
       continue;
 
+    static int iCount =0;
+    iCount = (iCount+1) % 50;
+    if (iCount==0)
+      CLog::Log(LOGDEBUG,"COMXPlayer::Process CACHE A:%d%%, V:%d%%, OMXA:%2.2fs, OMXV:%d%%",m_player_audio.GetLevel(),m_player_video.GetLevel(),m_player_audio.GetCacheTime(),m_player_video.GetCacheLevel());
+
     // if the queues are full, no need to read more
     if ((!m_player_audio.AcceptsData() && m_CurrentAudio.id >= 0)
     ||  (!m_player_video.AcceptsData() && m_CurrentVideo.id >= 0))
@@ -1805,8 +1814,16 @@ void COMXPlayer::HandlePlaySpeed()
   {
     bool bGotAudio(m_pDemuxer->GetNrOfAudioStreams() > 0);
     bool bGotVideo(m_pDemuxer->GetNrOfVideoStreams() > 0);
+
+    /* PLEX */
+    #ifndef TARGET_RASPBERRY_PI
     bool bAudioLevelOk(m_player_audio.GetLevel() > g_advancedSettings.m_iPVRMinAudioCacheLevel);
     bool bVideoLevelOk(m_player_video.GetLevel() > g_advancedSettings.m_iPVRMinVideoCacheLevel);
+    #else
+    bool bAudioLevelOk((m_player_audio.GetCacheTime() > 0.9 * AUDIO_BUFFER_SECONDS) && (m_player_audio.GetLevel() > 80));
+    bool bVideoLevelOk((m_player_video.GetCacheLevel() > 90) && (m_player_video.GetLevel() > 80));
+    #endif
+    /* END PLEX */
     bool bAudioFull(!m_player_audio.AcceptsData());
     bool bVideoFull(!m_player_video.AcceptsData());
 

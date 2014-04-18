@@ -84,6 +84,10 @@ OMXPlayerAudio::OMXPlayerAudio(OMXClock *av_clock, CDVDMessageQueue& parent)
 
   m_messageQueue.SetMaxDataSize(3 * 1024 * 1024);
   m_messageQueue.SetMaxTimeSize(8.0);
+
+  /* PLEX */
+  g_AudioCachePts = INFINITY;
+  /* END PLEX */
 }
 
 
@@ -495,6 +499,13 @@ void OMXPlayerAudio::Process()
       CLog::Log(LOGINFO, "Audio: dts:%.0f pts:%.0f size:%d (s:%d f:%d d:%d l:%d) s:%d %d/%d late:%d,%d", pPacket->dts, pPacket->pts,
            (int)pPacket->iSize, m_started, m_flush, bPacketDrop, m_stalled, m_speed, 0, 0, (int)m_omxAudio.GetAudioRenderingLatency(), (int)m_hints_current.samplerate);
       #endif
+
+      /* PLEX */
+      // if Audio is ahead Video, they yield to other thread
+      if (pPacket->pts > g_VideoCachePts)
+        Sleep(0);
+      /* END PLEX */
+
       if(Decode(pPacket, m_speed > DVD_PLAYSPEED_NORMAL || m_speed < 0 || bPacketDrop))
       {
         if (m_stalled && (m_omxAudio.GetCacheTime() > (AUDIO_BUFFER_SECONDS * 0.75f)))
@@ -514,6 +525,12 @@ void OMXPlayerAudio::Process()
         if(m_av_clock->HasVideo() && m_av_clock->OMXAudioBuffer())
           m_av_clock->OMXAudioBufferStop();
       }
+
+      /* PLEX */
+      // update out position
+      g_AudioCachePts = pPacket->pts;
+      /* END PLEX */
+
     }
     else if (pMsg->IsType(CDVDMsg::GENERAL_SYNCHRONIZE))
     {

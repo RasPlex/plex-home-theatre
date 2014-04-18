@@ -130,4 +130,10 @@ public:
 
   bool BadState() { return m_bad_state; }
 };
+
+/* PLEX */
+extern CEvent g_CacheSyncEvent;
+extern double g_VideoCachePts;
+extern double g_AudioCachePts;
+/* END PLEX */
 #endif
