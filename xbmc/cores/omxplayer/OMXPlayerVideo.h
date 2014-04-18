@@ -136,5 +136,7 @@ public:
   int GetFreeSpace();
   void  SetVideoRect(const CRect &SrcRect, const CRect &DestRect);
   static void RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect);
+
+  inline int GetCacheLevel() { return 100 - ((100 * m_omxVideo.GetFreeSpace()) / m_omxVideo.GetInputBufferSize()); }
 };
 #endif
