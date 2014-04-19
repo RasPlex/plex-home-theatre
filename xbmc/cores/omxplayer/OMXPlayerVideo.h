@@ -137,7 +137,13 @@ public:
   void  SetVideoRect(const CRect &SrcRect, const CRect &DestRect);
   static void RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect);
 
-  inline int GetCacheLevel() { return 100 - ((100 * m_omxVideo.GetFreeSpace()) / m_omxVideo.GetInputBufferSize()); }
+  inline int GetCacheLevel()
+  {
+    if (m_omxVideo.GetInputBufferSize() > 0)
+      return 100 - ((100 * m_omxVideo.GetFreeSpace()) / m_omxVideo.GetInputBufferSize());
+    else
+      return 0;
+  }
 };
 
 /* PLEX */
