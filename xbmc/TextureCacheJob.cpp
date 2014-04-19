@@ -133,6 +133,7 @@ bool CTextureCacheJob::CacheTexture(CBaseTexture **out_texture)
       outputFile.Write(buffer,bytesRead);
     }
 
+    outputFile.Flush();
     inputFile.Close();
     outputFile.Close();
     return true;
