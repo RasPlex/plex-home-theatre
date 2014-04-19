@@ -17,6 +17,7 @@
 #include "Client/PlexMediaServerClient.h"
 #include "FileSystem/PlexDirectory.h"
 #include "threads/CriticalSection.h"
+#include "TextureCacheJob.h"
 
 
 #ifdef TARGET_RASPBERRY_PI
@@ -188,6 +189,14 @@ class CPlexThemeMusicPlayerJob : public CJob
     bool DoWork();
     CStdString m_themeUrl;
     CStdString m_fileToPlay;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+class CPlexTextureCacheJob : public CTextureCacheJob
+{
+public:
+  CPlexTextureCacheJob(const CStdString &url, const CStdString &oldHash = "") : CTextureCacheJob(url,oldHash) {}
+  virtual bool CacheTexture(CBaseTexture **texture = NULL);
 };
 
 #ifdef TARGET_RASPBERRY_PI
