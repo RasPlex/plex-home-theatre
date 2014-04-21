@@ -762,7 +762,6 @@ bool CGUIWindowFullScreen::OnMessage(CGUIMessage& message)
 
       CSingleLock lock (g_graphicsContext);
       g_graphicsContext.SetFullScreenVideo(false);
-      g_application.StopPlaying();
       lock.Leave();
 
 #ifdef HAS_VIDEO_PLAYBACK
