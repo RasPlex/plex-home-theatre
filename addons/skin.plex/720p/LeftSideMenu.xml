@@ -355,7 +355,7 @@
 						<description>Preferences</description>
 						<label>$LOCALIZE[31955]</label>
 						<onclick>Dialog.Close(4998)</onclick>
-						<!-- guydev - change to videosettings (Playback)  as it is the first item listed on the Preferences page items -->
+						<!-- Change to videosettings (Playback)  as it is the first item listed on the Preferences page items -->
 						<onclick>XBMC.ActivateWindow(videossettings)</onclick>
                     </item>
                     <item id="101">
