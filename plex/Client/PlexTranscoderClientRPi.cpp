@@ -111,8 +111,8 @@ bool CPlexTranscoderClientRPi::ShouldTranscode(CPlexServerPtr server, const CFil
       audioChannels = selectedItem->GetProperty("mediaTag-audioChannels").asInteger();
 
   // default capping values
-  m_maxVideoBitrate = 20000;
-  m_maxAudioBitrate = 1000;
+  m_maxVideoBitrate = 200000;
+  m_maxAudioBitrate = 100000;
   int maxBitDepth = 8;
 
   // grab some other information in the audio / video streams
