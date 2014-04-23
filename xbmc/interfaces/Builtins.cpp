@@ -125,6 +125,8 @@ const BUILT_IN commands[] = {
   { "ControlGlobalCacher",        false,  "Stop or Start the global cacher" },
   { "MyPlexLogin",                false,  "Launches MyPlex login" },
   { "CalibrateVideo",             false,  "Calibrate Video" },
+  { "PlayAll",                    false,  "Play all files in this container" },
+  { "ShuffleAll",                 false,  "Shuffle all files in this container" },
   /* END PLEX */
   { "Help",                       false,  "This help message" },
   { "Reboot",                     false,  "Reboot the system" },
@@ -1695,9 +1697,11 @@ int CBuiltins::Execute(const CStdString& execString)
 #endif
   }
   else if (execute.Equals("togglewatched"))
-  {
     g_application.OnAction(CAction(ACTION_TOGGLE_WATCHED));
-  }
+  else if (execute.Equals("playall"))
+    g_application.OnAction(CAction(ACTION_PLEX_PLAY_ALL));
+  else if (execute.Equals("shuffleall"))
+    g_application.OnAction(CAction(ACTION_PLEX_PLAY_ALL));
 #endif
   /* PLEX */
   else
