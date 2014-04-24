@@ -71,6 +71,15 @@ void CPlexNavigationHelper::CloseBusyDialog()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+void CPlexNavigationHelper::navigateToNowPlaying()
+{
+  if (g_application.IsPlayingAudio())
+    g_windowManager.ActivateWindow(WINDOW_NOW_PLAYING);
+  else if (g_application.IsPlayingVideo())
+    g_windowManager.ActivateWindow(WINDOW_FULLSCREEN_VIDEO);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 CStdString CPlexNavigationHelper::navigateToItem(CFileItemPtr item, const CURL &parentUrl, int windowId, bool swap)
 {
   CStdString empty;
@@ -205,8 +214,7 @@ void CPlexNavigationHelper::OnJobComplete(unsigned int jobID, bool success, CJob
   if (fjob && success)
     g_directoryCache.SetDirectory(fjob->m_url.Get(), fjob->m_items, XFILE::DIR_CACHE_ALWAYS);
 
-  m_cacheSuccess = success;
-  CLog::Log(LOGDEBUG,"CPlexNavigationHelper::OnJobComplete setting event");
+  m_cacheSuccess = fjob ? success : false;
   m_cacheEvent.Set();
 
 }
