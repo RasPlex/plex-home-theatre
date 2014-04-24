@@ -201,8 +201,6 @@ CStdString CPlexNavigationHelper::navigateToItem(CFileItemPtr item, const CURL &
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void CPlexNavigationHelper::OnJobComplete(unsigned int jobID, bool success, CJob *job)
 {
-  Sleep(1000);
-
   CPlexDirectoryFetchJob *fjob = static_cast<CPlexDirectoryFetchJob*>(job);
   if (fjob && success)
     g_directoryCache.SetDirectory(fjob->m_url.Get(), fjob->m_items, XFILE::DIR_CACHE_ALWAYS);
