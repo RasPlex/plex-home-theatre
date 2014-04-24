@@ -51,7 +51,7 @@ bool CPlexNavigationHelper::CacheUrl(const std::string& url, bool& cancel, bool 
         g_windowManager.ProcessRenderLoop();
       }
 
-      if (closeDialog)
+      if (closeDialog || !m_cacheSuccess)
         busy->Close();
     }
   }
@@ -60,6 +60,14 @@ bool CPlexNavigationHelper::CacheUrl(const std::string& url, bool& cancel, bool 
       busy->Close();
 
   return m_cacheSuccess;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void CPlexNavigationHelper::CloseBusyDialog()
+{
+  CGUIDialogBusy *busy = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
+  if (busy && busy->IsActive())
+    busy->Close();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,10 +202,7 @@ CStdString CPlexNavigationHelper::navigateToItem(CFileItemPtr item, const CURL &
 void CPlexNavigationHelper::OnJobComplete(unsigned int jobID, bool success, CJob *job)
 {
   CPlexDirectoryFetchJob *fjob = static_cast<CPlexDirectoryFetchJob*>(job);
-  if (!fjob)
-    return;
-
-  if (success)
+  if (fjob && success)
     g_directoryCache.SetDirectory(fjob->m_url.Get(), fjob->m_items, XFILE::DIR_CACHE_ALWAYS);
 
   m_cacheSuccess = success;
