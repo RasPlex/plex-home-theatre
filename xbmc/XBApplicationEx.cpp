@@ -34,6 +34,8 @@
 #define XBMC_TRACK_EXCEPTIONS
 #endif
 
+#include "Stopwatch.h"
+
 CXBApplicationEx::CXBApplicationEx()
 {
   // Variables to perform app timing
@@ -79,6 +81,11 @@ VOID CXBApplicationEx::Destroy()
 INT CXBApplicationEx::Run()
 {
   CLog::Log(LOGNOTICE, "Running the application..." );
+
+
+
+
+
 
   unsigned int lastFrameTime = 0;
   unsigned int frameTime = 0;
@@ -139,6 +146,22 @@ INT CXBApplicationEx::Run()
         throw;
       }
     }
+    int blocksize = 1024*1024;
+    unsigned char src[blocksize];
+    unsigned char dest[blocksize];
+    int nbLoops = 1024 * 10;
+    CStopWatch timer;
+    timer.StartZero();
+    int starttime = XbmcThreads::SystemClockMillis();
+    CLog::Log(LOGDEBUG,"MEMCPY : Start Measurement");
+    for (int i=0;i<nbLoops;i++)
+      memcpy(dest,src,blocksize);
+
+    float mytime = timer.GetElapsedMilliseconds();
+    int bytes = 1000 * 1000000;
+    CLog::Log(LOGDEBUG,"MEMCPY : Copy Rate is %f Mbytes/s (%d Mbytes in %f ms)", (float) 1000 * nbLoops / mytime, nbLoops, mytime);
+
+
 #endif
     // Frame move the scene
 #ifdef XBMC_TRACK_EXCEPTIONS
