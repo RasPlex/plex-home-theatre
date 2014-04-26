@@ -236,6 +236,8 @@ void CPlexMediaDecisionEngine::ChooseMedia()
     }
   }
   
+  m_choosenMedia.m_lStartOffset = m_item.m_lStartOffset;
+
   if (m_item.HasProperty("selectedMediaItem"))
     m_choosenMedia.SetProperty("selectedMediaItem", m_item.GetProperty("selectedMediaItem"));
 
