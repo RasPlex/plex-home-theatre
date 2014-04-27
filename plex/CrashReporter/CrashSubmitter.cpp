@@ -16,7 +16,11 @@
 #include "URL.h"
 #include "utils/Base64.h"
 
+#ifdef TARGET_RASPBERRY_PI
+#define SUBMITTER_URL "http://crashreport.rasplex.com/crashes"
+#else
 #define SUBMITTER_URL "http://crashreport.plexapp.com:8881"
+#endif
 
 using namespace std;
 
@@ -121,6 +125,11 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
 
   u.SetOption("version", ExtractVersionFromCrashDump(p));
   u.SetOption("platform", PlexUtils::GetMachinePlatform());
+
+  #ifdef TARGET_RASPBERRY_PI
+    u.SetOption("serial", readProcCPUInfoValue("Serial"));
+    u.SetOption("revision", readProcCPUInfoValue("Revision"));
+  #endif
 
   // Strip off the version number, if present
   CStdString crashUuid = URIUtils::GetFileName(p);

@@ -23,6 +23,10 @@
 #include "threads/Thread.h"
 #include "PlexApplication.h"
 
+#ifdef TARGET_RASPBERRY_PI
+#include "RaspberryPiProcReader.h"
+#endif
+
 class CPlexAutoUpdate : public IJobCallback, public IPlexGlobalTimeout
 {
   public:
@@ -77,9 +81,6 @@ class CPlexAutoUpdate : public IJobCallback, public IPlexGlobalTimeout
     bool RenameLocalBinary();
     int m_percentage;
 
-#ifdef TARGET_RASPBERRY_PI
-    CStdString readProcCPUInfoValue(CStdString keyname);
-#endif
 
     std::vector<std::string> GetAllInstalledVersions() const;
 };

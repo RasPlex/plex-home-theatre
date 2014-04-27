@@ -3,6 +3,10 @@
 #include <string>
 #include "threads/Thread.h"
 
+#ifdef TARGET_RASPBERRY_PI
+#include "RaspberryPiProcReader.h"
+#endif
+
 class CrashSubmitter : public CThread
 {
   public:

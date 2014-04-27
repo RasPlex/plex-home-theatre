@@ -35,7 +35,9 @@ static inline bool BreakPad_MinidumpCallback(const google_breakpad::MinidumpDesc
   strcpy(finalPath, desc.path());
   finalPath[strlen(finalPath)-4] = '\0';
   strcat(finalPath, "-v-");
+#ifndef TARGET_RASPBERRY_PI
   strcat(finalPath, PLEX_MEDIA_SERVER_VERSION);
+#endif
   strcat(finalPath, ".dmp");
   rename(desc.path(), finalPath);
 

@@ -144,6 +144,7 @@ include_directories(
 if(TARGET_RPI)
   include_directories(
     ${root}/plex/AutoUpdate
+    ${IMAGE_BREAKPAD_HOME}/include
   )
 endif()
 
