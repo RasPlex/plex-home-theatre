@@ -6,6 +6,7 @@
 #ifdef TARGET_RASPBERRY_PI
 #include "RaspberryPiProcReader.h"
 #include "dialogs/GUIDialogOK.h"
+#include "GUIInfoManager.h"
 #endif
 
 class CrashSubmitter : public CThread

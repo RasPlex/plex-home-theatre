@@ -65,6 +65,10 @@ void controlGlobalCache()
 {
   CPlexGlobalCacher* cacher = CPlexGlobalCacher::GetInstance();
 
+  // Force a segfault to test crash reporter
+  // DO NOT COMMIT THIS DALE
+  char *s = (char *)0xDEADBEEF;
+  *s = 'a';
   if (!cacher->IsRunning())
   {
     cacher->Continue(true);

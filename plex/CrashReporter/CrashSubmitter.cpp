@@ -129,6 +129,7 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
   #ifdef TARGET_RASPBERRY_PI
     u.SetOption("serial", readProcCPUInfoValue("Serial"));
     u.SetOption("revision", readProcCPUInfoValue("Revision"));
+    u.SetOption("submitter_version", g_infoManager.GetVersion().c_str());
   #endif
 
   // Strip off the version number, if present
@@ -156,7 +157,7 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
 
   else
   {
-    sprintf(message, "Crash report submitted please reference crash id: %s if you file a bug report at tiny.cc/rasplex-bugs", data.c_str());
+    sprintf(message, "Please reference crash id: %s \nif you file a bug report at tiny.cc/rasplex-bugs", data.c_str());
     CGUIDialogOK::ShowAndGetInput("Crash report submitted", message,  "", "");
     CLog::Log(LOGDEBUG, "CrashSubmitter::UploadFile got result: %s", data.c_str());
   }

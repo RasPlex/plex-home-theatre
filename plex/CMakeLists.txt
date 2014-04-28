@@ -150,6 +150,7 @@ set_target_properties(${PLEX_TARGET_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_NA
 set_target_properties(${PLEX_TARGET_NAME} PROPERTIES PDB_NAME "Plex Home Theater")
 
 if(ENABLE_DUMP_SYMBOLS)
+  message(STATUS "Generating breakpad symbols")
   GENERATE_BREAKPAD_SYMBOLS(${PLEX_TARGET_NAME})
   add_custom_target(symbols DEPENDS ${PLEX_TARGET_NAME}_symbols)
 endif(ENABLE_DUMP_SYMBOLS)
