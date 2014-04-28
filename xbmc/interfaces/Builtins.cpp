@@ -127,6 +127,8 @@ const BUILT_IN commands[] = {
   { "CalibrateVideo",             false,  "Calibrate Video" },
   { "PlayAll",                    false,  "Play all files in this container" },
   { "ShuffleAll",                 false,  "Shuffle all files in this container" },
+  { "NextItem",                   false,  "Move to the next item. Good for preplay" },
+  { "PrevItem",                   false,  "Move to previous item, good for preplay" },
   /* END PLEX */
   { "Help",                       false,  "This help message" },
   { "Reboot",                     false,  "Reboot the system" },
@@ -1690,6 +1692,7 @@ int CBuiltins::Execute(const CStdString& execString)
     g_graphicsContext.UpdateDisplayBlanking();
     //g_graphicsContext.SetVideoResolution(g_graphicsContext.GetVideoResolution(), true);
   }
+#endif
   else if (execute.Equals("updateandrestart"))
   {
 #ifdef ENABLE_AUTOUPDATE
@@ -1702,9 +1705,11 @@ int CBuiltins::Execute(const CStdString& execString)
     g_application.OnAction(CAction(ACTION_PLEX_PLAY_ALL));
   else if (execute.Equals("shuffleall"))
     g_application.OnAction(CAction(ACTION_PLEX_SHUFFLE_ALL));
-#endif
+  else if (execute.Equals("nextitem"))
+    g_application.OnAction(CAction(ACTION_PLEX_MOVE_NEXT_ITEM));
+  else if (execute.Equals("prevtem"))
+    g_application.OnAction(CAction(ACTION_PLEX_MOVE_PREV_ITEM));
   /* PLEX */
-  else
     return -1;
   return 0;
 }
