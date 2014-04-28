@@ -136,6 +136,7 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
   CStdString ext = URIUtils::GetExtension(crashUuid);
   crashUuid.Replace(ext, "");
 
+  char message[80];
   size_t index = crashUuid.find("-v-");
   if (index != string::npos)
     crashUuid = crashUuid.substr(0, index);
@@ -151,6 +152,13 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
   {
     CLog::Log(LOGDEBUG, "CrashSubmitter::UploadFile failed to upload to %s", SUBMITTER_URL);
     return false;
+  }
+
+  else
+  {
+    sprintf(message, "Crash report submitted please reference crash id: %s if you file a bug report at tiny.cc/rasplex-bugs", data.c_str());
+    CGUIDialogOK::ShowAndGetInput("Crash report submitted", message,  "", "");
+    CLog::Log(LOGDEBUG, "CrashSubmitter::UploadFile got result: %s", data.c_str());
   }
 
   return true;
