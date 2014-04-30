@@ -366,6 +366,7 @@
 #include "plex/GUI/GUIPlexScreenSaverPhoto.h"
 #include "plex/Client/PlexTranscoderClient.h"
 #include "plex/GUI/GUIWindowPlexPlayQueue.h"
+#include "plex/Playlists/GUIDialogPlexPlayQueue.h"
 /* END PLEX */
 
 #if defined(TARGET_ANDROID)
@@ -1521,6 +1522,7 @@ bool CApplication::Initialize()
     g_windowManager.Add(new CGUIPlexPictureWindow);
     g_windowManager.Add(new CGUIPlexScreenSaverPhoto);
     g_windowManager.Add(new CGUIWindowPlexPlayQueue);
+    g_windowManager.Add(new CGUIDialogPlexPlayQueue);
     /* END PLEX */
 
     /* window id's 3000 - 3100 are reserved for python */
@@ -3605,6 +3607,8 @@ bool CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_DIALOG_PLEX_AUDIO_PICKER);
     g_windowManager.Delete(WINDOW_DIALOG_PLEX_SUBTITLE_PICKER);
     g_windowManager.Delete(WINDOW_PLEX_STARTUP_HELPER);
+    g_windowManager.Delete(WINDOW_PLEX_PLAY_QUEUE);
+    g_windowManager.Delete(WINDOW_DIALOG_PLEX_PLAYQUEUE);
     /* END PLEX */
 
     g_windowManager.Delete(WINDOW_MUSIC_PLAYLIST);
