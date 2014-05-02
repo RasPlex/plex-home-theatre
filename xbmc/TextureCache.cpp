@@ -32,13 +32,20 @@
 /* PLEX */
 #include "PlexUtils.h"
 #include "PlexJobs.h"
+#include "PlexTextureCache.h"
 /* END PLEX */
 
 using namespace XFILE;
 
 CTextureCache &CTextureCache::Get()
 {
+  /* PLEX */
+#ifdef __PLEX__
+  static CPlexTextureCache s_cache;
+#else
   static CTextureCache s_cache;
+#endif
+  /* END PLEX */
   return s_cache;
 }
 
