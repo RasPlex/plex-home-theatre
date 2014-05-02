@@ -829,6 +829,7 @@ bool CPlexDirectory::GetChannelDirectory(CFileItemList &items)
   }
   
   items.SetContent("channels");
+  items.SetPlexDirectoryType(PLEX_DIR_TYPE_CHANNELS);
   items.SetPath("plexserver://channels");
   
   return true;
