@@ -19,6 +19,7 @@
 #include "network/UdpClient.h"
 #include "FileItem.h"
 #include "Utility/PlexGlobalTimer.h"
+#include "PlexBusyIndicator.h"
 
 #ifdef TARGET_DARWIN_OSX
 #include "Helper/PlexHTHelper.h"
@@ -121,6 +122,7 @@ public:
   CPlexExtraInfoLoader* extraInfo;
   CPlexPlayQueueManagerPtr playQueueManager;
   CPlexDirectoryCachePtr directoryCache;
+  CPlexBusyIndicator busy;
 
   void setNetworkLogging(bool);
   void OnTimeout();
