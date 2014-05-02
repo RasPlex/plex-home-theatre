@@ -321,8 +321,6 @@ void CPlexGlobalCacherWorker::Process()
   art.push_back("fanart");
   art.push_back("banner");
 
-  static int i;
-  CPlexUrlFile file;
   CFileItemPtr pItem;
   while (pItem = m_pCacher->PickItem())
   {
