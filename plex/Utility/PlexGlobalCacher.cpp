@@ -88,10 +88,19 @@ void controlGlobalCache()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+CFileItemPtr CPlexGlobalCacher::PickItem()
+{
+  CSingleLock lock(m_picklock);
+
+  CFileItemPtr pick = m_listToCache.Get(0);
+  m_listToCache.Remove(0);
+  return pick;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void CPlexGlobalCacher::Process()
 {
   CPlexDirectory dir;
-  CFileItemList list;
   CStopWatch timer;
   CStopWatch looptimer;
   CStopWatch msgtimer;
@@ -99,19 +108,8 @@ void CPlexGlobalCacher::Process()
   CStdString heading;
   int totalsize =0;
 
-  // list the arts we want to cache
-  CStdStringArray art;
-  art.push_back("smallThumb");
-  art.push_back("thumb");
-  art.push_back("bigthumb"); //*
-  art.push_back("smallPoster");
-  art.push_back("poster");
-  art.push_back("bigPoster");//*
-  art.push_back("smallGrandparentThumb");
-  art.push_back("grandparentThumb");
-  art.push_back("bigGrandparentThumb");
-  art.push_back("fanart");
-  art.push_back("banner");
+  int numWorkers = 6;
+  CPlexGlobalCacherWorker *pWorkers[numWorkers];
 
   CGUIDialogSelect *dialog = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
   if (!dialog)
@@ -208,7 +206,7 @@ void CPlexGlobalCacher::Process()
       if(!m_continue)
         break;
 
-      list.Clear();
+      m_listToCache.Clear();
 
       looptimer.StartZero();
       CFileItemPtr Section = selectedSections->Get(iSection);
@@ -226,62 +224,69 @@ void CPlexGlobalCacher::Process()
       PlexUtils::AppendPathToURL(url, "all");
 
       // store them into the list
-      dir.GetDirectory(url, list);
+      dir.GetDirectory(url, m_listToCache);
 
       // Grab the server Name
       CStdString ServerName = "<unknown>";
-      if (list.Size())
+      if (m_listToCache.Size())
       {
-        CPlexServerPtr  pServer = g_plexApplication.serverManager->FindFromItem(list.Get(0));
+        CPlexServerPtr  pServer = g_plexApplication.serverManager->FindFromItem(m_listToCache.Get(0));
         if (pServer)
         {
           ServerName = pServer->GetName();
         }
 
-        CLog::Log(LOGNOTICE,"Global Cache : Processed +%d items in '%s' on %s (total %d), took %f (total %f)", list.Size(), Section->GetLabel().c_str(), ServerName.c_str(), totalsize, looptimer.GetElapsedSeconds(),timer.GetElapsedSeconds());
+        CLog::Log(LOGNOTICE,"Global Cache : Processed +%d items in '%s' on %s (total %d), took %f (total %f)", m_listToCache.Size(), Section->GetLabel().c_str(), ServerName.c_str(), totalsize, looptimer.GetElapsedSeconds(),timer.GetElapsedSeconds());
       }
 
-      totalsize += list.Size();
+      totalsize += m_listToCache.Size();
 
-      // Here we have the file list, just process the items
-      for (int i = 0; i < list.Size() && m_continue; i++)
+      int itemsToCache = m_listToCache.Size();
+      int itemsProcessed = 0;
+
+      // create the workers
+      for (int iWorker=0; iWorker< numWorkers; iWorker++)
       {
-        // check for user cancel
-        m_continue = !m_dlgProgress->IsCanceled();
-        if(!m_continue)
-          break;
+        pWorkers[iWorker] = new CPlexGlobalCacherWorker(this);
+        pWorkers[iWorker]->Create(false);
+      }
 
-        CFileItemPtr item = list.Get(i);
-        if (item->IsPlexMediaServer())
+      // update the displayed information on progress dialog while
+      // threads are doing the job
+      while ((itemsProcessed < itemsToCache) && (!m_dlgProgress->IsCanceled()))
+      {
+        itemsProcessed = itemsToCache - m_listToCache.Size();
+
+        message.Format(g_localizeStrings.Get(41003) + " %d / %d : '%s' on '%s' ", iSection+1, selectedSections->Size(), Section->GetLabel(), ServerName);
+        m_dlgProgress->SetLine(0,message);
+
+        m_dlgProgress->SetPercentage(itemsProcessed*100 / itemsToCache);
+
+        message.Format(g_localizeStrings.Get(41006) + " %d/%d ...", itemsProcessed, itemsToCache);
+        m_dlgProgress->SetLine(1,message);
+
+        message.Format(g_localizeStrings.Get(41007) + " : %2d%%",itemsProcessed*100 / itemsToCache);
+        m_dlgProgress->SetLine(2,message);
+
+        Sleep(200);
+      }
+
+      // stop all the threads if we cancelled it
+      if (m_dlgProgress->IsCanceled())
+      {
+        for (int iWorker=0; iWorker< numWorkers; iWorker++)
         {
-          // display some progress
-          message.Format(g_localizeStrings.Get(41003) + " %d / %d : '%s' on '%s' ", iSection+1, selectedSections->Size(), Section->GetLabel(), ServerName);
-          m_dlgProgress->SetLine(0,message);
-
-          m_dlgProgress->SetPercentage(i*100 / list.Size());
-
-          message.Format(g_localizeStrings.Get(41006) + " %d/%d ...", i, list.Size());
-          m_dlgProgress->SetLine(1,message);
-
-          message.Format(g_localizeStrings.Get(41007) + " : %2d%%",i*100 / list.Size());
-          m_dlgProgress->SetLine(2,message);
-
-          BOOST_FOREACH(CStdString artKey, art)
-          {
-            if (item->HasArt(artKey) &&
-                !CTextureCache::Get().HasCachedImage(item->GetArt(artKey)))
-              CTextureCache::Get().CacheImage(item->GetArt(artKey));
-          }
-
-          // check if cancel button has been pressed
-          if (m_dlgProgress->IsCanceled())
-          {
-            CLog::Log(LOGNOTICE,"Global Cache : Operation was canceled by user");
-            break;
-          }
+          pWorkers[iWorker]->StopThread(false);
         }
+      }
 
-        m_dlgProgress->Progress();
+      // wait for workers to terminate
+      for (int iWorker=0; iWorker< numWorkers; iWorker++)
+      {
+        while (pWorkers[iWorker]->IsRunning())
+          Sleep(10);
+
+        delete pWorkers[iWorker];
       }
       CLog::Log(LOGNOTICE,"Global Cache : Processing section %s took %f",Section->GetLabel().c_str(), timer.GetElapsedSeconds());
     }
@@ -298,4 +303,35 @@ void CPlexGlobalCacher::OnExit()
 {
   m_dlgProgress->Close();
   m_globalCacher = NULL;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void CPlexGlobalCacherWorker::Process()
+{
+  CStdStringArray art;
+  art.push_back("smallThumb");
+  art.push_back("thumb");
+  art.push_back("bigthumb"); //*
+  art.push_back("smallPoster");
+  art.push_back("poster");
+  art.push_back("bigPoster");//*
+  art.push_back("smallGrandparentThumb");
+  art.push_back("grandparentThumb");
+  art.push_back("bigGrandparentThumb");
+  art.push_back("fanart");
+  art.push_back("banner");
+
+  static int i;
+  CPlexUrlFile file;
+  CFileItemPtr pItem;
+  while (pItem = m_pCacher->PickItem())
+  {
+
+    BOOST_FOREACH(CStdString artKey, art)
+    {
+      if (pItem->HasArt(artKey) &&
+          !CTextureCache::Get().HasCachedImage(pItem->GetArt(artKey)))
+        CTextureCache::Get().CacheImage(pItem->GetArt(artKey));
+    }
+  }
 }
