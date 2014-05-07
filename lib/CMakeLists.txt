@@ -33,8 +33,6 @@ endif(TARGET_COMMON_DARWIN)
 
 add_subdirectory(cpluff)
 add_subdirectory(cximage-6.0)
-
-if(ENABLE_TESTING)
-  include_directories(gtest gtest/include)
-  add_library(gtest STATIC gtest/src/gtest-all.cc gtest/src/gtest_main.cc)
-endif(ENABLE_TESTING)
+if(TARGET_RPI)
+  add_subdirectory(addons)
+endif()
