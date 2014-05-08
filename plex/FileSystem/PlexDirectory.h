@@ -109,6 +109,7 @@ namespace XFILE
     bool ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContainer);
     void ReadChildren(XML_ELEMENT* element, CFileItemList& container);
 
+  private:
     CStdString m_body;
     CStdString m_data;
     CStdString m_xmlData;
