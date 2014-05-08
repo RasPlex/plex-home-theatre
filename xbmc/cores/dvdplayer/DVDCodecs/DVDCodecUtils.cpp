@@ -22,8 +22,7 @@
 #include "DVDClock.h"
 #include "cores/VideoRenderers/RenderManager.h"
 #include "utils/log.h"
-//#include "utils/fastmemcpy.h"
-#define fast_memcpy memcpy
+#include "utils/fastmemcpy.h"
 #include "DllSwScale.h"
 
 // allocate a new picture (PIX_FMT_YUV420P)
