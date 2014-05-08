@@ -30,6 +30,14 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback)
     busy = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
     if (busy)
       busy->Show();
+
+#ifdef TARGET_RASPBERRY_PI
+    // we dont want to have renderloop called
+    // too often as it slows a lot the ongoing job
+    std::vector<CAnimation> emptyAnims;
+    busy->SetAnimations(emptyAnims);
+    g_windowManager.ProcessRenderLoop();
+#endif
   }
 
   lk.Enter();
@@ -38,7 +46,7 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback)
   while (m_callbackMap.size() > 0)
   {
     lk.Leave();
-    while (!m_blockEvent.WaitMSec(100))
+    while (!m_blockEvent.WaitMSec(500))
     {
       lk.Enter();
       if (busy && busy->IsCanceled())
@@ -53,7 +61,10 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback)
         success = false;
       }
       lk.Leave();
+
+#ifndef TARGET_RASPBERRY_PI
       g_windowManager.ProcessRenderLoop();
+#endif
     }
     lk.Enter();
   }
