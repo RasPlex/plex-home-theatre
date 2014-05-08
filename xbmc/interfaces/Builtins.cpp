@@ -122,9 +122,6 @@ const BUILT_IN commands[] = {
   { "ToggleDisplayBlanking",      false,  "Toggle display blanking" },
   #endif
   { "UpdateAndRestart",           false,  "Update PHT and restart" },
-  { "ControlGlobalCacher",        false,  "Stop or Start the global cacher" },
-  { "MyPlexLogin",                false,  "Launches MyPlex login" },
-  { "CalibrateVideo",             false,  "Calibrate Video" },
   { "PlayAll",                    false,  "Play all files in this container" },
   { "ShuffleAll",                 false,  "Shuffle all files in this container" },
   { "NextItem",                   false,  "Move to the next item. Good for preplay" },
@@ -314,20 +311,6 @@ int CBuiltins::Execute(const CStdString& execString)
   {
     CApplicationMessenger::Get().Minimize();
   }
-  /* PLEX */
-  else if (execute.Equals("controlglobalcacher"))
-  { //ControlGlobalCacher
-    controlGlobalCache();
-  }
-  else if (execute.Equals("myplexlogin"))
-  {
-    g_windowManager.ActivateWindow(WINDOW_MYPLEX_LOGIN);
-  }
-  else if (execute.Equals("calibratevideo"))
-  {
-    g_windowManager.ActivateWindow(WINDOW_SCREEN_CALIBRATION);
-  }
-  /* PLEX */
   else if (execute.Equals("loadprofile"))
   {
     int index = g_settings.GetProfileIndex(parameter);
