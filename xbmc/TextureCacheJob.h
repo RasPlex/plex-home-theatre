@@ -73,6 +73,7 @@ public:
    \param url location of the image
    \return a hash string for this image
    */
+  /* PLEX - Added virtual */
   virtual bool CacheTexture(CBaseTexture **texture = NULL);
 
   CStdString m_url;

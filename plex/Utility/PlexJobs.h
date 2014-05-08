@@ -18,7 +18,7 @@
 #include "FileSystem/PlexDirectory.h"
 #include "threads/CriticalSection.h"
 #include "TextureCacheJob.h"
-
+#include "filesystem/File.h"
 
 #ifdef TARGET_RASPBERRY_PI
 #include "dialogs/GUIDialogKaiToast.h"
@@ -206,9 +206,17 @@ class CPlexThemeMusicPlayerJob : public CJob
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 class CPlexTextureCacheJob : public CTextureCacheJob
 {
+private:
+  XFILE::CFile m_inputFile;
+  XFILE::CFile m_outputFile;
+
 public:
-  CPlexTextureCacheJob(const CStdString &url, const CStdString &oldHash = "") : CTextureCacheJob(url,oldHash) {}
-  virtual bool CacheTexture(CBaseTexture **texture = NULL);
+  CPlexTextureCacheJob(const CStdString& url, const CStdString& oldHash = "")
+    : CTextureCacheJob(url, oldHash)
+  {
+  }
+  virtual bool CacheTexture(CBaseTexture** texture = NULL);
+  virtual void Cancel();
 };
 
 #ifdef TARGET_RASPBERRY_PI
