@@ -4,7 +4,6 @@ OBJS-$(CONFIG_AC3DSP)                  += arm/ac3dsp_init_arm.o         \
 OBJS-$(CONFIG_DCA_DECODER)             += arm/dcadsp_init_arm.o         \
 
 ARMV6-OBJS-$(CONFIG_AC3DSP)            += arm/ac3dsp_armv6.o
-ARMV6-OBJS-$(CONFIG_H264DSP)           += arm/h264dsp_armv6.o
 
 OBJS-$(CONFIG_MPEGAUDIODSP)            += arm/mpegaudiodsp_init_arm.o
 ARMV6-OBJS-$(CONFIG_MPEGAUDIODSP)      += arm/mpegaudiodsp_fixed_armv6.o
