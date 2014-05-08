@@ -36,11 +36,7 @@ OBJS-$(HAVE_ARMV6)                     += arm/dsputil_init_armv6.o      \
                                           arm/simple_idct_armv6.o       \
                                           $(ARMV6-OBJS-yes)
 
-VFP-OBJS-$(HAVE_ARMV6)                 += arm/dcadsp_vfp.o              \
-                                          arm/fft_vfp.o                 \
-                                          arm/fmtconvert_vfp.o          \
-                                          arm/mdct_vfp.o                \
-                                          arm/synth_filter_vfp.o
+VFP-OBJS-$(HAVE_ARMV6)                 += arm/fmtconvert_vfp.o          \
 
 OBJS-$(HAVE_ARMVFP)                    += arm/dsputil_vfp.o             \
                                           arm/dsputil_init_vfp.o        \
