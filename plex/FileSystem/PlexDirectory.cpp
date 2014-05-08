@@ -273,45 +273,6 @@ CPlexAttributeParserBase *g_parserTitleSort = new CPlexAttributeParserTitleSort;
 typedef std::map<CStdString, CPlexAttributeParserBase*> AttributeMap;
 typedef std::pair<CStdString, CPlexAttributeParserBase*> AttributePair;
 static AttributeMap g_attributeMap = boost::assign::list_of<AttributePair>
-                                     ("size", g_parserInt)
-                                     ("channels", g_parserInt)
-                                     ("createdAt", g_parserInt)
-                                     ("updatedAt", g_parserInt)
-                                     ("leafCount", g_parserInt)
-                                     ("viewedLeafCount", g_parserInt)
-                                     ("bitrate", g_parserInt)
-                                     ("duration", g_parserInt)
-                                     ("librarySectionID", g_parserInt)
-                                     ("streamType", g_parserInt)
-                                     ("index", g_parserInt)
-                                     ("channels", g_parserInt)
-                                     ("bitrate", g_parserInt)
-                                     ("samplingRate", g_parserInt)
-                                     ("dialogNorm", g_parserInt)
-                                     ("viewMode", g_parserInt)
-                                     ("autoRefresh", g_parserInt)
-                                     ("playQueueID", g_parserInt)
-                                     ("playQueueSelectedItemID", g_parserInt)
-                                     ("playQueueSelectedItemOffset", g_parserInt)
-                                     ("playQueueTotalCount", g_parserInt)
-                                     ("playQueueVersion", g_parserInt)
-                                     ("ratingKey", g_parserInt)
-
-                                     ("filters", g_parserBool)
-                                     ("refreshing", g_parserBool)
-                                     ("allowSync", g_parserBool)
-                                     ("secondary", g_parserBool)
-                                     ("search", g_parserBool)
-                                     ("selected", g_parserBool)
-                                     ("indirect", g_parserBool)
-                                     ("popup", g_parserBool)
-                                     ("installed", g_parserBool)
-                                     ("settings", g_parserBool)
-                                     ("search", g_parserBool)
-                                     ("live", g_parserBool)
-                                     ("autoupdate", g_parserBool)
-                                     ("synced", g_parserBool)
-
                                      ("key", g_parserKey)
                                      ("theme", g_parserKey)
                                      ("parentKey", g_parserKey)
@@ -384,14 +345,14 @@ void CPlexDirectory::CopyAttributes(XML_ELEMENT* el, CFileItem* item, const CURL
     CStdString key = attr->name();
     CStdString valStr = CStdString(attr->value());
 
-    if (g_attributeMap.find(key) != g_attributeMap.end())
+    AttributeMap::iterator it = g_attributeMap.find(key);
+    if ( it != g_attributeMap.end())
     {
-      CPlexAttributeParserBase* attr = g_attributeMap[key];
-      attr->Process(url, key, valStr, item);
+      it->second->Process(url, key, valStr, item);
     }
     else
     {
-      g_defaultAttr->Process(url, key, valStr, item);
+      item->SetProperty(key,valStr);
     }
 
     attr = attr->next_attribute();
