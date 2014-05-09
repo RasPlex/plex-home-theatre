@@ -342,4 +342,3 @@ bool CPlexRecursiveFetchJob::DoWork()
   CUtil::GetRecursiveListing(m_url, *m_list, m_exts);
   return true;
 }
-
