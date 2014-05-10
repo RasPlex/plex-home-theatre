@@ -21,12 +21,14 @@ include_directories(
 )
 
 if(ENABLE_AUTOUPDATE)
-  include(ExternalProject)
-  ExternalProject_Add(Update-Installer
-    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
-    SOURCE_DIR ${plexdir}/Update-Installer
-    INSTALL_DIR "${CMAKE_BINARY_DIR}"
-  )
+  if (NOT TARGET_RPI)
+    include(ExternalProject)
+    ExternalProject_Add(Update-Installer
+      CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
+      SOURCE_DIR ${plexdir}/Update-Installer
+      INSTALL_DIR "${CMAKE_BINARY_DIR}"
+    )
+  endif(NOT TARGET_RPI)
   if(TARGET_OSX)
     install(FILES ${CMAKE_BINARY_DIR}/update_installer/updater
             PERMISSIONS WORLD_READ WORLD_EXECUTE OWNER_WRITE OWNER_EXECUTE OWNER_READ GROUP_EXECUTE GROUP_READ
@@ -68,7 +70,7 @@ add_subdirectory(Remote)
 add_subdirectory(Filters)
 add_subdirectory(Playlists)
 add_subdirectory(Windows)
-add_subdirectory(AutoUpdate)
+add_subdirectory(Third-Party)
 add_subdirectory(Tests)
 
 include(BreakpadSymbols)
