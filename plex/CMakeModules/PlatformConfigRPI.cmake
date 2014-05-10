@@ -150,7 +150,6 @@ add_definitions(
     -DNDEBUG=1 
     -DDEBUG
     -DUSE_RAPIDXML
-    -DENABLE_AUTOUPDATE
     -DOPENELEC
 )
 
