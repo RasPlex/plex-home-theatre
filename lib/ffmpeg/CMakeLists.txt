@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-if(TARGET_LINUX OR TARGET_RPI)
+if(TARGET_LINUX)
   set(OS linux)
 elseif(TARGET_DARWIN)
   set(OS darwin)
