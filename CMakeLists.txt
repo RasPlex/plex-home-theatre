@@ -116,9 +116,6 @@ endif(TARGET_WIN32)
 if(NOT TARGET_RPI)
   # Build the texturepacker
   add_subdirectory(tools/TexturePacker)
-
-  # add our visualizations
-  add_subdirectory(xbmc/visualizations)
 endif()
 
 # add our visualizations
