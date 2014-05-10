@@ -92,10 +92,6 @@
 
 
 /* PLEX */
-#ifdef TARGET_RASPBERRY_PI
-#include "PlexTypes.h"
-#include "guilib/Key.h"
-#endif
 #include "PlexApplication.h"
 #include "AutoUpdate/PlexAutoUpdate.h"
 #include "Utility/PlexGlobalCacher.h"
@@ -1666,7 +1662,6 @@ int CBuiltins::Execute(const CStdString& execString)
   {
     g_application.StopPVRManager();
   }
-
   /* PLEX */
 #if defined(TARGET_DARWIN_OSX) || defined(TARGET_WINDOWS) || defined(OPENELEC)
   else if (execute.Equals("toggledisplayblanking"))
