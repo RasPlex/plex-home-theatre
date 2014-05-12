@@ -881,6 +881,10 @@ msgctxt "#44405"
 msgid "Progress"
 msgstr "Progress"
 
+msgctxt "#44406"
+msgid "Use FFMPEG AVIO"
+msgstr "Use FFMPEG AVIO"
+
 #### These are error strings shown from channels
 #### errorcode + 50000
 msgctxt "#52000"
