@@ -33,7 +33,7 @@ namespace XFILE
   class CPlexDirectory : public IDirectory
   {
   public:
-    CPlexDirectory() : m_verb("GET"), m_cacheStrategy(CPlexDirectoryCache::CACHE_STRATEGY_ITEM_COUNT)
+    CPlexDirectory() : m_verb("GET"), m_xmlData(new char[1024]), m_cacheStrategy(CPlexDirectoryCache::CACHE_STRATEGY_ITEM_COUNT)
     {
     }
 
@@ -115,7 +115,7 @@ namespace XFILE
   private:
     CStdString m_body;
     CStdString m_data;
-    CStdString m_xmlData;
+    boost::scoped_array<char> m_xmlData;
     CURL m_url;
     CPlexDirectoryCache::CacheStrategies m_cacheStrategy;
 
