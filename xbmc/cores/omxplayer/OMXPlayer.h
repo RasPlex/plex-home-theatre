@@ -363,7 +363,7 @@ public:
   bool    CheckStartCaching(COMXCurrentStream& current);
   void    SetCaching(ECacheState state);
   double  GetQueueTime();
-  virtual bool  IsCaching() const                                 { return m_caching == CACHESTATE_FULL; }
+  virtual bool  IsCaching() const                                 { return m_caching != CACHESTATE_DONE; }
   virtual int   GetCacheLevel() const;
 
   virtual int  OnDVDNavResult(void* pData, int iMessage);
