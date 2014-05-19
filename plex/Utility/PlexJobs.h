@@ -216,7 +216,6 @@ public:
   {
   }
   virtual bool CacheTexture(CBaseTexture** texture = NULL);
-  virtual void Cancel();
 };
 
 #ifdef TARGET_RASPBERRY_PI
