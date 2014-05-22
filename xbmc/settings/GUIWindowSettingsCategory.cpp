@@ -3369,6 +3369,7 @@ void CGUIWindowSettingsCategory::FillInPlexUpdateChannels(CSetting *pSetting)
 
 #ifdef TARGET_RASPBERRY_PI
   pControl->AddLabel("PreRelease", CMyPlexUserInfo::ROLE_EMPLOYEE);
+  pControl->AddLabel("Beta (unsupported!)", CMyPlexUserInfo::ROLE_NINJA);
 #else
   if (user.hasRole(CMyPlexUserInfo::ROLE_PLEXPASS) || user.hasRole(CMyPlexUserInfo::ROLE_NINJA) || user.hasRole(CMyPlexUserInfo::ROLE_EMPLOYEE))
     pControl->AddLabel(g_localizeStrings.Get(40004), CMyPlexUserInfo::ROLE_PLEXPASS);
