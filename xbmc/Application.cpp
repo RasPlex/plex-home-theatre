@@ -3797,6 +3797,8 @@ void CApplication::Stop(int exitCode)
 #ifndef __PLEX__
     SaveFileState(true);
 #else
+    g_audioManager.Enable(false);
+    g_audioManager.UnLoad();
     UpdateFileState("stopped");
 #endif
     
@@ -4574,6 +4576,11 @@ bool CApplication::PlayFile(const CFileItem& item_, bool bRestart)
     {
       if (g_windowManager.GetActiveWindow() == WINDOW_FULLSCREEN_VIDEO)
         g_windowManager.ActivateWindow(WINDOW_VISUALISATION);
+
+      /* PLEX */
+      if (!g_playlistPlayer.HasPlayedFirstFile())
+        ActivateVisualizer();
+      /* END PLEX */
     }
 
 #ifdef HAS_VIDEO_PLAYBACK

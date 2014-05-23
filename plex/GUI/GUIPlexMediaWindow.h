@@ -74,7 +74,6 @@ class CGUIPlexMediaWindow : public CGUIMediaWindow, public IJobCallback
     void CheckPlexFilters(CFileItemList &list);
     void UpdateButtons();
     void PlayAll(bool shuffle, const CFileItemPtr &fromHere = CFileItemPtr());
-    void QueueItem(const CFileItemPtr &item, bool next);
     void PlayAllPlayQueue(const CPlexServerPtr &server, bool shuffle, const CFileItemPtr &fromHere);
     void PlayAllLocalPlaylist(bool shuffle, const CFileItemPtr &fromHere);
     bool MatchPlexContent(const CStdString& matchStr);
@@ -111,8 +110,11 @@ private:
     int m_currentJobId;
     CURL m_sectionRoot;
     void UpdateSectionTitle();
-    bool m_hasAdvancedFilters;
+    bool UnwatchedEnabled() const;
+    std::string GetFilteredURI(const CFileItem &item) const;
 
+
+    bool m_hasAdvancedFilters;
     CCriticalSection m_filterValuesSection;
     std::string m_waitingForFilter;
     CEvent m_filterValuesEvent;
@@ -126,6 +128,8 @@ private:
 
     CPlexThumbCacher m_thumbCache;
     CPlexSectionFilterPtr m_sectionFilter;
+
+    std::map<std::string, bool> m_contentMatch;
 };
 
 class CGUIPlexMusicWindow : public CGUIPlexMediaWindow

@@ -255,6 +255,13 @@ void CGUIWindowHome::GetItemContextMenu(CContextButtons& buttons, const CFileIte
       buttons.Add(CONTEXT_BUTTON_MARK_WATCHED, 16103);
   }
 
+
+  buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52602);
+
+  ePlexMediaType itemType = PlexUtils::GetMediaTypeFromItem(item);
+  if (g_plexApplication.playQueueManager->getCurrentPlayQueueType() == itemType)
+    buttons.Add(CONTEXT_BUTTON_QUEUE_ITEM, 52603);
+
   CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(item.GetProperty("plexserver").asString());
   if (server && server->SupportsDeletion())
     buttons.Add(CONTEXT_BUTTON_DELETE, 117);
@@ -432,6 +439,15 @@ bool CGUIWindowHome::OnPopupMenu()
       g_plexApplication.playQueueManager->clear();
       UpdateSections();
       break;
+
+    case CONTEXT_BUTTON_QUEUE_ITEM:
+    case CONTEXT_BUTTON_PLAY_ONLY_THIS:
+    {
+      CFileItemPtr item = GetCurrentFanoutItem();
+      if (item)
+        g_plexApplication.playQueueManager->QueueItem(item, choice == CONTEXT_BUTTON_PLAY_ONLY_THIS);
+      break;
+    }
 
     default:
       CLog::Log(LOGWARNING, "CGUIWindowHome::OnPopupMenu can't handle choice %d", choice);
@@ -647,6 +663,11 @@ bool CGUIWindowHome::OnClick(const CGUIMessage& message)
   }
   else
   {
+    if (iAction == ACTION_PLAYER_PLAY && GetCurrentItemName() == "plexserver://playqueue/")
+    {
+      g_plexApplication.playQueueManager->playCurrentId(-1);
+      return true;
+    }
     OpenItem(GetCurrentListItem());
   }
 

@@ -19,6 +19,9 @@ bool CPlexPlayQueueLocal::create(const CFileItem& container, const CStdString& u
                                  const CPlexPlayQueueOptions& options)
 {
   CURL containerURL(container.GetPath());
+  if (container.GetProperty("isSynthesized").asBoolean())
+    containerURL = CURL(container.GetProperty("containerPath").asString());
+
   return g_plexApplication.busy.blockWaitingForJob(new CPlexPlayQueueFetchJob(containerURL, options), this);
 }
 
@@ -112,7 +115,10 @@ void CPlexPlayQueueLocal::OnJobComplete(unsigned int jobID, bool success, CJob* 
       m_list->Randomize();
 
     if (!fj->m_options.showPrompts && m_list->Get(0))
-      m_list->Get(0)->SetProperty("forceStartOffset", true);
+    {
+      m_list->Get(0)->SetProperty("avoidPrompts", true);
+      PlexUtils::SetItemResumeOffset(m_list->Get(0), fj->m_options.resumeOffset);
+    }
 
     if (!fj->m_options.startItemKey.empty())
     {
@@ -125,6 +131,8 @@ void CPlexPlayQueueLocal::OnJobComplete(unsigned int jobID, bool success, CJob* 
       m_list->SetProperty("playQueueID", m_list->GetProperty("ratingKey"));
     else
       m_list->SetProperty("playQueueID", rand());
+
+    m_list->SetProperty("playQueueIsLocal", true);
 
     CApplicationMessenger::Get().PlexUpdatePlayQueue(type, fj->m_options.startPlaying);
   }

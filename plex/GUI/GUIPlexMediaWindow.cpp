@@ -532,7 +532,7 @@ bool CGUIPlexMediaWindow::OnAction(const CAction &action)
     if (m_viewControl.GetSelectedItem() != -1)
     {
       CFileItemPtr pItem = m_vecItems->Get(m_viewControl.GetSelectedItem());
-      QueueItem(pItem, false);
+      g_plexApplication.playQueueManager->QueueItem(pItem, false);
     }
   }
 
@@ -716,6 +716,8 @@ bool CGUIPlexMediaWindow::OnSelect(int iItem)
     if (m_sectionFilter && m_sectionFilter->secondaryFiltersActivated())
     {
       CPlexSecondaryFilterPtr unwatchedFilter = m_sectionFilter->getSecondaryFilterOfName("unwatchedLeaves");
+      if (!unwatchedFilter)
+        unwatchedFilter = m_sectionFilter->getSecondaryFilterOfName("unwatched");
       if (unwatchedFilter && unwatchedFilter->isSelected())
       {
         CURL u(item->GetPath());
@@ -760,7 +762,8 @@ bool CGUIPlexMediaWindow::OnPlayMedia(int iItem)
   }
   else
   {
-    g_plexApplication.playQueueManager->create(*item, CPlexPlayQueueManager::getURIFromItem(*item));
+    std::string uri = GetFilteredURI(*item);
+    g_plexApplication.playQueueManager->create(*item, uri);
   }
 
   return true;
@@ -840,7 +843,7 @@ bool CGUIPlexMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     case CONTEXT_BUTTON_QUEUE_ITEM:
     case CONTEXT_BUTTON_PLAY_ONLY_THIS:
     {
-      QueueItem(item, button == CONTEXT_BUTTON_PLAY_ONLY_THIS);
+      g_plexApplication.playQueueManager->QueueItem(item, button == CONTEXT_BUTTON_PLAY_ONLY_THIS);
       break;
     }
 
@@ -876,37 +879,56 @@ bool CGUIPlexMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void CGUIPlexMediaWindow::QueueItem(const CFileItemPtr& item, bool next)
+bool CGUIPlexMediaWindow::UnwatchedEnabled() const
 {
-  if (!item)
-    return;
+  if (!m_sectionFilter)
+    return false;
 
-  ePlexMediaType type = g_plexApplication.playQueueManager->getCurrentPlayQueueType();
+  CPlexSecondaryFilterPtr filter = m_sectionFilter->getSecondaryFilterOfName("unwatchedLeaves");
+  if (filter)
+    return filter->isSelected();
+  return false;
+}
 
-  bool success = false;
-  if (type == PLEX_MEDIA_TYPE_UNKNOWN || (type == PLEX_MEDIA_TYPE_MUSIC && IsVideoContainer()) ||
-      (type == PLEX_MEDIA_TYPE_VIDEO && IsMusicContainer()))
+///////////////////////////////////////////////////////////////////////////////////////////////////
+std::string CGUIPlexMediaWindow::GetFilteredURI(const CFileItem& item) const
+{
+  CURL itemUrl(item.GetPath());
+  CURL uri("plexserver://plex");
+
+  // first we check if this is the root, in that case we want to
+  // apply all our sorting and filtering that we have going on.
+  if (itemUrl.GetUrlWithoutOptions() == m_startDirectory && m_sectionFilter)
   {
-    CPlexPlayQueueOptions options;
-    options.startPlaying = false;
-    success = g_plexApplication.playQueueManager->create(*item, "", options);
-
-    if ((g_application.IsPlayingAudio() && IsVideoContainer()) ||
-        (g_application.IsPlayingVideo() && IsMusicContainer()))
-      CApplicationMessenger::Get().MediaStop();
-
+    uri.SetFileName(m_sectionRoot.GetFileName());
+    uri = m_sectionFilter->addFiltersToUrl(uri);
+    if (uri.HasOption("unwatchedLeaves"))
+    {
+      uri.SetOption("unwatched", uri.GetOption("unwatchedLeaves"));
+      uri.RemoveOption("unwatchedLeaves");
+    }
   }
   else
   {
-    success = g_plexApplication.playQueueManager->addItem(item, next);
+    uri.SetFileName(itemUrl.GetFileName());
+    // now forward the unwatched filter if set.
+    if (UnwatchedEnabled())
+      uri.SetOption("unwatched", "1");
   }
 
-  if (success)
+  if (item.GetPlexDirectoryType() == PLEX_DIR_TYPE_SHOW ||
+      (item.GetPlexDirectoryType() == PLEX_DIR_TYPE_SEASON && item.HasProperty("size")))
   {
-    CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info,
-                                          "Item Queued", "The item was added the current queue..",
-                                          2500L, false);
+    std::string fname = uri.GetFileName();
+    boost::replace_last(fname, "/children", "/allLeaves");
+    uri.SetFileName(fname);
   }
+
+  // set sourceType
+  CStdString sourceType = boost::lexical_cast<CStdString>(PlexUtils::GetFilterType(item));
+  uri.SetOption("sourceType", sourceType);
+
+  return CPlexPlayQueueManager::getURIFromItem(item, uri.Get().substr(17, std::string::npos));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -928,27 +950,8 @@ void CGUIPlexMediaWindow::PlayAll(bool shuffle, const CFileItemPtr& fromHere)
   if (fromHere)
     fromHereKey = fromHere->GetProperty("key").asString();
 
-  CURL itemsUrl(m_vecItems->GetPath());
-  CURL uriPart("plexserver://plex");
-
-  if (m_startDirectory == itemsUrl.GetUrlWithoutOptions())
-  {
-    uriPart.SetFileName(m_sectionRoot.GetFileName());
-    if (m_sectionFilter)
-      uriPart = m_sectionFilter->addFiltersToUrl(uriPart);
-  }
-  else
-    uriPart.SetFileName(itemsUrl.GetFileName());
-
-  CStdString sourceType = boost::lexical_cast<CStdString>(PlexUtils::GetFilterType(*m_vecItems));
-  uriPart.SetOption("sourceType", sourceType);
-
-  if (m_sectionFilter && m_sectionFilter->getSecondaryFilterOfName("unwatchedLeaves") &&
-      m_sectionFilter->getSecondaryFilterOfName("unwatchedLeaves")->isSelected())
-    uriPart.SetOption("unwatched", "1");
-
   // take out the plexserver://plex part from above when passing it down
-  CStdString uri = CPlexPlayQueueManager::getURIFromItem(*m_vecItems, uriPart.Get().substr(17, std::string::npos));
+  CStdString uri = GetFilteredURI(*m_vecItems);
 
   CPlexPlayQueueOptions options;
   options.startItemKey = fromHereKey;
@@ -1029,6 +1032,8 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void CGUIPlexMediaWindow::CheckPlexFilters(CFileItemList &list)
 {
+  m_contentMatch.clear();
+
   if (m_sectionFilter)
   {
     list.SetProperty("hasAdvancedFilters", m_sectionFilter->hasAdvancedFilters() ? "yes" : "");
@@ -1369,17 +1374,31 @@ void CGUIPlexMediaWindow::AddFilters()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 bool CGUIPlexMediaWindow::MatchPlexContent(const CStdString &matchStr)
 {
-  CStdStringArray matchVec = StringUtils::SplitString(matchStr, ";");
-  CStdString content = PlexUtils::GetPlexContent(*m_vecItems);
+  if (m_contentMatch.find(matchStr) != m_contentMatch.end())
+    return m_contentMatch[matchStr];
 
-  BOOST_FOREACH(CStdString& match, matchVec)
+  std::vector<std::string> matchVec;
+  matchVec = StringUtils::Split(matchStr, ";");
+
+  std::string content = m_vecItems->GetProperty("PlexContent").asString();
+  if (content.empty())
   {
-    match = StringUtils::Trim(match);
-    if(match.Equals(content))
-      return true;
+    content = PlexUtils::GetPlexContent(*m_vecItems);
+    m_vecItems->SetProperty("PlexContent", content);
   }
 
-  return false;
+  bool ret = false;
+
+  BOOST_FOREACH(std::string& match, matchVec)
+  {
+    StringUtils::Trim(match);
+    StringUtils::ToLower(match);
+    if(match == content)
+      ret = true;
+  }
+
+  m_contentMatch[matchStr] = ret;
+  return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

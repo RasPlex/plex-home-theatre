@@ -95,7 +95,7 @@ endif(NOT TARGET_OSX)
 if(NOT TARGET_WIN32)
   list(REMOVE_ITEM plex_SRCS ./MediaCenterLaunchHost.cpp)
 else(NOT TARGET_WIN32)
-  list(APPEND plex_SRCS ${root}/xbmc/win32/Win32DelayedDllLoad.cpp)
+  set(WIN32_SRC ${root}/xbmc/win32/Win32DelayedDllLoad.cpp)
 endif(NOT TARGET_WIN32)
 
 get_property(PLEX_MODULE_SRCS GLOBAL PROPERTY SRCS_LIST)
@@ -145,7 +145,7 @@ if(TARGET_COMMON_DARWIN)
   set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${PLEX_VERSION_STRING_SHORT}")
   set(MACOSX_BUNDLE_BUNDLE_VERSION "${PLEX_VERSION_STRING}")
 else()
-  add_executable(${PLEX_TARGET_NAME} WIN32 $<TARGET_OBJECTS:PlexMain> $<TARGET_OBJECTS:xbmcmain> Resources/Plex.rc Resources/Plex.rc2)
+  add_executable(${PLEX_TARGET_NAME} WIN32 $<TARGET_OBJECTS:PlexMain> $<TARGET_OBJECTS:xbmcmain> ${WIN32_SRC} Resources/Plex.rc Resources/Plex.rc2)
 endif()
 
 # Set the correct binary name
