@@ -22,9 +22,11 @@
 
 #ifdef TARGET_RASPBERRY_PI
 #include "dialogs/GUIDialogKaiToast.h"
+#include "dialogs/GUIDialogProgress.h"
 #include "PlexAutoUpdate.h"
 #include "filesystem/SpecialProtocol.h"
 #include "xbmc/Util.h"
+#include "guilib/GUIWindowManager.h"
 #endif
 
 class IPlexPlayQueueBase;
@@ -230,9 +232,12 @@ class CPlexUpdaterJob : public CJob
     };
 
     bool DoWork();
+    bool StreamExec(CStdString command);
+    void SetProgress(CStdString& Line1, CStdString& Line2, int percentage);
 
     CPlexAutoUpdate *m_autoupdater;
     CStdString m_localBinary;
+    CGUIDialogProgress* m_dlgProgress;
 };
 #endif
 

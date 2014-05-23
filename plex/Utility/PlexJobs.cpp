@@ -204,64 +204,135 @@ bool CPlexThemeMusicPlayerJob::DoWork()
 }
 
 #ifdef TARGET_RASPBERRY_PI
+bool CPlexUpdaterJob::StreamExec(CStdString command)
+{
+  CLog::Log(LOGDEBUG,"CPlexUpdaterJob::StreamExec : Executing '%s'", command.c_str());
+  FILE* fp = popen(command.c_str(), "r");
+  if (fp)
+  {
+    // we grab script output in case we would have an error
+    char buffer[128];
+    CStdString commandOutput; 
+
+    while(!feof(fp)){
+      if ( fgets(buffer, sizeof(buffer), fp)!=NULL )
+      {
+        commandOutput = CStdString(buffer);
+        CLog::Log(LOGINFO, "CPlexUpdaterJob::StreamExec: %s",commandOutput.c_str());
+      }
+    }
+
+    int retcode = pclose(fp);
+    if (retcode)
+    {
+      CLog::Log(LOGERROR,"CPlexUpdaterJob::StreamExec: error %d while running install", retcode);
+      return false;
+    }
+  }
+}
 
 
 /* OPENELEC */
 bool CPlexUpdaterJob::DoWork()
 {
-  // we need to start the Install script here
 
-  // build script path
-  CStdString updaterPath;
-  CUtil::GetHomePath(updaterPath);
-  updaterPath += "/tools/openelec_install_update.sh";
+  CStdString message1, message2;
+  m_dlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
 
   // run the script redirecting stderr to stdin so that we can grab script errors and log them
-  CStdString command = "/bin/sh " + updaterPath + " " + CSpecialProtocol::TranslatePath(m_localBinary) + " 2>&1";
-  CLog::Log(LOGDEBUG,"CPlexAutoUpdate::UpdateAndRestart : Executing '%s'", command.c_str());
-  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Launching updater", "Progress will be reported. Please be patient", 10000, false);
+  //CStdString command = "/bin/sh " + updaterPath + " " + CSpecialProtocol::TranslatePath(m_localBinary) + " 2>&1";
 
-  //http://www.sw-at.com/blog/2011/03/23/popen-execute-shell-command-from-cc/ should replace with streaming execution, so we can see the output of the script in the log
-  FILE* fp = popen(command.c_str(), "r");
-  if (fp)
-  {
-    // we grab script output in case we would have an error
-    char output[1000];
-    CStdString commandOutput;
+  // Do the actual update here, translate this to C++:
 
-    while(fgets(output, sizeof(output), fp)!=NULL){
-      commandOutput = CStdString(output);
-      CLog::Log(LOGINFO, "CPlexAutoUpdate::UpdateAndRestart: %s",commandOutput.c_str());
-    }
+/*
+EXTRACTPATH=/storage/.update/tmp
+INSTALLPATH=/storage/.update             
+POST_UPDATE_PATH=/storage/.post_update.sh
 
-    int retcode = fclose(fp);
-    if (retcode)
-    {
-      CLog::Log(LOGERROR,"CPlexAutoUpdate::UpdateAndRestart: error %d while running install", retcode);
-      return false;
-    }
-  }
+if [ ! -d $EXTRACTPATH ]; then
+	mkdir -p $EXTRACTPATH
+fi
 
+if [ ! -d $INSTALLPATH ]; then
+	mkdir -p $INSTALLPATH
+fi
+
+notify 'Updating...' 'Beginning extraction, this will take a few minutes.'
+
+# untar both SYSTEM and KERNEL into extraction directory
+tar -xf $UPDATEFILE -C $EXTRACTPATH &
+
+CONTENTS=`find $EXTRACTPATH`
+
+# Grab KERNEL and SYSTEM 
+KERNEL=$(echo $CONTENTS | tr " " "\n" | grep KERNEL$)
+SYSTEM=$(echo $CONTENTS | tr " " "\n" | grep SYSTEM$)
+KERNELMD5=$(echo $CONTENTS | tr " " "\n"  | grep KERNEL.md5)
+SYSTEMMD5=$(echo $CONTENTS | tr " " "\n" | grep SYSTEM.md5)
+set +e
+POST_UPDATE=$(echo $CONTENTS | tr " " "\n" | grep post_update.sh)
+set -e
+
+[ -z "$KERNEL" ] && abort 'Invalid archive - no kernel.'
+[ -z "$KERNELMD5" ] && abort 'Invalid archive - no kernel check.'
+[ -z "$SYSTEM" ] && abort 'Invalid archive - no system.'
+[ -z "$SYSTEMMD5" ] && abort 'Invalid archive - no system check.'
+cd $INSTALLPATH
+
+notify 'Updating...' 'Finished extraction, validating checksums.'
+
+if [ -n $POST_UPDATE ] && [-f "$POST_UPDATE" ];then
+  notify 'Running post update script'
+  cp $POST_UPDATE $POST_UPDATE_PATH
+  post_update
+  notify 'Post-update complete!'
+fi
+
+kernel_check=`/bin/md5sum $KERNEL | awk '{print $1}'`
+system_check=`/bin/md5sum $SYSTEM | awk '{print $1}'`
+
+kernelmd5=`cat $KERNELMD5 | awk '{print $1}'`
+systemmd5=`cat $SYSTEMMD5 | awk '{print $1}'`
+
+[ "$kernel_check" != "$kernelmd5" ] && abort 'Kernel checksum mismatch'
+[ "$system_check" != "$systemmd5" ] && abort 'System checksum mismatch'
+
+notify 'Updating...' 'Checksums valid! Cleaning up...'
+# move extracted files to the toplevel
+mv $KERNEL $SYSTEM $KERNELMD5 $SYSTEMMD5 .
+
+# remove the directories created by tar
+rm -r 
+rm $UPDATEFILE
+*/
   m_autoupdater -> WriteUpdateInfo();
   CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update is complete!", "System will reboot twice to apply.", 10000, false);
-  fp = popen("/sbin/reboot", "r");
-  if (fp)
-  {
-    // we grab script output in case we would have an error
-    char output[1000];
-    CStdString commandOutput;
-    if (fgets(output, sizeof(output)-1, fp))
-      commandOutput = CStdString(output);
+//  fp = popen("/sbin/reboot", "r");
+/*
 
-    int retcode = fclose(fp);
-    if (retcode)
-    {
-      CLog::Log(LOGERROR,"CPlexAutoUpdate::UpdateAndRestart: error %d! Couldn't restart", retcode );
-      return false;
-    }
-  }
+  Example for updating user:
+  message1.Format( " %d / %d : '%s' on '%s' ", iSection + 1, TotalSections, Section->GetLabel(), ServerName);
+  message2.Format( " %d/%d ...", itemsProcessed, itemsToCache);
+  SetProgress(message1, message2, progress);
+  */
 
-  return true;
+}
+
+
+void CPlexUpdaterJob::SetProgress(CStdString& Line1, CStdString& Line2, int percentage)
+{
+  CStdString progressMsg;
+
+  m_dlgProgress->SetLine(0, Line1);
+  m_dlgProgress->SetLine(1, Line2);
+
+  if (percentage > 0)
+    progressMsg.Format( " : %2d%%", percentage);
+  else
+    progressMsg = "";
+
+  m_dlgProgress->SetLine(2, progressMsg);
+  m_dlgProgress->SetPercentage(percentage);
 }
 #endif
 
