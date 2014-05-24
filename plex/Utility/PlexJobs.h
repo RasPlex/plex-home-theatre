@@ -27,6 +27,7 @@
 #include "filesystem/SpecialProtocol.h"
 #include "xbmc/Util.h"
 #include "guilib/GUIWindowManager.h"
+#include <stdlib.h>
 #endif
 
 class IPlexPlayQueueBase;
@@ -232,8 +233,8 @@ class CPlexUpdaterJob : public CJob
     };
 
     bool DoWork();
-    bool StreamExec(CStdString command);
-    void SetProgress(CStdString& Line1, CStdString& Line2, int percentage);
+    CStdString StreamExec(CStdString command);
+    void SetProgress(char* message, int step, int steps);
 
     CPlexAutoUpdate *m_autoupdater;
     CStdString m_localBinary;

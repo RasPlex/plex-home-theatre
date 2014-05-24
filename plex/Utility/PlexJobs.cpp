@@ -204,8 +204,10 @@ bool CPlexThemeMusicPlayerJob::DoWork()
 }
 
 #ifdef TARGET_RASPBERRY_PI
-bool CPlexUpdaterJob::StreamExec(CStdString command)
+CStdString CPlexUpdaterJob::StreamExec(CStdString command)
 {
+  CStdString output = "";
+  command += "2>&1";
   CLog::Log(LOGDEBUG,"CPlexUpdaterJob::StreamExec : Executing '%s'", command.c_str());
   FILE* fp = popen(command.c_str(), "r");
   if (fp)
@@ -217,6 +219,7 @@ bool CPlexUpdaterJob::StreamExec(CStdString command)
     while(!feof(fp)){
       if ( fgets(buffer, sizeof(buffer), fp)!=NULL )
       {
+        output += buffer;
         commandOutput = CStdString(buffer);
         CLog::Log(LOGINFO, "CPlexUpdaterJob::StreamExec: %s",commandOutput.c_str());
       }
@@ -226,9 +229,9 @@ bool CPlexUpdaterJob::StreamExec(CStdString command)
     if (retcode)
     {
       CLog::Log(LOGERROR,"CPlexUpdaterJob::StreamExec: error %d while running install", retcode);
-      return false;
     }
   }
+  return output;
 }
 
 
@@ -236,58 +239,73 @@ bool CPlexUpdaterJob::StreamExec(CStdString command)
 bool CPlexUpdaterJob::DoWork()
 {
 
-  CStdString message1, message2;
+  CStdString command, output;
+  CStdString contents;
+  CStdString kernel, system, kernel_md5, system_md5, post_update;
+  int steps = 8; // hardcoded based on count below
+  int step  = 1;
   m_dlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
 
+  if (m_dlgProgress)
+  {
+    m_dlgProgress->SetHeading("Updating");
+    m_dlgProgress->StartModal();
+    m_dlgProgress->ShowProgressBar(true);
+
+  }
+
   // run the script redirecting stderr to stdin so that we can grab script errors and log them
-  //CStdString command = "/bin/sh " + updaterPath + " " + CSpecialProtocol::TranslatePath(m_localBinary) + " 2>&1";
+  //CStdString command = "/bin/sh " + updaterPath + " " + CSpecialProtocol::TranslatePath(m_localBinary) + " ";
 
   // Do the actual update here, translate this to C++:
 
+  SetProgress("Preparing directory", step++, steps); // 1
+
+  command = "mkdir -p /storage/.update/tmp";
+  StreamExec(command);
+
+
+  SetProgress("Extracting update...", step++, steps); // 2
+
+  command = "tar -xf "+CSpecialProtocol::TranslatePath(m_localBinary)+" -C /storage/.update/tmp";
+  output = StreamExec(command);
+
+  SetProgress("Examining archive...", step++, steps); // 3
+
+  command = "find /storage/.update/tmp/";
+  contents = StreamExec(command);
+
+  SetProgress("Checking archive integrity...", step++, steps); // 4
+
+  command = "echo "+contents+" | tr \" \" \"\n\" | KERNEL$";
+  kernel  = StreamExec(command);
+  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: kernel: %s", kernel);
+
+  command = "echo "+contents+" | tr \" \" \"\n\" | SYSTEM$";
+  system  = StreamExec(command);
+  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: system: %s", system);
+
+  command = "echo "+contents+" | tr \" \" \"\n\" | KERNEL.md5";
+  kernel_md5  = StreamExec(command);
+  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: kernel check: %s", kernel_md5);
+
+  command = "echo "+contents+" | tr \" \" \"\n\" | SYSTEM.md5";
+  system_md5  = StreamExec(command);
+  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: system check: %s", system_md5);
+
+  command = "echo "+contents+" | tr \" \" \"\n\" | post_update.sh";
+  post_update = StreamExec(command); 
+  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: post_update: %s", post_update);
+
+  SetProgress("Examining archive...", step++, steps); // 5
+
+  // check if any of the above were empty
+  
+  SetProgress("Validating checksums", step++, steps); // 6
+
+  // compute and compare checksums 
+
 /*
-EXTRACTPATH=/storage/.update/tmp
-INSTALLPATH=/storage/.update             
-POST_UPDATE_PATH=/storage/.post_update.sh
-
-if [ ! -d $EXTRACTPATH ]; then
-	mkdir -p $EXTRACTPATH
-fi
-
-if [ ! -d $INSTALLPATH ]; then
-	mkdir -p $INSTALLPATH
-fi
-
-notify 'Updating...' 'Beginning extraction, this will take a few minutes.'
-
-# untar both SYSTEM and KERNEL into extraction directory
-tar -xf $UPDATEFILE -C $EXTRACTPATH &
-
-CONTENTS=`find $EXTRACTPATH`
-
-# Grab KERNEL and SYSTEM 
-KERNEL=$(echo $CONTENTS | tr " " "\n" | grep KERNEL$)
-SYSTEM=$(echo $CONTENTS | tr " " "\n" | grep SYSTEM$)
-KERNELMD5=$(echo $CONTENTS | tr " " "\n"  | grep KERNEL.md5)
-SYSTEMMD5=$(echo $CONTENTS | tr " " "\n" | grep SYSTEM.md5)
-set +e
-POST_UPDATE=$(echo $CONTENTS | tr " " "\n" | grep post_update.sh)
-set -e
-
-[ -z "$KERNEL" ] && abort 'Invalid archive - no kernel.'
-[ -z "$KERNELMD5" ] && abort 'Invalid archive - no kernel check.'
-[ -z "$SYSTEM" ] && abort 'Invalid archive - no system.'
-[ -z "$SYSTEMMD5" ] && abort 'Invalid archive - no system check.'
-cd $INSTALLPATH
-
-notify 'Updating...' 'Finished extraction, validating checksums.'
-
-if [ -n $POST_UPDATE ] && [-f "$POST_UPDATE" ];then
-  notify 'Running post update script'
-  cp $POST_UPDATE $POST_UPDATE_PATH
-  post_update
-  notify 'Post-update complete!'
-fi
-
 kernel_check=`/bin/md5sum $KERNEL | awk '{print $1}'`
 system_check=`/bin/md5sum $SYSTEM | awk '{print $1}'`
 
@@ -297,37 +315,62 @@ systemmd5=`cat $SYSTEMMD5 | awk '{print $1}'`
 [ "$kernel_check" != "$kernelmd5" ] && abort 'Kernel checksum mismatch'
 [ "$system_check" != "$systemmd5" ] && abort 'System checksum mismatch'
 
-notify 'Updating...' 'Checksums valid! Cleaning up...'
+
+*/
+  SetProgress("Preparing update files", step++, steps); // 7
+
+  // move the files to the update directory
+
+/*
 # move extracted files to the toplevel
 mv $KERNEL $SYSTEM $KERNELMD5 $SYSTEMMD5 .
 
-# remove the directories created by tar
-rm -r 
-rm $UPDATEFILE
 */
-  m_autoupdater -> WriteUpdateInfo();
-  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update is complete!", "System will reboot twice to apply.", 10000, false);
-//  fp = popen("/sbin/reboot", "r");
+
+  SetProgress("Running post-update steps", step++, steps); // 8
+
 /*
 
-  Example for updating user:
-  message1.Format( " %d / %d : '%s' on '%s' ", iSection + 1, TotalSections, Section->GetLabel(), ServerName);
-  message2.Format( " %d/%d ...", itemsProcessed, itemsToCache);
-  SetProgress(message1, message2, progress);
-  */
+POST_UPDATE_PATH=/storage/.post_update.sh
+if [ -n $POST_UPDATE ] && [-f "$POST_UPDATE" ];then
+  notify 'Running post update script'
+  cp $POST_UPDATE $POST_UPDATE_PATH
+  post_update
+  notify 'Post-update complete!'
+fi
+
+*/
+
+  SetProgress("Cleaning up", step++, steps); // 9
+
+  // remove temporary folders
+/*
+# remove the directories created by tar
+rm -r /storage/.update/tmp
+rm $UPDATEFILE
+*/
+
+  m_autoupdater -> WriteUpdateInfo();
+  m_dlgProgress->Close();
+
+  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update is complete!", "System will reboot twice to apply.", 10000, false);
+  StreamExec("/sbin/reboot")
 
 }
 
 
-void CPlexUpdaterJob::SetProgress(CStdString& Line1, CStdString& Line2, int percentage)
+void CPlexUpdaterJob::SetProgress(char* message, int step, int steps)
 {
   CStdString progressMsg;
+  CStdString update;
+  float percentage = ((step * 100 / steps)/100);
 
-  m_dlgProgress->SetLine(0, Line1);
-  m_dlgProgress->SetLine(1, Line2);
+  update.Format( " %d / %d : '%s'", step, steps, message );
+
+  m_dlgProgress->SetLine(0, update);
 
   if (percentage > 0)
-    progressMsg.Format( " : %2d%%", percentage);
+    progressMsg.Format( "Progress : %2d%%", percentage);
   else
     progressMsg = "";
 
