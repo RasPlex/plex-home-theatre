@@ -403,7 +403,7 @@ void CPlexAutoUpdate::WriteUpdateInfo()
   bool httpSuccess = m_http.Get(callback.Get(), data);
 
   if (httpSuccess)
-    CLog::Log(LOGINFO, "CPlexAutoUpdate::WriteUpdateInfo updated, got %s seconds", data.c_str());
+    CLog::Log(LOGNOTICE, "CPlexAutoUpdate::WriteUpdateInfo updated, got %s seconds", data.c_str());
   else
     CLog::Log(LOGERROR, "CPlexAutoUpdate::WriteUpdateInfo failed to update, got %s seconds", data.c_str());
 #endif
@@ -729,11 +729,9 @@ void CPlexAutoUpdate::UpdateAndRestart()
 
 void CPlexAutoUpdate::UpdateAndRestart()
 {
-    CJobManager::GetInstance().AddJob(new CPlexUpdaterJob(this, m_localBinary), this, CJob::PRIORITY_HIGH);
+  CJobManager::GetInstance().AddJob(new CPlexUpdaterJob(this, m_localBinary), this, CJob::PRIORITY_HIGH);
 }
-
 #endif
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void CPlexAutoUpdate::ForceVersionCheckInBackground()

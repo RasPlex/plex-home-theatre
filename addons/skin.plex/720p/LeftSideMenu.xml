@@ -395,7 +395,7 @@
 						<description>Restart</description>
 						<label>$LOCALIZE[31072]</label>
 						<onclick>Dialog.Close(4998)</onclick>
-						<onclick>System.Exec(reboot)</onclick>
+						<onclick>Plex.reboot</onclick>
 						<visible>System.isSystem(openelec)</visible>
 					</item>
 					<item id="115">

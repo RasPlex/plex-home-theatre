@@ -21,6 +21,7 @@
 #include "filesystem/File.h"
 
 #ifdef TARGET_RASPBERRY_PI
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include "dialogs/GUIDialogKaiToast.h"
 #include "dialogs/GUIDialogProgress.h"
 #include "PlexAutoUpdate.h"
@@ -28,6 +29,7 @@
 #include "xbmc/Util.h"
 #include "guilib/GUIWindowManager.h"
 #include <stdlib.h>
+#include <errno.h>
 #endif
 
 class IPlexPlayQueueBase;
@@ -230,15 +232,20 @@ class CPlexUpdaterJob : public CJob
       m_localBinary(localbinary)
     {
       m_autoupdater = autoupdater;
+      m_updating = false;
     };
 
     bool DoWork();
     CStdString StreamExec(CStdString command);
     void SetProgress(char* message, int step, int steps);
+    void CancelUpdate(char* message);
 
     CPlexAutoUpdate *m_autoupdater;
     CStdString m_localBinary;
     CGUIDialogProgress* m_dlgProgress;
+    bool m_continue;
+    bool m_cancelled;
+    bool m_updating;
 };
 #endif
 

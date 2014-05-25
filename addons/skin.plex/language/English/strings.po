@@ -1088,7 +1088,7 @@ msgid "Section"
 msgstr ""
 
 msgctxt "#41000"
-msgid "System Settings"
+msgid "RasPlex Settings"
 msgstr ""
 
 msgctxt "#41001"

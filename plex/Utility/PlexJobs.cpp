@@ -204,158 +204,196 @@ bool CPlexThemeMusicPlayerJob::DoWork()
 }
 
 #ifdef TARGET_RASPBERRY_PI
+
+bool CPlexUpdaterJob::DoWork()
+{
+  CStdString command, output;
+  CStdString contents;
+  CStdString kernel, system, kernel_md5, system_md5, post_update;
+  int step  = 1;
+  int steps = 9;
+  m_continue = true;
+  m_cancelled = false;
+
+
+  if (!m_updating)
+  {
+    m_updating = true;
+
+    m_dlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
+    if (m_dlgProgress)
+    {
+      m_dlgProgress->SetHeading(2);
+    }
+    m_dlgProgress->SetHeading("Updating RasPlex");
+    m_dlgProgress->StartModal();
+    m_dlgProgress->ShowProgressBar(true);
+   
+    if (m_continue)
+    {
+      SetProgress("Preparing directory", step++, steps); // 1
+      command = "mkdir -p /storage/.update/tmp";
+      StreamExec(command);
+    }
+    if (m_continue)
+    {
+
+      SetProgress("Extracting update... this will take a minute or two.", step++, steps); // 2
+      command = "tar -xf "+CSpecialProtocol::TranslatePath(m_localBinary)+" -C /storage/.update/tmp";
+      output = StreamExec(command);
+    }
+    if (m_continue)
+    {
+
+      SetProgress("Examining archive...", step++, steps); // 3
+      command = "find /storage/.update/tmp/";
+      contents = StreamExec(command);
+    }
+    if (m_continue)
+    {
+
+      SetProgress("Checking archive integrity...", step++, steps); // 4
+      command = "echo \""+contents+"\" | tr \" \" \"\n\" | grep KERNEL$ | sed ':a;N;$!ba;s/\\n//g' | tr \"\n\" \" \"";
+      kernel  = StreamExec(command);
+      CLog::Log(LOGNOTICE, "CPlexUpdaterJob::DoWork: kernel: %s", kernel.c_str());
+
+      command = "echo \""+contents+"\" | tr \" \" \"\n\" | grep SYSTEM$ | sed ':a;N;$!ba;s/\\n//g' | tr \"\n\" \" \"";
+      system  = StreamExec(command);
+      CLog::Log(LOGNOTICE, "CPlexUpdaterJob::DoWork: system: %s", system.c_str());
+
+      command = "echo \""+contents+"\" | tr \" \" \"\n\" | grep KERNEL.md5 | sed ':a;N;$!ba;s/\\n//g' | tr \"\n\" \" \"";
+      kernel_md5  = StreamExec(command);
+      CLog::Log(LOGNOTICE, "CPlexUpdaterJob::DoWork: kernel check: %s", kernel_md5.c_str());
+
+      command = "echo \""+contents+"\" | tr \" \" \"\n\" | grep SYSTEM.md5 | sed ':a;N;$!ba;s/\\n//g' | tr \"\n\" \" \"";
+      system_md5  = StreamExec(command);
+      CLog::Log(LOGNOTICE, "CPlexUpdaterJob::DoWork: system check: %s", system_md5.c_str());
+
+      command = "echo \""+contents+"\" | tr \" \" \"\n\" | grep post_update.sh | sed ':a;N;$!ba;s/\\n//g' | tr \"\n\" \" \"";
+      post_update = StreamExec(command); 
+      CLog::Log(LOGNOTICE, "CPlexUpdaterJob::DoWork: post_update: %s", post_update.c_str());
+    }
+    if (m_continue)
+    {
+
+      SetProgress("Examining archive...", step++, steps); // 5
+      // check if any of the above were empty
+    }
+    if (m_continue)
+    {
+
+      SetProgress("Validating checksums", step++, steps); // 6
+
+      /*
+      // compute and compare checksums 
+      kernel_check=`/bin/md5sum $KERNEL | awk '{print $1}'`
+      system_check=`/bin/md5sum $SYSTEM | awk '{print $1}'`
+
+      kernelmd5=`cat $KERNELMD5 | awk '{print $1}'`
+      systemmd5=`cat $SYSTEMMD5 | awk '{print $1}'`
+
+      [ "$kernel_check" != "$kernelmd5" ] && abort 'Kernel checksum mismatch'
+      [ "$system_check" != "$systemmd5" ] && abort 'System checksum mismatch'
+      */
+    }
+    if (m_continue)
+    {
+      SetProgress("Preparing update files", step++, steps); // 7
+      StreamExec("mv "+kernel+" "+system+" "+kernel_md5+" "+system_md5+" /storage/.update");
+      // move the files to the update directory
+    }
+    if (m_continue)
+    {
+      SetProgress("Running post-update steps", step++, steps); // 8
+
+      /*
+      POST_UPDATE_PATH=/storage/.post_update.sh
+      if [ -n $POST_UPDATE ] && [-f "$POST_UPDATE" ];then
+        notify 'Running post update script'
+        cp $POST_UPDATE $POST_UPDATE_PATH
+        post_update
+        notify 'Post-update complete!'
+      fi
+      */
+    }
+    if (m_continue)
+    {
+      // remove temporary folders
+      SetProgress("Cleaning up", step++, steps); // 9
+      StreamExec("rm -rf /storage/.update/tmp");
+      StreamExec("rm "+CSpecialProtocol::TranslatePath(m_localBinary));
+    }
+    if (m_continue)
+    {
+      m_autoupdater -> WriteUpdateInfo();
+      CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update is complete!", "System will reboot twice to apply.", 10000, false);
+      m_updating = false;
+      StreamExec("/sbin/reboot");
+    }
+  }else{
+    CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Invalid action", "Update already in progress.", 10000, false);
+  }                                                                                                                                 
+
+}
+
 CStdString CPlexUpdaterJob::StreamExec(CStdString command)
 {
   CStdString output = "";
-  command += "2>&1";
-  CLog::Log(LOGDEBUG,"CPlexUpdaterJob::StreamExec : Executing '%s'", command.c_str());
+  char* errorstr;
+  command += " 2>&1";
+  CLog::Log(LOGNOTICE,"CPlexUpdaterJob::StreamExec : Executing '%s'", command.c_str());
   FILE* fp = popen(command.c_str(), "r");
-  if (fp)
+  if(!fp)
   {
-    // we grab script output in case we would have an error
-    char buffer[128];
-    CStdString commandOutput; 
+    errorstr = strerror(errno);
+    CLog::Log(LOGNOTICE,"Failed to open process, got error %s", errorstr );
+    m_continue = false;
+    CancelUpdate(errorstr);
+    return output;
+  }
 
-    while(!feof(fp)){
-      if ( fgets(buffer, sizeof(buffer), fp)!=NULL )
+  char buffer[128];
+  CStdString commandOutput; 
+
+  while(!feof(fp) ){
+    if (! m_cancelled)
+    {
+      m_cancelled = m_dlgProgress->IsCanceled();
+      if (m_cancelled)
       {
-        output += buffer;
-        commandOutput = CStdString(buffer);
-        CLog::Log(LOGINFO, "CPlexUpdaterJob::StreamExec: %s",commandOutput.c_str());
+        CancelUpdate("Update cancelled by user");
+        return output;
       }
     }
-
-    int retcode = pclose(fp);
-    if (retcode)
+    if ( fgets(buffer, sizeof(buffer), fp)!=NULL )
     {
-      CLog::Log(LOGERROR,"CPlexUpdaterJob::StreamExec: error %d while running install", retcode);
+      output += buffer;
+      commandOutput = CStdString(buffer);
+      CLog::Log(LOGNOTICE, "CPlexUpdaterJob::StreamExec: %s",commandOutput.c_str());
     }
   }
+
+  int retcode = pclose(fp);
+
+  if (retcode)
+  {
+    CLog::Log(LOGERROR,"CPlexUpdaterJob::StreamExec: error %d while running command", retcode);
+  }
+
   return output;
 }
 
 
-/* OPENELEC */
-bool CPlexUpdaterJob::DoWork()
+void CPlexUpdaterJob::CancelUpdate(char* error)
 {
 
-  CStdString command, output;
-  CStdString contents;
-  CStdString kernel, system, kernel_md5, system_md5, post_update;
-  int steps = 8; // hardcoded based on count below
-  int step  = 1;
-  m_dlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
-
-  if (m_dlgProgress)
-  {
-    m_dlgProgress->SetHeading("Updating");
-    m_dlgProgress->StartModal();
-    m_dlgProgress->ShowProgressBar(true);
-
-  }
-
-  // run the script redirecting stderr to stdin so that we can grab script errors and log them
-  //CStdString command = "/bin/sh " + updaterPath + " " + CSpecialProtocol::TranslatePath(m_localBinary) + " ";
-
-  // Do the actual update here, translate this to C++:
-
-  SetProgress("Preparing directory", step++, steps); // 1
-
-  command = "mkdir -p /storage/.update/tmp";
-  StreamExec(command);
-
-
-  SetProgress("Extracting update...", step++, steps); // 2
-
-  command = "tar -xf "+CSpecialProtocol::TranslatePath(m_localBinary)+" -C /storage/.update/tmp";
-  output = StreamExec(command);
-
-  SetProgress("Examining archive...", step++, steps); // 3
-
-  command = "find /storage/.update/tmp/";
-  contents = StreamExec(command);
-
-  SetProgress("Checking archive integrity...", step++, steps); // 4
-
-  command = "echo "+contents+" | tr \" \" \"\n\" | KERNEL$";
-  kernel  = StreamExec(command);
-  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: kernel: %s", kernel);
-
-  command = "echo "+contents+" | tr \" \" \"\n\" | SYSTEM$";
-  system  = StreamExec(command);
-  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: system: %s", system);
-
-  command = "echo "+contents+" | tr \" \" \"\n\" | KERNEL.md5";
-  kernel_md5  = StreamExec(command);
-  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: kernel check: %s", kernel_md5);
-
-  command = "echo "+contents+" | tr \" \" \"\n\" | SYSTEM.md5";
-  system_md5  = StreamExec(command);
-  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: system check: %s", system_md5);
-
-  command = "echo "+contents+" | tr \" \" \"\n\" | post_update.sh";
-  post_update = StreamExec(command); 
-  CLog::Log(LOGDEBUG, "CPlexUpdaterJob::DoWork: post_update: %s", post_update);
-
-  SetProgress("Examining archive...", step++, steps); // 5
-
-  // check if any of the above were empty
-  
-  SetProgress("Validating checksums", step++, steps); // 6
-
-  // compute and compare checksums 
-
-/*
-kernel_check=`/bin/md5sum $KERNEL | awk '{print $1}'`
-system_check=`/bin/md5sum $SYSTEM | awk '{print $1}'`
-
-kernelmd5=`cat $KERNELMD5 | awk '{print $1}'`
-systemmd5=`cat $SYSTEMMD5 | awk '{print $1}'`
-
-[ "$kernel_check" != "$kernelmd5" ] && abort 'Kernel checksum mismatch'
-[ "$system_check" != "$systemmd5" ] && abort 'System checksum mismatch'
-
-
-*/
-  SetProgress("Preparing update files", step++, steps); // 7
-
-  // move the files to the update directory
-
-/*
-# move extracted files to the toplevel
-mv $KERNEL $SYSTEM $KERNELMD5 $SYSTEMMD5 .
-
-*/
-
-  SetProgress("Running post-update steps", step++, steps); // 8
-
-/*
-
-POST_UPDATE_PATH=/storage/.post_update.sh
-if [ -n $POST_UPDATE ] && [-f "$POST_UPDATE" ];then
-  notify 'Running post update script'
-  cp $POST_UPDATE $POST_UPDATE_PATH
-  post_update
-  notify 'Post-update complete!'
-fi
-
-*/
-
-  SetProgress("Cleaning up", step++, steps); // 9
-
-  // remove temporary folders
-/*
-# remove the directories created by tar
-rm -r /storage/.update/tmp
-rm $UPDATEFILE
-*/
-
-  m_autoupdater -> WriteUpdateInfo();
+  CLog::Log(LOGERROR,"UpdateCancelled");
+  StreamExec("rm -rf /storage/.update/tmp");
+  StreamExec("rm /storage/.plexht/userdata/plexupdateinfo.xml");
   m_dlgProgress->Close();
-
-  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update is complete!", "System will reboot twice to apply.", 10000, false);
-  StreamExec("/sbin/reboot")
-
+  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update failed!", error, 10000, false);
+  m_continue = false;
+  m_updating = false;
 }
 
 
