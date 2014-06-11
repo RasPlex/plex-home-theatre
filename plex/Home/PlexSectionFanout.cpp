@@ -203,7 +203,6 @@ void CPlexSectionFanout::LoadArts()
       case SECTION_TYPE_SHOW:
       case SECTION_TYPE_ALBUM:
       case SECTION_TYPE_PHOTOS:
-      case SECTION_TYPE_QUEUE:
         artsUrl = CURL(m_url);
         PlexUtils::AppendPathToURL(artsUrl, "arts");
         break;
