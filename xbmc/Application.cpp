@@ -368,6 +368,7 @@
 #include "plex/GUI/GUIWindowPlexPlayQueue.h"
 #include "plex/Playlists/GUIDialogPlexPlayQueue.h"
 #include "plex/GUI/GUIDialogPlexError.h"
+#include "plex/GUI/GUIDialogPlexGlobalCacher.h"
 /* END PLEX */
 
 #if defined(TARGET_ANDROID)
