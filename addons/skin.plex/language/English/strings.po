@@ -1110,10 +1110,3 @@ msgstr ""
 msgctxt "#32112"
 msgid "Actors"
 msgstr ""
-
-# OE related strings
-
-msgctxt "#41000"
-msgid "OE Settings"
-msgstr ""
-
