@@ -33,7 +33,7 @@ namespace XFILE
   class CPlexDirectory : public IDirectory
   {
   public:
-    CPlexDirectory() : m_verb("GET"), m_xmlData(new char[1024]), m_showErrors(false)
+    CPlexDirectory() : m_verb("GET"), m_xmlData(new char[1024]), m_showErrors(false), m_cacheStrategy(CPlexDirectoryCache::CACHE_STRATEGY_ITEM_COUNT)
     {
     }
 
@@ -108,7 +108,6 @@ namespace XFILE
 
     inline void SetCacheStrategy(CPlexDirectoryCache::CacheStrategies Strategy) { m_cacheStrategy = Strategy; }
 
-  private:
     bool ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContainer);
     void ReadChildren(XML_ELEMENT* element, CFileItemList& container);
 

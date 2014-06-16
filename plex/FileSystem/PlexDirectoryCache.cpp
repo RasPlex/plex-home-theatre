@@ -25,16 +25,18 @@ bool CPlexDirectoryCache::GetCacheHit(const std::string path, const unsigned lon
 
   if (it != m_cacheMap.end())
   {
+#ifdef _DEBUG
     CLog::Log(LOGDEBUG,"CPlexDirectoryCache Cache HIT for  : %s, with Hash %lX",path.c_str(),newHash);
+#endif
     if (it->second.hash == newHash)
     {
       List.Copy(*it->second.pitemList);
       return true;
     }
   }
-
+#ifdef _DEBUG
   CLog::Log(LOGDEBUG,"CPlexDirectoryCache Cache MISS for  : %s, with Hash %lX",path.c_str(),newHash);
-
+#endif
   return false;
 }
 
@@ -67,8 +69,7 @@ void CPlexDirectoryCache::AddToCache(const std::string path, const unsigned long
   CLog::Log(LOGDEBUG,"CPlexDirectoryCache Adding an entry to cache : %s, with Hash %lX",path.c_str(),newHash);
 
   // Create new Item List or clear existing
-  CacheMapIterator it = m_cacheMap.find(path);
-  if (it != m_cacheMap.end())
+  if (m_cacheMap.find(path) != m_cacheMap.end())
     m_cacheMap[path].pitemList->Clear();
   else
     m_cacheMap[path].pitemList = CFileItemListPtr(new CFileItemList());
