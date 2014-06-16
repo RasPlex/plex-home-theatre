@@ -252,6 +252,10 @@
 #include "pictures/GUIDialogPictureInfo.h"
 #include "addons/GUIDialogAddonSettings.h"
 #include "addons/GUIDialogAddonInfo.h"
+#ifdef __PLEX__
+#include "plex/GUI/GUIDialogPlexSettingsMenu.h"
+#endif
+
 #ifdef HAS_LINUX_NETWORK
 #include "network/GUIDialogAccessPoints.h"
 #endif
@@ -1399,6 +1403,8 @@ bool CApplication::Initialize()
 #ifndef __PLEX__
     g_windowManager.Add(new CGUIWindowVideoNav);
     g_windowManager.Add(new CGUIWindowVideoPlaylist);
+#else
+    g_windowManager.Add(new CGUIDialogPlexSettingsMenu);
 #endif
     g_windowManager.Add(new CGUIWindowLoginScreen);
     g_windowManager.Add(new CGUIWindowSettingsProfile);
