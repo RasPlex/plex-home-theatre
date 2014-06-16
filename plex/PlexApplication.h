@@ -123,7 +123,6 @@ public:
   CPlexPlayQueueManagerPtr playQueueManager;
   CPlexDirectoryCachePtr directoryCache;
   CPlexBusyIndicator busy;
-  CPlexDirectoryCachePtr directoryCache;
 
   void setNetworkLogging(bool);
   void OnTimeout();
