@@ -964,7 +964,7 @@
 			<viewtype label="535">list</viewtype>
 			<scrolltime>200</scrolltime>
 			<itemlayout width="40">
-					</itemlayout>
+      		</itemlayout>
 			<focusedlayout width="53">
 				<control type="label">
 					<posx>33</posx>
@@ -1685,7 +1685,6 @@
 			</control>
 		</control>
 	</include>
-	<!-- 2014 Apr 12 KeyboardNumeric fix by guyldn for RaspPlex -->
 	<include name="KeyboardNumeric">
 		<control type="group">
 			<include>KeyboardBG</include>
@@ -1696,7 +1695,7 @@
 			<animation effect="fade" start="90" end="0" time="200">WindowClose</animation>
 			<!-- text field bg -->
 			<control type="grouplist">
-				<posy>222</posy>
+				<posy>170</posy>
 				<width>1280</width>
 				<height>50</height>
 				<align>center</align>
@@ -2132,7 +2131,6 @@
 						<ondown>505</ondown>
 						<label>&#x2192;</label>
 						<include>KeyboardButtonBig</include>
-						<label>&#x2192;</label>
 					</control>
 				</control>
 				<!-- Row 5 -->

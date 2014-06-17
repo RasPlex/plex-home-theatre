@@ -445,13 +445,6 @@ void CGUIWindowManager::CloseDialogs(bool forceClose)
 bool CGUIWindowManager::OnAction(const CAction &action)
 {
   CSingleLock lock(g_graphicsContext);
-
-  /* PLEX */
-  // allow  all window manager actions to reset screensaver timeout.
-  // so that events comming from httpremotehandlker can also reset it
-  g_application.ResetScreenSaver();
-  /* END PLEX */
-
   unsigned int topMost = m_activeDialogs.size();
   while (topMost)
   {

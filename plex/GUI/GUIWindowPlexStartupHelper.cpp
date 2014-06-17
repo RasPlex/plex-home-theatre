@@ -52,14 +52,6 @@ bool CGUIWindowPlexStartupHelper::OnMessage(CGUIMessage &message)
           break;
         case WIZARD_PAGE_AUDIO:
         {
-          #ifdef TARGET_RASPBERRY_PI
-          // resetting audio output parameters upon wizard on welcome screen
-          g_guiSettings.SetInt("audiooutput.mode", AUDIO_HDMI);
-          g_guiSettings.SetInt("audiooutput.channels", GetNumberOfHDMIChannels());
-          g_guiSettings.SetBool("audiooutput.ac3passthrough", false);
-          g_guiSettings.SetBool("audiooutput.dtspassthrough", false);
-          #endif
-
           if (!g_plexApplication.myPlexManager->IsSignedIn())
           {
             std::vector<CStdString> param;
@@ -102,6 +94,7 @@ void CGUIWindowPlexStartupHelper::AudioControlSelected(int id)
   hdmi->SetSelected(false);
 
   CStdString outputDevice = "default";
+
   if (id == RADIO_BUTTON_ANALOG)
   {
     analog->SetSelected(true);
