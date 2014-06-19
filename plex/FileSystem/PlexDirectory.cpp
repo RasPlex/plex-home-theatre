@@ -45,6 +45,7 @@
 
 #include "XMLChoice.h"
 #include "AdvancedSettings.h"
+#include "PlexDirectoryCache.h"
 
 
 using namespace XFILE;
@@ -97,10 +98,20 @@ CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
   CStopWatch httpTimer;
   httpTimer.StartZero();
 
-  if (m_body.empty())
-    httpSuccess = m_file.Get(m_url.Get(), m_data);
-  else
+  if (m_verb == "POST" || !m_body.empty())
     httpSuccess = m_file.Post(m_url.Get(), m_body, m_data);
+  else if (m_verb == "GET")
+    httpSuccess = m_file.Get(m_url.Get(), m_data);
+  else if (m_verb == "PUT")
+    httpSuccess = m_file.Put(m_url.Get(), m_data);
+  else if (m_verb == "DELETE")
+    httpSuccess = m_file.Delete(m_url.Get(), m_data);
+  else
+  {
+    CLog::Log(LOGERROR, "CPlexDirectory::GetDirectory UNKNOWN VERB %s :-(", m_verb.c_str());
+    return false;
+  }
+
 
   if (!httpSuccess)
   {
@@ -113,6 +124,25 @@ CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
   }
 
   CLog::Log(LOGDEBUG, "CPlexDirectory::GetDirectory::Timing took %f seconds to download XML document", httpTimer.GetElapsedSeconds());
+
+  // now handle the cache if required
+  unsigned long newHash = 0;
+  std::string cacheURL = m_url.Get();
+
+  if (m_cacheStrategy != CPlexDirectoryCache::CACHE_STARTEGY_NONE)
+  {
+    // first compute the hash on retrieved xml
+     newHash = PlexUtils::GetFastHash(m_data);
+
+   if (g_plexApplication.directoryCache->GetCacheHit(cacheURL,newHash,fileItems))
+    {
+     float elapsed = timer.GetElapsedSeconds();
+     CLog::Log(LOGDEBUG, "CPlexDirectory::GetDirectory::Timing returning a directory after total %f seconds with %d items with content %s", elapsed, fileItems.Size(), fileItems.GetContent().c_str());
+
+      // we found a hit, return it
+      return true;
+    }
+  }
 
   {
 
@@ -159,6 +189,9 @@ CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
     }
 #endif
   }
+
+  // add evetually to the cache
+  g_plexApplication.directoryCache->AddToCache(cacheURL, newHash, fileItems, m_cacheStrategy);
 
   float elapsed = timer.GetElapsedSeconds();
 
@@ -251,6 +284,12 @@ static AttributeMap g_attributeMap = boost::assign::list_of<AttributePair>
                                      ("dialogNorm", g_parserInt)
                                      ("viewMode", g_parserInt)
                                      ("autoRefresh", g_parserInt)
+                                     ("playQueueID", g_parserInt)
+                                     ("playQueueSelectedItemID", g_parserInt)
+                                     ("playQueueSelectedItemOffset", g_parserInt)
+                                     ("playQueueTotalCount", g_parserInt)
+                                     ("playQueueVersion", g_parserInt)
+                                     ("ratingKey", g_parserInt)
 
                                      ("filters", g_parserBool)
                                      ("refreshing", g_parserBool)
@@ -458,6 +497,12 @@ CPlexDirectory::ReadChildren(XML_ELEMENT* root, CFileItemList& container)
 
     if (!item->HasArt(PLEX_ART_THUMB) && container.HasArt(PLEX_ART_THUMB))
       item->SetArt(PLEX_ART_THUMB, container.GetArt(PLEX_ART_THUMB));
+
+    if (container.HasProperty("librarySectionUUID"))
+      item->SetProperty("librarySectionUUID", container.GetProperty("librarySectionUUID"));
+
+    if (container.HasProperty("playQueueID"))
+      item->SetProperty("playQueueID", container.GetProperty("playQueueID"));
     
     item->m_bIsFolder = IsFolder(item, element);
 

@@ -39,85 +39,6 @@ bool CPlexDirectoryFetchJob::DoWork()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-boost::unordered_map<std::string,unsigned long> CPlexCachedDirectoryFetchJob::m_urlHash;
-CCriticalSection CPlexCachedDirectoryFetchJob::m_hashMaplock;
-
-unsigned long CPlexCachedDirectoryFetchJob::GetHashFromCache(const CURL& url)
-{
-  CSingleLock lock(m_hashMaplock);
-  return m_urlHash[url.Get()];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void CPlexCachedDirectoryFetchJob::SetCacheHash(const CURL& url, unsigned long hash)
-{
-  CSingleLock lock(m_hashMaplock);
-  m_urlHash[url.Get()] = hash;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-bool CPlexCachedDirectoryFetchJob::DoWork()
-{
-  bool bResult = true;
-  CStopWatch timer;
-
-  timer.StartZero();
-
-  CLog::Log(LOGDEBUG,"CPlexCachedDirectoryFetchJob::DoWork, Starting Fetch");
-
-  // 1 - grab the url XML content
-  if (boost::contains(m_url.GetFileName(), "library/metadata"))
-    m_url.SetOption("checkFiles", "1");
-
-  if (m_url.HasProtocolOption("containerSize"))
-  {
-    m_url.SetOption("X-Plex-Container-Size", m_url.GetProtocolOption("containerSize"));
-    m_url.RemoveProtocolOption("containerSize");
-  }
-  if (m_url.HasProtocolOption("containerStart"))
-  {
-    m_url.SetOption("X-Plex-Container-Start", m_url.GetProtocolOption("containerStart"));
-    m_url.RemoveProtocolOption("containerStart");
-  }
-
-  bool httpSuccess;
-  XFILE::CPlexFile file;
-  CStdString xmlData;
-
-  httpSuccess = file.Get(m_url.Get(), xmlData);
-
-  if (!httpSuccess)
-  {
-    CLog::Log(LOGDEBUG, "CPlexCachedDirectoryFetchJob::DoWork failed to fetch data from %s: %ld", m_url.Get().c_str(), file.GetLastHTTPResponseCode());
-    if (file.GetLastHTTPResponseCode() == 500)
-    {
-      /* internal server error, we should handle this .. */
-    }
-    return false;
-  }
-
-  // 2 - Compute the URL hash
-  m_newHash = PlexUtils::GetFastHash(xmlData);
-  m_oldHash = GetHashFromCache(m_url);
-
-  CLog::Log(LOGDEBUG, "CPlexCachedDirectoryFetchJob::DoWork New Hash = %X, Old Hash = %X",m_newHash,m_oldHash);
-  if (m_newHash != m_oldHash)
-  {
-    CLog::Log(LOGDEBUG, "CPlexCachedDirectoryFetchJob::DoWork detected that section '%s'' content has changed, refreshing ...",m_url.Get().c_str());
-    // refetch directory if content has changed
-    bResult = CPlexDirectoryFetchJob::DoWork();
-
-    if (bResult)
-      SetCacheHash(m_url,m_newHash);
-  }
-  else
-    CLog::Log(LOGDEBUG, "CPlexCachedDirectoryFetchJob::DoWork did not find any change in section '%s'",m_url.Get().c_str());
-
-  CLog::Log(LOGDEBUG,"CPlexCachedDirectoryFetchJob::DoWork, Fetch took %f",timer.GetElapsedSeconds());
-  return bResult;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 bool CPlexMediaServerClientJob::DoWork()
 {
   bool success = false;
@@ -223,12 +144,11 @@ CPlexDownloadFileJob::DoWork()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 bool CPlexThemeMusicPlayerJob::DoWork()
 {
-  CStdString themeMusicUrl = m_item.GetProperty("theme").asString();
-  if (themeMusicUrl.empty())
+  if (m_themeUrl.empty())
     return false;
 
   Crc32 crc;
-  crc.ComputeFromLowerCase(themeMusicUrl);
+  crc.ComputeFromLowerCase(m_themeUrl);
 
   CStdString hex;
   hex.Format("%08x", (unsigned int)crc);
@@ -248,7 +168,7 @@ bool CPlexThemeMusicPlayerJob::DoWork()
 
     bool failed = false;
 
-    if (plex.Open(themeMusicUrl))
+    if (plex.Open(m_themeUrl))
     {
       bool done = false;
       int64_t read = 0;
@@ -271,7 +191,7 @@ bool CPlexThemeMusicPlayerJob::DoWork()
       }
     }
 
-    CLog::Log(LOGDEBUG, "CPlexThemeMusicPlayerJob::DoWork cached %s => %s", themeMusicUrl.c_str(), m_fileToPlay.c_str());
+    CLog::Log(LOGDEBUG, "CPlexThemeMusicPlayerJob::DoWork cached %s => %s", m_themeUrl.c_str(), m_fileToPlay.c_str());
 
     plex.Close();
     localFile.Close();

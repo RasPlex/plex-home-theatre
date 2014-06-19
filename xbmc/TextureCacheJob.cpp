@@ -88,6 +88,50 @@ bool CTextureCacheJob::CacheTexture(CBaseTexture **out_texture)
   else if (m_details.hash == m_oldHash)
     return true;
 
+  /* PLEX */
+#if defined(TARGET_RASPBERRY_PI)
+  XFILE::CFile inputFile, outputFile;
+  int bytesRead, bufferSize = 131072;
+  char buffer[bufferSize];
+
+  // check that file is a picture
+  CFileItem file(image, false);
+  if (!(file.IsPicture() && !(file.IsZIP() || file.IsRAR() || file.IsCBR() || file.IsCBZ() ))
+      && !file.GetMimeType().Left(6).Equals("image/") && !file.GetMimeType().Equals("application/octet-stream")) // ignore non-pictures
+  {
+    CLog::Log(LOGERROR,"CTextureCacheJob::CacheTexture file %s is not a picture",image.c_str());
+    return false;
+  }
+  // build destination file
+  m_details.file = m_cachePath + ".jpg";
+
+  if (inputFile.Open(image,READ_NO_CACHE))
+  {
+    if (outputFile.OpenForWrite(CTextureCache::GetCachedPath(m_details.file),true))
+    {
+      while (bytesRead = inputFile.Read(buffer,bufferSize))
+      {
+        outputFile.Write(buffer,bytesRead);
+      }
+
+      inputFile.Close();
+      outputFile.Close();
+      return true;
+    }
+    else
+    {
+      inputFile.Close();
+      CLog::Log(LOGERROR,"CTextureCacheJob::CacheTexture unable to open output file %s",CTextureCache::GetCachedPath(m_details.file).c_str());
+      return false;
+    }
+  }
+  else
+  {
+    CLog::Log(LOGERROR,"CTextureCacheJob::CacheTexture unable to open input file %s",image.c_str());
+    return false;
+  }
+#else
+  /* END PLEX */
   CBaseTexture *texture = LoadImage(image, width, height, additional_info);
   if (texture)
   {
@@ -111,6 +155,7 @@ bool CTextureCacheJob::CacheTexture(CBaseTexture **out_texture)
   }
   delete texture;
   return false;
+#endif
 }
 
 CStdString CTextureCacheJob::DecodeImageURL(const CStdString &url, unsigned int &width, unsigned int &height, std::string &additional_info)

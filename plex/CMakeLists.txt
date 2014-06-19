@@ -16,6 +16,7 @@ include_directories(
 	${root}/plex/Remote
 	${root}/plex/Filters
   ${root}/plex/Third-Party/rapidxml
+  ${root}/plex/Playlists
   ${CONFIG_INCLUDE_PATH_SPARKLE}
 )
 
@@ -48,18 +49,27 @@ OPTION(USE_RAPIDXML "Use RAPIDXML instead of TinyXML - Faster" ON)
 if(USE_RAPIDXML)
   add_definitions(-DUSE_RAPIDXML)
 endif(USE_RAPIDXML)
+ 
+if(HAVE_BREAKPAD)
+  if(NOT TARGET_WIN32)
+   list(APPEND CONFIG_PLEX_LINK_LIBRARIES ${LIBBREAKPAD_CLIENT})
+  endif(NOT TARGET_WIN32)
+endif(HAVE_BREAKPAD)
 
 add_subdirectory(CrashReporter)
 add_subdirectory(Client)
 add_subdirectory(FileSystem)
 add_subdirectory(GUI)
+add_subdirectory(Home)
 add_subdirectory(Network)
 add_subdirectory(Owned)
 add_subdirectory(Utility)
 add_subdirectory(Remote)
 add_subdirectory(Filters)
+add_subdirectory(Playlists)
 add_subdirectory(Windows)
 add_subdirectory(AutoUpdate)
+add_subdirectory(Tests)
 
 include(BreakpadSymbols)
 
@@ -74,8 +84,6 @@ endif(TARGET_OSX)
 find_all_sources(. plex_SRCS)
 
 list(REMOVE_ITEM plex_SRCS ./pch_plex.cpp)
-list(APPEND plex_SRCS Resources/Plex.rc)
-list(APPEND plex_SRCS Resources/Plex.rc2)
 
 set(Headers PlexTypes.h)
 if(NOT TARGET_OSX)
@@ -93,15 +101,48 @@ set(PLEX_ALL_SRCS ${PLEX_MODULE_SRCS} ${plex_SRCS} ${Headers})
 
 ADD_MSVC_PRECOMPILED_HEADER("pch_plex.h" "pch_plex.cpp" PLEX_ALL_SRCS)
 
+# build all plex related source files
+add_library(PlexMain OBJECT ${PLEX_ALL_SRCS})
+
+# build test cases
+if(ENABLE_TESTING)
+  get_property(TEST_CASES GLOBAL PROPERTY PLEX_TEST_CASES)
+  foreach(cases ${TEST_CASES})
+    message(STATUS "Adding test case ${cases}")
+    list(APPEND TEST_CASES_OBJS $<TARGET_OBJECTS:${cases}>)
+  endforeach(cases ${TEST_CASES})
+  add_executable(PlexHomeTheaterTests ${TEST_CASES_OBJS} $<TARGET_OBJECTS:xbmctest> $<TARGET_OBJECTS:PlexMain> $<TARGET_OBJECTS:PlexTestingUtils>)
+  target_link_libraries(PlexHomeTheaterTests xbmc pcre gtest ${CONFIG_INTERNAL_LIBS} ${CONFIG_PLEX_LINK_LIBRARIES})
+  add_test(PlexHomeTheaterTests ${EXECUTABLE_OUTPUT_PATH}/PlexHomeTheaterTests --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/PlexHomeTheaterTests.xml --gtest_color=yes)
+
+  add_custom_target(all_tests DEPENDS PlexHomeTheaterTests)
+  add_custom_target(run_tests COMMAND ${CMAKE_CTEST_COMMAND} -V DEPENDS all_tests)
+endif(ENABLE_TESTING)
+
+find_program(LIZARD lizard HINTS /usr/local/bin)
+if(NOT LIZARD MATCHES "-NOTFOUND")
+  add_custom_command(
+    OUTPUT lizard-output.xml
+    COMMAND ${LIZARD} --xml -t 4 ${plexdir} -x"${plexdir}/Dependencies/*" -x"${plexdir}/Update-Installer/*" -x"${plexdir}/Third-Party/*" > ${CMAKE_CURRENT_BINARY_DIR}/lizard-output.xml
+  )
+  add_custom_command(
+    OUTPUT lizard-stdout
+    COMMAND ${LIZARD} -w -t 4 ${plexdir} -x"${plexdir}/Dependencies/*" -x"${plexdir}/Update-Installer/*" -x"${plexdir}/Third-Party/*"
+  )
+
+  add_custom_target(lizard DEPENDS lizard-output.xml)
+  add_custom_target(lizard-warnings DEPENDS lizard-stdout)
+endif(NOT LIZARD MATCHES "-NOTFOUND")
+
 if(TARGET_COMMON_DARWIN)
-  add_executable(${PLEX_TARGET_NAME} MACOSX_BUNDLE ${PLEX_ALL_SRCS})
+  add_executable(${PLEX_TARGET_NAME} MACOSX_BUNDLE $<TARGET_OBJECTS:PlexMain> $<TARGET_OBJECTS:xbmcmain>)
   set_target_properties(${PLEX_TARGET_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${plexdir}/Resources/Info.plist.in")
   add_dependencies(${PLEX_TARGET_NAME} Update-Installer)
   set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PLEX_VERSION_STRING}")
   set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${PLEX_VERSION_STRING_SHORT}")
   set(MACOSX_BUNDLE_BUNDLE_VERSION "${PLEX_VERSION_STRING}")
 else()
-  add_executable(${PLEX_TARGET_NAME} WIN32 ${PLEX_ALL_SRCS})
+  add_executable(${PLEX_TARGET_NAME} WIN32 $<TARGET_OBJECTS:PlexMain> $<TARGET_OBJECTS:xbmcmain> Resources/Plex.rc Resources/Plex.rc2)
 endif()
 
 # Set the correct binary name
@@ -115,11 +156,6 @@ endif(ENABLE_DUMP_SYMBOLS)
 
 add_dependencies(${PLEX_TARGET_NAME} git_revision.h)
 target_link_libraries(${PLEX_TARGET_NAME} xbmc pcre ${CONFIG_INTERNAL_LIBS} ${CONFIG_PLEX_LINK_LIBRARIES})
-if(HAVE_BREAKPAD)
-  if(NOT TARGET_WIN32)
-   target_link_libraries(${PLEX_TARGET_NAME} ${LIBBREAKPAD_CLIENT})
-  endif(NOT TARGET_WIN32)
-endif(HAVE_BREAKPAD)
 
 if(TARGET_WIN32)
   add_custom_command(
@@ -135,7 +171,6 @@ endif(ENABLE_PYTHON)
 
 
 # find all image files in the skin
-file(GLOB MEDIA_IMAGES_MEDIASTREAM ${root}/addons/skin.mediastream/Media/*.png ${root}/addons/skin.mediastream/Media/*.gif)
 file(GLOB MEDIA_IMAGES_PLEX_SKIN ${root}/addons/skin.plex/Media/*.png ${root}/addons/skin.plex/Media/*.gif)
 
 if(COMPRESS_TEXTURES AND NOT TARGET_RPI)
@@ -153,29 +188,16 @@ if(COMPRESS_TEXTURES AND NOT TARGET_RPI)
   endif(TEXTUREPACKERPATH)
 
   add_custom_command(
-    OUTPUT Textures_MediaStream.xbt
-    COMMAND ${TEXTUREPACKER_EXE} -input ${root}/addons/skin.mediastream/Media -output ${CMAKE_CURRENT_BINARY_DIR}/Textures_MediaStream.xbt
-    MAIN_DEPENDENCY ${MEDIA_IMAGES_MEDIASTREAM}
+    OUTPUT Textures_Plex.xbt
+    COMMAND ${TEXTUREPACKER_EXE} -input ${root}/addons/skin.plex/Media -output ${CMAKE_CURRENT_BINARY_DIR}/Textures_Plex.xbt
+    MAIN_DEPENDENCY ${MEDIA_IMAGES_PLEX_SKIN}
     DEPENDS TexturePacker
     WORKING_DIRECTORY ${WORKDIR}
   )
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Textures_MediaStream.xbt DESTINATION ${RESOURCEPATH}/addons/skin.mediastream/Media RENAME Textures.xbt COMPONENT RUNTIME)
+  add_custom_target(CompressTextures ALL DEPENDS Textures_Plex.xbt)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Textures_Plex.xbt DESTINATION ${RESOURCEPATH}/addons/skin.plex/Media RENAME Textures.xbt COMPONENT RUNTIME)
 
-  if(ENABLE_NEW_SKIN)
-    add_custom_command(
-      OUTPUT Textures_Plex.xbt
-      COMMAND ${TEXTUREPACKER_EXE} -input ${root}/addons/skin.plex/Media -output ${CMAKE_CURRENT_BINARY_DIR}/Textures_Plex.xbt
-      MAIN_DEPENDENCY ${MEDIA_IMAGES_PLEX_SKIN}
-      DEPENDS TexturePacker
-      WORKING_DIRECTORY ${WORKDIR}
-    )
-    add_custom_target(CompressTextures ALL DEPENDS Textures_MediaStream.xbt Textures_Plex.xbt)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Textures_Plex.xbt DESTINATION ${RESOURCEPATH}/addons/skin.plex/Media RENAME Textures.xbt COMPONENT RUNTIME)
-  else(ENABLE_NEW_SKIN)
-    add_custom_target(CompressTextures ALL DEPENDS Textures_MediaStream.xbt)
-  endif(ENABLE_NEW_SKIN)
-
-  set(EXCLUDE_TEXTURES "skin.(mediastream|plex)/Media/*")
+  set(EXCLUDE_TEXTURES "skin.plex/Media/*")
 else()
   set(EXCLUDE_TEXTURES ^foo)
 endif()
@@ -218,16 +240,9 @@ install(DIRECTORY ${root}/system DESTINATION ${RESOURCEPATH} COMPONENT RUNTIME
         PATTERN peripherals.xml EXCLUDE)
 
 
-if(NOT ENABLE_NEW_SKIN)
-  set(EXCLUDE_NEW_SKIN skin.plex)
-else(NOT ENABLE_NEW_SKIN)
-  set(EXCLUDE_NEW_SKIN ^foo)
-endif(NOT ENABLE_NEW_SKIN)
-
 install(DIRECTORY ${root}/addons DESTINATION ${RESOURCEPATH} COMPONENT RUNTIME
         PATTERN skin.confluence EXCLUDE
         PATTERN skin.touched EXCLUDE
-        PATTERN ${EXCLUDE_NEW_SKIN} EXCLUDE
         REGEX screensaver.rsxs* EXCLUDE
         REGEX library.* EXCLUDE
         REGEX metadata.* EXCLUDE

@@ -474,7 +474,8 @@ class NavigationTimeout : public IPlexGlobalTimeout
     NavigationTimeout() {}
     void OnTimeout()
     {
-      CApplicationMessenger::Get().ActivateWindow(WINDOW_HOME, std::vector<CStdString>(), true);
+      if (!g_application.IsPlayingFullScreenVideo())
+        CApplicationMessenger::Get().ActivateWindow(WINDOW_HOME, std::vector<CStdString>(), true);
     }
 
     CStdString TimerName() const { return "navigationTimeout"; }
@@ -538,7 +539,7 @@ void CPlexHTTPRemoteHandler::showDetails(const ArgMap &arguments)
 
         if (!navTimeout)
           navTimeout = new NavigationTimeout;
-        g_plexApplication.timer.RestartTimeout(5 * 60 * 1000, navTimeout);
+        g_plexApplication.timer->RestartTimeout(5 * 60 * 1000, navTimeout);
       }
     }
   }

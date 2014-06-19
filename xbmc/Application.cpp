@@ -364,6 +364,7 @@
 #include "plex/PlexThemeMusicPlayer.h"
 #include "video/dialogs/GUIDialogVideoOSD.h"
 #include "plex/GUI/GUIPlexScreenSaverPhoto.h"
+#include "plex/Client/PlexTranscoderClient.h"
 /* END PLEX */
 
 #if defined(TARGET_ANDROID)
@@ -2462,11 +2463,7 @@ bool CApplication::WaitFrame(unsigned int timeout)
 void CApplication::NewFrame()
 {
   /* PLEX */
-#if !defined(TARGET_RASPBERRY_PI)
-  // on RPi, with OMX player, there is a race condition, causing this function to deadlock on Graphic context
-  // when player is flipping page
   HideBusyIndicator();
-#endif
   /* END PLEX */
 
   // We just posted another frame. Keep track and notify.
@@ -4277,6 +4274,19 @@ bool CApplication::PlayFile(const CFileItem& item_, bool bRestart)
       newItem.m_lStartOffset = item.m_lStartOffset;
       newItem.m_lEndOffset = item.m_lEndOffset;
 
+      // Matroska seeking check
+      if (CPlexTranscoderClient::getItemTranscodeMode(item) == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_MKV)
+      {
+        if (item.HasProperty("viewOffsetSeek"))
+        {
+          // for Matroska seeking, redefine viewOffset from seeeking value and update item offset
+          int64_t offsetSeek = item.GetProperty("viewOffsetSeek").asInteger();
+
+          newItem.SetProperty("viewOffset", offsetSeek);
+          newItem.m_lStartOffset = item.m_lStartOffset = ((offsetSeek / 10) - newItem.m_lEndOffset) * 0.75;
+        }
+      }
+
       item = newItem;
 
       if (!m_itemCurrentFile->IsStack())
@@ -4605,8 +4615,7 @@ bool CApplication::PlayFile(const CFileItem& item_, bool bRestart)
   // If we're supposed to activate the visualizer when playing audio, do so now.
   if (IsPlayingAudio() &&
       g_advancedSettings.m_bVisualizerOnPlay &&
-      !g_playlistPlayer.HasPlayedFirstFile() &&
-      !g_playlistPlayer.QueuedFirstFile())
+      !g_playlistPlayer.HasPlayedFirstFile())
   {
     ActivateVisualizer();
   }
@@ -4760,6 +4769,17 @@ void CApplication::OnPlayBackSeek(int iTime, int seekOffset)
   g_infoManager.SetDisplayAfterSeek(2500, seekOffset/1000);
 
   /* PLEX */
+  // define here viewOffsetSeek for Matroska transcoding seek & restart media
+  if (CurrentFileItemPtr())
+  {
+    if (CPlexTranscoderClient::getItemTranscodeMode(*CurrentFileItemPtr()) == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_MKV)
+    {
+      CurrentFileItemPtr()->SetProperty("viewOffsetSeek",iTime);
+      CApplicationMessenger::Get().MediaRestart(false);
+    }
+  }
+  
+
   UpdateFileState("", true);
   /* END PLEX */
 }
@@ -5782,7 +5802,7 @@ void CApplication::Restart(bool bSamePosition)
   /* END PLEX */
 
   // do we want to return to the current position in the file
-  if (false == bSamePosition)
+  if ((false == bSamePosition) && (CPlexTranscoderClient::getItemTranscodeMode(*m_itemCurrentFile) != CPlexTranscoderClient::PLEX_TRANSCODE_MODE_MKV))
   {
     // no, then just reopen the file and start at the beginning
     PlayFile(*m_itemCurrentFile, true);

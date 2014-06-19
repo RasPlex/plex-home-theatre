@@ -25,71 +25,97 @@
 #include "utils/log.h"
 
 #include "FileSystem/PlexFile.h"
+#include "FileSystem/PlexDirectoryCache.h"
 
 namespace XFILE
 {
   class CPlexDirectory : public IDirectory
   {
-    public:
+  public:
+    CPlexDirectory() : m_verb("GET"), m_cacheStrategy(CPlexDirectoryCache::CACHE_STRATEGY_ITEM_COUNT)
+    {
+    }
 
+    bool GetDirectory(const CURL& url, CFileItemList& items);
 
-      CPlexDirectory() {}
+    /* plexserver://shared */
+    bool GetSharedServerDirectory(CFileItemList& items);
 
-      bool GetDirectory(const CURL& url, CFileItemList& items);
+    /* plexserver://channels */
+    bool GetChannelDirectory(CFileItemList& items);
 
-      /* plexserver://shared */
-      bool GetSharedServerDirectory(CFileItemList& items);
+    /* plexserver://channeldirectory */
+    bool GetOnlineChannelDirectory(CFileItemList& items);
 
-      /* plexserver://channels */
-      bool GetChannelDirectory(CFileItemList& items);
+    virtual bool GetDirectory(const CStdString& strPath, CFileItemList& items)
+    {
+      return GetDirectory(CURL(strPath), items);
+    }
 
-      /* plexserver://channeldirectory */
-      bool GetOnlineChannelDirectory(CFileItemList &items);
+    virtual void CancelDirectory();
 
-      virtual bool GetDirectory(const CStdString& strPath, CFileItemList& items)
-      {
-        return GetDirectory(CURL(strPath), items);
-      }
+    static EPlexDirectoryType GetDirectoryType(const CStdString& typeStr);
+    static CStdString GetDirectoryTypeString(EPlexDirectoryType typeNr);
 
-      virtual void CancelDirectory();
+    static CStdString GetContentFromType(EPlexDirectoryType typeNr);
 
-      static EPlexDirectoryType GetDirectoryType(const CStdString& typeStr);
-      static CStdString GetDirectoryTypeString(EPlexDirectoryType typeNr);
+    void SetHTTPVerb(const CStdString& verb)
+    {
+      m_verb = verb;
+    }
 
-      static CStdString GetContentFromType(EPlexDirectoryType typeNr);
+    /* Legacy functions we need to revisit */
+    void SetBody(const CStdString& body)
+    {
+      m_body = body;
+    }
 
-      /* Legacy functions we need to revisit */
-      void SetBody(const CStdString& body) { m_body = body; }
-      static CFileItemListPtr GetFilterList() { return CFileItemListPtr(); }
-      CStdString GetData() const { return m_data; }
+    static CFileItemListPtr GetFilterList()
+    {
+      return CFileItemListPtr();
+    }
 
-      static void CopyAttributes(XML_ELEMENT* element, CFileItem* fileItem, const CURL &url);
-      static CFileItemPtr NewPlexElement(XML_ELEMENT *element, const CFileItem& parentItem, const CURL &url = CURL());
+    CStdString GetData() const
+    {
+      return m_data;
+    }
 
-      static bool IsFolder(const CFileItemPtr& item, XML_ELEMENT* element);
+    static void CopyAttributes(XML_ELEMENT* element, CFileItem* fileItem, const CURL& url);
+    static CFileItemPtr NewPlexElement(XML_ELEMENT* element, const CFileItem& parentItem,
+                                       const CURL& url = CURL());
 
-      long GetHTTPResponseCode() const { return m_file.GetLastHTTPResponseCode(); }
-    
-      virtual DIR_CACHE_TYPE GetCacheType(const CStdString& strPath) const;
+    static bool IsFolder(const CFileItemPtr& item, XML_ELEMENT* element);
 
-      virtual bool IsAllowed(const CStdString &strFile) const { return true; }
+    long GetHTTPResponseCode() const
+    {
+      return m_file.GetLastHTTPResponseCode();
+    }
 
-      static bool CachePath(const CStdString& path);
+    virtual DIR_CACHE_TYPE GetCacheType(const CStdString& strPath) const;
 
-    private:
-      bool ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContainer);
-      void ReadChildren(XML_ELEMENT* element, CFileItemList& container);
+    virtual bool IsAllowed(const CStdString& strFile) const
+    {
+      return true;
+    }
 
-      CStdString m_body;
-      CStdString m_data;
-      CStdString m_xmlData;
-      CURL m_url;
+    static bool CachePath(const CStdString& path);
 
-      CPlexFile m_file;
+    inline void SetCacheStrategy(CPlexDirectoryCache::CacheStrategies Strategy) { m_cacheStrategy = Strategy; }
 
+  private:
+    bool ReadMediaContainer(XML_ELEMENT* root, CFileItemList& mediaContainer);
+    void ReadChildren(XML_ELEMENT* element, CFileItemList& container);
+
+    CStdString m_body;
+    CStdString m_data;
+    CStdString m_xmlData;
+    CURL m_url;
+    CPlexDirectoryCache::CacheStrategies m_cacheStrategy;
+
+    CPlexFile m_file;
+
+    CStdString m_verb;
   };
 }
-
-
 
 #endif // PLEXDIRECTORY_H

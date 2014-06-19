@@ -1,5 +1,3 @@
-
-
 #include "Utility/PlexGlobalCacher.h"
 #include "FileSystem/PlexDirectory.h"
 #include "Client/PlexServerDataLoader.h"
@@ -22,7 +20,7 @@ using namespace XFILE;
 CPlexGlobalCacher* CPlexGlobalCacher::m_globalCacher = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-CPlexGlobalCacher::CPlexGlobalCacher() : CPlexThumbCacher() , CThread("Plex Global Cacher")
+CPlexGlobalCacher::CPlexGlobalCacher() : CThread("Plex Global Cacher")
 {
   m_continue = true;
 
@@ -31,14 +29,7 @@ CPlexGlobalCacher::CPlexGlobalCacher() : CPlexThumbCacher() , CThread("Plex Glob
   {
     m_dlgProgress->SetHeading(2);
   }
-
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-CPlexGlobalCacher::~CPlexGlobalCacher()
-{
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CPlexGlobalCacher* CPlexGlobalCacher::GetInstance()
@@ -48,6 +39,7 @@ CPlexGlobalCacher* CPlexGlobalCacher::GetInstance()
   return m_globalCacher;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void CPlexGlobalCacher::DeleteInstance()
 {
   if (m_globalCacher)
@@ -73,12 +65,12 @@ void controlGlobalCache()
 {
   CPlexGlobalCacher* cacher = CPlexGlobalCacher::GetInstance();
 
-  if ( ! cacher->IsRunning() )
+  if (!cacher->IsRunning())
   {
     cacher->Continue(true);
     cacher->Start();
   }
-  else if ( cacher ->IsRunning() )
+  else if (cacher ->IsRunning())
   {
     bool ok = CGUIDialogYesNo::ShowAndGetInput("Stop global caching?",
                                                "A reboot is recommended after stopping ",
@@ -86,7 +78,7 @@ void controlGlobalCache()
                                                "Stopping may not occur right away.",
                                                "No!", "Yes");
 
-    if ( ok )
+    if (ok)
     {
       CLog::Log(LOGNOTICE,"Global Cache : Cacher thread stopped by user");
       cacher -> Continue(false);
@@ -107,6 +99,20 @@ void CPlexGlobalCacher::Process()
   CStdString heading;
   int totalsize =0;
 
+  // list the arts we want to cache
+  CStdStringArray art;
+  art.push_back("smallThumb");
+  art.push_back("thumb");
+  art.push_back("bigthumb"); //*
+  art.push_back("smallPoster");
+  art.push_back("poster");
+  art.push_back("bigPoster");//*
+  art.push_back("smallGrandparentThumb");
+  art.push_back("grandparentThumb");
+  art.push_back("bigGrandparentThumb");
+  art.push_back("fanart");
+  art.push_back("banner");
+
   CGUIDialogSelect *dialog = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
   if (!dialog)
   {
@@ -124,7 +130,6 @@ void CPlexGlobalCacher::Process()
   pAllSections->Append(*pAllSharedSections);
 
   CLog::Log(LOGNOTICE,"Global Cache : found %d Regular Sections",pAllSections->Size());
-
 
   CFileItemList items;
   std::set<CStdString> servers;
@@ -156,7 +161,7 @@ void CPlexGlobalCacher::Process()
   dialog->DoModal();
   CFileItemList* selectedSections = new CFileItemList();
 
-  if ( dialog->IsButtonPressed())
+  if (dialog->IsButtonPressed())
   {
     // switch to the addons browser.
     const CFileItemList& selectedItems = dialog->GetSelectedItems();
@@ -261,16 +266,6 @@ void CPlexGlobalCacher::Process()
           message.Format(g_localizeStrings.Get(41007) + " : %2d%%",i*100 / list.Size());
           m_dlgProgress->SetLine(2,message);
 
-          // list the arts we want to cache
-          CStdStringArray art;
-          art.push_back("smallThumb");
-          art.push_back("smallPoster");
-          art.push_back("smallGrandparentThumb");
-          art.push_back("fanart");
-          art.push_back("banner");
-          art.push_back("thumb");
-          art.push_back("poster");
-
           BOOST_FOREACH(CStdString artKey, art)
           {
             if (item->HasArt(artKey) &&
@@ -288,11 +283,12 @@ void CPlexGlobalCacher::Process()
 
         m_dlgProgress->Progress();
       }
-
       CLog::Log(LOGNOTICE,"Global Cache : Processing section %s took %f",Section->GetLabel().c_str(), timer.GetElapsedSeconds());
     }
+
     CLog::Log(LOGNOTICE,"Global Cache : Full operation took %f",timer.GetElapsedSeconds());
   }
+
   if (!dialog->IsConfirmed())
     return ;
 }

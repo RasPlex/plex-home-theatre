@@ -1,0 +1,2 @@
+plex_add_testcase(PlexAttributeParser_Tests.cpp)
+plex_add_testcase(PlexDirectoryCache_Tests.cpp)

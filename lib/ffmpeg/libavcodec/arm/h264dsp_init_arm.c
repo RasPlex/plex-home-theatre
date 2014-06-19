@@ -23,8 +23,6 @@
 #include "libavcodec/dsputil.h"
 #include "libavcodec/h264dsp.h"
 
-int ff_h264_find_start_code_candidate_armv6(const uint8_t *buf, int size);
-
 void ff_h264_v_loop_filter_luma_neon(uint8_t *pix, int stride, int alpha,
                                      int beta, int8_t *tc0);
 void ff_h264_h_loop_filter_luma_neon(uint8_t *pix, int stride, int alpha,
@@ -101,7 +99,5 @@ static void ff_h264dsp_init_neon(H264DSPContext *c, const int bit_depth, const i
 
 void ff_h264dsp_init_arm(H264DSPContext *c, const int bit_depth, const int chroma_format_idc)
 {
-    if (HAVE_ARMV6)
-        c->h264_find_start_code_candidate = ff_h264_find_start_code_candidate_armv6;
     if (HAVE_NEON) ff_h264dsp_init_neon(c, bit_depth, chroma_format_idc);
 }

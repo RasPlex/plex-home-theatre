@@ -37,11 +37,6 @@
 #include "guilib/LocalizeStrings.h"
 #include "cores/AudioEngine/Utils/AEConvert.h"
 
-/* PLEX */
-#include "PlexApplication.h"
-/* END PLEX */
-
-
 using namespace std;
 
 #define OMX_MAX_CHANNELS 10

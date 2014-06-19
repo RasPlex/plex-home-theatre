@@ -257,8 +257,6 @@ const infomap system_labels[] =  {{ "hasnetwork",       SYSTEM_ETHERNET_LINK_ACT
                                   { "selectedplexmediaserver", SYSTEM_SELECTED_PLEX_MEDIA_SERVER },
                                   { "updateisavailable", SYSTEM_UPDATE_IS_AVAILABLE },
                                   { "noplexservers",    SYSTEM_NO_PLEX_SERVERS },
-                                  { "israsplex",        SYSTEM_ISRASPLEX },
-                                  { "isopenelec",       SYSTEM_ISOPENELEC },
                                   /* END PLEX */
                                   { "hasmediadvd",      SYSTEM_MEDIA_DVD },
                                   { "dvdready",         SYSTEM_DVDREADY },
@@ -946,6 +944,13 @@ int CGUIInfoManager::TranslateSingleString(const CStdString &strCondition)
           else if (param == "used.percent") return SYSTEM_USED_MEMORY_PERCENT;
           else if (param == "total") return SYSTEM_TOTAL_MEMORY;
         }
+        /* PLEX */
+        else if (prop.name == "issystem")
+        {
+          if (param == "rasplex") return SYSTEM_ISRASPLEX;
+          else if (param == "openelec") return SYSTEM_ISOPENELEC;
+        }
+        /* END PLEX */
         else if (prop.name == "addontitle")
         {
           int infoLabel = TranslateSingleString(param);
@@ -4378,7 +4383,6 @@ CStdString CGUIInfoManager::GetVersion()
   return PLEX_VERSION;
 #endif
 }
-
 
 CStdString CGUIInfoManager::GetBuild()
 {

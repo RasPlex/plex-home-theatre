@@ -40,6 +40,8 @@
 #include "Client/PlexExtraInfoLoader.h"
 #include "ViewDatabase.h"
 #include "ViewState.h"
+#include "PlayQueueManager.h"
+#include "Client/PlexServerVersion.h"
 
 #include "LocalizeStrings.h"
 #include "DirectoryCache.h"
@@ -422,12 +424,7 @@ bool CGUIPlexMediaWindow::OnAction(const CAction &action)
 {
   if (action.GetID() == ACTION_PLAYER_PLAY)
   {
-    CGUIControl *pControl = (CGUIControl*)GetControl(m_viewControl.GetCurrentControl());
-    if (pControl)
-    {
-      PlayFileFromContainer(pControl);
-      return true;
-    }
+    return OnPlayMedia(m_viewControl.GetSelectedItem());
   }
   else if (action.GetID() == ACTION_CLEAR_FILTERS ||
            action.GetID() == ACTION_PLEX_TOGGLE_UNWATCHED_FILTER ||
@@ -560,7 +557,9 @@ bool CGUIPlexMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItem
   
   bool ret = CGUIMediaWindow::GetDirectory(u.Get(), items);
 
+#ifndef TARGET_RASPBERRY_PI
   m_thumbCache.Load(items);
+#endif
 
   CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(u.GetHostName());
   if (server && server->GetActiveConnection() && server->GetActiveConnection()->IsLocal())
@@ -615,13 +614,6 @@ bool CGUIPlexMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItem
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void CGUIPlexMediaWindow::LoadPage(int start, int numberOfItems)
 {
-  // avoid Load page multiple calls with same parameters
-  static int m_LastStart = -1;
-  static int m_LastnumberOfItems = -1;
-  if ((start==m_LastStart)&&(numberOfItems==m_LastnumberOfItems)) return;
-  m_LastStart = start;
-  m_LastnumberOfItems = numberOfItems;
-
   if (start >= m_vecItems->GetProperty("totalSize").asInteger())
     return;
   if (m_currentJobId != -1)
@@ -734,8 +726,16 @@ bool CGUIPlexMediaWindow::OnPlayMedia(int iItem)
   if (!item)
     return false;
 
+  if (item->m_bIsFolder)
+  {
+    // we want to create a PlayQueue for this
+    CPlexServerPtr server = g_plexApplication.serverManager->FindFromItem(item);
+    g_plexApplication.playQueueManager->createPlayQueueFromItem(server, item);
+    return true;
+  }
+
   if (IsMusicContainer())
-    QueueItems(*m_vecItems, item);
+    PlayAll(false, item);
   else if (IsPhotoContainer())
     CApplicationMessenger::Get().PictureSlideShow(m_vecItems->GetPath(), false, item->GetPath());
   else
@@ -751,20 +751,26 @@ void CGUIPlexMediaWindow::GetContextButtons(int itemNumber, CContextButtons &but
   if (!item)
     return;
 
-  int currentPlaylist = ContainerPlaylistType();
+  if (PlexUtils::IsPlayingPlaylist())
+    buttons.Add(CONTEXT_BUTTON_NOW_PLAYING, 13350);
 
-  if (currentPlaylist != PLAYLIST_NONE)
+  if (!PlexUtils::IsPlayingPlaylist())
   {
-    if (g_playlistPlayer.GetPlaylist(currentPlaylist).size() > 0)
-    {
-      buttons.Add(CONTEXT_BUTTON_NOW_PLAYING, 13350);
-    }
+    buttons.Add(CONTEXT_BUTTON_SHUFFLE, 52600);
+    buttons.Add(CONTEXT_BUTTON_PLAY_PARTYMODE, 52601);
+
+    if (!item->m_bIsFolder && item->CanQueue())
+      buttons.Add(CONTEXT_BUTTON_PLAY_AND_QUEUE, 13412);
   }
-
-  if (item->CanQueue())
+  else
   {
-    buttons.Add(CONTEXT_BUTTON_SHUFFLE, 191);
-    buttons.Add(CONTEXT_BUTTON_QUEUE_ITEM, 13347);
+    if ((IsVideoContainer() && g_playlistPlayer.GetCurrentPlaylist() == PLAYLIST_VIDEO) ||
+        (IsMusicContainer() && g_playlistPlayer.GetCurrentPlaylist() == PLAYLIST_MUSIC))
+    {
+      // now enable queueing
+      buttons.Add(CONTEXT_BUTTON_QUEUE_ITEM, 13347);
+      buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS,52602);
+    }
   }
 
   if (IsVideoContainer() && item->IsPlexMediaServerLibrary())
@@ -803,19 +809,27 @@ bool CGUIPlexMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     {
       if (IsVideoContainer() && g_application.IsPlayingVideo())
         g_windowManager.ActivateWindow(WINDOW_FULLSCREEN_VIDEO);
-      else if (IsVideoContainer() && g_playlistPlayer.GetPlaylist(PLAYLIST_VIDEO).size() > 0)
-        CApplicationMessenger::Get().MediaPlay(PLAYLIST_VIDEO);
       else if (IsMusicContainer() && g_application.IsPlayingAudio())
         g_windowManager.ActivateWindow(WINDOW_NOW_PLAYING);
        break;
     }
     case CONTEXT_BUTTON_SHUFFLE:
-      ShuffleItem(item);
+    {
+      PlayAll(true);
       break;
+    }
 
-    case CONTEXT_BUTTON_QUEUE_ITEM:
-      QueueItem(item);
+    case CONTEXT_BUTTON_PLAY_PARTYMODE:
+    {
+      PlayAll(false);
       break;
+    }
+
+    case CONTEXT_BUTTON_PLAY_AND_QUEUE:
+    {
+      PlayAll(false, item);
+      break;
+    }
 
     case CONTEXT_BUTTON_MARK_WATCHED:
     case CONTEXT_BUTTON_MARK_UNWATCHED:
@@ -850,90 +864,84 @@ bool CGUIPlexMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void CGUIPlexMediaWindow::ShuffleItem(CFileItemPtr item)
+void CGUIPlexMediaWindow::PlayAllPlayQueue(const CPlexServerPtr& server, bool shuffle,
+                                           const CFileItemPtr& fromHere)
 {
-  int currentPlaylist = ContainerPlaylistType();
-  if (currentPlaylist == PLAYLIST_NONE)
-    return;
+  CStdString fromHereKey;
+  if (fromHere)
+    fromHereKey = fromHere->GetProperty("unprocessed_key").asString();
 
-  CApplicationMessenger &appMsg = CApplicationMessenger::Get();
 
-  appMsg.MediaStop();
-  appMsg.PlayListPlayerClear(currentPlaylist);
+  CURL uriPart("plexserver://plex");
+  CURL itemsUrl(m_vecItems->GetPath());
+  CPlexSectionFilterPtr filter = g_plexApplication.filterManager->getFilterForSection(m_sectionRoot.Get());
 
-  if (!item->m_bIsFolder)
-    appMsg.PlayListPlayerAdd(currentPlaylist, *m_vecItems);
-  else
+  if (m_startDirectory == itemsUrl.GetUrlWithoutOptions())
   {
-    XFILE::CPlexDirectory dir;
-    CFileItemList list;
-    dir.GetDirectory(item->GetPath(), list);
-    appMsg.PlayListPlayerAdd(currentPlaylist, list);
-  }
-
-  appMsg.PlayListPlayerShuffle(currentPlaylist, true);
-  appMsg.MediaPlay(currentPlaylist);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void CGUIPlexMediaWindow::QueueItem(CFileItemPtr item)
-{
-  int currentPlaylist = ContainerPlaylistType();
-  if (currentPlaylist == PLAYLIST_NONE)
-    return;
-
-  CApplicationMessenger &appMsg = CApplicationMessenger::Get();
-
-  if ((IsVideoContainer() && !g_application.IsPlayingVideo()) ||
-      (IsMusicContainer() && !g_application.IsPlayingAudio()))
-    appMsg.PlayListPlayerClear(currentPlaylist);
-
-  if(item->m_bIsFolder)
-  {
-    XFILE::CPlexDirectory dir;
-    CFileItemList list;
-    dir.GetDirectory(item->GetPath(), list);
-    appMsg.PlayListPlayerAdd(currentPlaylist, list);
+    uriPart.SetFileName(m_sectionRoot.GetFileName());
+    if (filter)
+      uriPart = filter->addFiltersToUrl(uriPart);
   }
   else
   {
-    appMsg.PlayListPlayerAdd(currentPlaylist, *item.get());
+    uriPart.SetFileName(itemsUrl.GetFileName());
+    if (filter && filter->getSecondaryFilterOfName("unwatchedLeaves") &&
+        filter->getSecondaryFilterOfName("unwatchedLeaves")->isSelected())
+      uriPart.SetOption("unwatched", "1");
   }
 
-  if ((IsVideoContainer() && !g_application.IsPlayingVideo()) ||
-      (IsMusicContainer() && !g_application.IsPlayingAudio()))
+  // take out the plexserver://plex part from above when passing it down
+  CStdString uri = CPlayQueueManager::getURIFromItem(*m_vecItems, uriPart.Get().substr(17, std::string::npos));
+
+  if (g_plexApplication.playQueueManager->createPlayQueue(server,
+                                                          PlexUtils::GetMediaTypeFromItem(*m_vecItems),
+                                                          uri, fromHereKey, shuffle))
   {
-    appMsg.MediaStop(true);
-    appMsg.MediaPlay(currentPlaylist);
+    // error
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void CGUIPlexMediaWindow::QueueItems(const CFileItemList &list, CFileItemPtr startItem)
+void CGUIPlexMediaWindow::PlayAllLocalPlaylist(bool shuffle, const CFileItemPtr& fromHere)
 {
-  int currentPlaylist = ContainerPlaylistType();
-  if (currentPlaylist == PLAYLIST_NONE)
-    return;
+  int playlist = IsMusicContainer() ? PLAYLIST_MUSIC : PLAYLIST_VIDEO;
 
-  CApplicationMessenger &appMsg = CApplicationMessenger::Get();
-  appMsg.PlayListPlayerClear(currentPlaylist);
-  appMsg.PlayListPlayerAdd(currentPlaylist, list);
-  appMsg.MediaStop(true);
-
-  bool found = false;
-  int idx = 0;
-  if (startItem)
+  int startOffset = 0;
+  if (fromHere)
   {
-    for (; idx < list.Size(); idx++)
+    for (int i = 0; i < m_vecItems->Size(); i++)
     {
-      if (list.Get(idx)->GetPath() == startItem->GetPath())
+      if (fromHere->GetProperty("unprocessed_key") ==
+          m_vecItems->Get(i)->GetProperty("unprocessed_key"))
       {
-        found = true;
+        startOffset = i;
         break;
       }
     }
   }
-  appMsg.MediaPlay(currentPlaylist, found ? idx : 0);
+
+  g_playlistPlayer.SetCurrentPlaylist(playlist);
+  g_playlistPlayer.ClearPlaylist(playlist);
+  g_playlistPlayer.Add(playlist, *m_vecItems);
+  g_playlistPlayer.SetShuffle(playlist, shuffle);
+  g_playlistPlayer.PlaySongId(startOffset);
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void CGUIPlexMediaWindow::PlayAll(bool shuffle, const CFileItemPtr& fromHere)
+{
+  CPlexServerPtr server;
+  if (m_vecItems->HasProperty("plexServer"))
+    server = g_plexApplication.serverManager->FindByUUID(m_vecItems->GetProperty("plexServer").asString());
+
+  if (server)
+  {
+
+    CPlexServerVersion version(server->GetVersion());
+    if (!server->IsSecondary() && (version.isValid && version > CPlexServerVersion("0.9.9.6.0")))
+      PlayAllPlayQueue(server, shuffle, fromHere);
+    else
+      PlayAllLocalPlaylist(shuffle, fromHere);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1120,8 +1128,6 @@ bool CGUIPlexMediaWindow::OnBack(int actionID)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CURL CGUIPlexMediaWindow::GetRealDirectoryUrl(const CStdString& url_)
 {
-  CFileItemList tmpItems;
-  XFILE::CPlexDirectory dir;
   CURL dirUrl(url_);
 
   if (!PlexUtils::CurrentSkinHasFilters())

@@ -50,7 +50,7 @@ public:
   bool SendMessage(CGUIMessage& message);
   bool SendMessage(int message, int senderID, int destID, int param1 = 0, int param2 = 0);
   bool SendMessage(CGUIMessage& message, int window);
-  /* PLEX */
+ /* PLEX */
   int  RemoveThreadMessageByMessageIds(int *pMessageIDList);
   /* END PLEX */
   void Initialize();

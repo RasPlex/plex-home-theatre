@@ -273,6 +273,9 @@ string PlexUtils::GetMachinePlatformVersion()
 ///////////////////////////////////////////////////////////////////////////////
 std::string PlexUtils::GetStreamChannelName(CFileItemPtr item)
 {
+  if (!item->HasProperty("channels"))
+    return "";
+
   int64_t channels = item->GetProperty("channels").asInteger();
 
   if (channels == 1)
@@ -286,6 +289,9 @@ std::string PlexUtils::GetStreamChannelName(CFileItemPtr item)
 ///////////////////////////////////////////////////////////////////////////////
 std::string PlexUtils::GetStreamCodecName(CFileItemPtr item)
 {
+  if (!item->HasProperty("codec"))
+    return "";
+
   std::string codec = item->GetProperty("codec").asString();
   if (codec == "dca")
     return "DTS";
@@ -447,24 +453,43 @@ CStdString PlexUtils::GetPrettyStreamNameFromStreamItem(CFileItemPtr stream)
   CStdString name;
 
   if (stream->HasProperty("language") && !stream->GetProperty("language").asString().empty())
-  {
     name = stream->GetProperty("language").asString();
-    if (stream->GetProperty("streamType").asInteger() == PLEX_STREAM_AUDIO)
+  else
+    name = g_localizeStrings.Get(1446).empty() ? "Unknown" : g_localizeStrings.Get(1446);
+
+  if (stream->GetProperty("streamType").asInteger() == PLEX_STREAM_AUDIO)
+  {
+    if (stream->HasProperty("codec") || stream->HasProperty("channels"))
     {
-      name += " (" + GetStreamCodecName(stream) + " " + GetStreamChannelName(stream) + ")";
+      name += " (";
+      if (stream->HasProperty("codec"))
+        name += GetStreamCodecName(stream);
+
+      if (stream->HasProperty("channels") && stream->HasProperty("codec"))
+        name += " ";
+
+      if (stream->HasProperty("channels"))
+        name += GetStreamChannelName(stream);
+
+      name += ")";
     }
-    else if (stream->HasProperty("format"))
+  }
+  else if (stream->GetProperty("streamType") == PLEX_STREAM_SUBTITLE)
+  {
+    if (!stream->GetProperty("format").empty() || stream->HasProperty("codec"))
     {
-      name += " (" + boost::to_upper_copy(stream->GetProperty("format").asString());
+      name += " (";
+      if (!stream->GetProperty("format").empty())
+        name += boost::to_upper_copy(stream->GetProperty("format").asString());
+      else if (stream->HasProperty("codec"))
+        name += boost::to_upper_copy(stream->GetProperty("codec").asString());
+
       if (stream->GetProperty("forced").asBoolean())
         name += " " + g_localizeStrings.Get(52503) + ")";
       else
         name += ")";
-
     }
   }
-  else
-    name = g_localizeStrings.Get(1446);
 
   return name;
 }
@@ -625,18 +650,22 @@ void PlexUtils::LogStackTrace(char *FuncName) {}
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ePlexMediaType PlexUtils::GetMediaTypeFromItem(CFileItemPtr item)
+ePlexMediaType PlexUtils::GetMediaTypeFromItem(const CFileItem& item)
 {
-  EPlexDirectoryType plexType = item->GetPlexDirectoryType();
+  EPlexDirectoryType plexType = item.GetPlexDirectoryType();
 
   switch(plexType)
   {
     case PLEX_DIR_TYPE_TRACK:
+    case PLEX_DIR_TYPE_ALBUM:
+    case PLEX_DIR_TYPE_ARTIST:
       return PLEX_MEDIA_TYPE_MUSIC;
     case PLEX_DIR_TYPE_VIDEO:
     case PLEX_DIR_TYPE_EPISODE:
     case PLEX_DIR_TYPE_CLIP:
     case PLEX_DIR_TYPE_MOVIE:
+    case PLEX_DIR_TYPE_SEASON:
+    case PLEX_DIR_TYPE_SHOW:
       return PLEX_MEDIA_TYPE_VIDEO;
     case PLEX_DIR_TYPE_IMAGE:
     case PLEX_DIR_TYPE_PHOTO:
@@ -645,6 +674,12 @@ ePlexMediaType PlexUtils::GetMediaTypeFromItem(CFileItemPtr item)
     default:
       return PLEX_MEDIA_TYPE_UNKNOWN;
   }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+ePlexMediaType PlexUtils::GetMediaTypeFromItem(CFileItemPtr item)
+{
+  return GetMediaTypeFromItem(*(item.get()));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -698,8 +733,7 @@ std::string PlexUtils::GetMediaStateString(ePlexMediaState state)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ePlexMediaState PlexUtils::GetMediaStateFromString(const std::string& statestr)
-{
-  if (statestr == "stopped")
+{ if (statestr == "stopped")
     return PLEX_MEDIA_STATE_STOPPED;
   else if (statestr == "buffering")
     return PLEX_MEDIA_STATE_BUFFERING;
@@ -723,4 +757,17 @@ unsigned long PlexUtils::GetFastHash(std::string Data)
     hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
   return hash;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+bool PlexUtils::IsPlayingPlaylist()
+{
+  if (!g_application.IsPlaying())
+    return false;
+
+  int playlist = g_playlistPlayer.GetCurrentPlaylist();
+  if (g_playlistPlayer.GetPlaylist(playlist).size() > 0 && g_playlistPlayer.GetCurrentSong() != -1)
+    return true;
+
+  return false;
 }

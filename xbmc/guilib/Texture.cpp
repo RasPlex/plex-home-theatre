@@ -220,11 +220,8 @@ CBaseTexture *CBaseTexture::LoadFromFileInMemory(unsigned char *buffer, size_t b
 
 bool CBaseTexture::LoadFromFileInternal(const CStdString& texturePath, unsigned int maxWidth, unsigned int maxHeight, bool autoRotate)
 {
-
 #if defined(HAS_OMXPLAYER)
-	// If we have OMX, just always try it first as it will decode efficiently most files
-	// Except .png on which it fails, so we just skip it to avoid loading
-  if (URIUtils::GetExtension(texturePath)!=".png")
+  if (URIUtils::GetExtension(texturePath).Equals(".jpg"))
   {
     #ifndef TARGET_RASPBERRY_PI
     COMXImage omx_image;
@@ -391,19 +388,7 @@ bool CBaseTexture::LoadFromFileInternal(const CStdString& texturePath, unsigned 
   unsigned int width = maxWidth ? std::min(maxWidth, g_Windowing.GetMaxTextureSize()) : g_Windowing.GetMaxTextureSize();
   unsigned int height = maxHeight ? std::min(maxHeight, g_Windowing.GetMaxTextureSize()) : g_Windowing.GetMaxTextureSize();
 
-  /* PLEX */
-  // Make sure to check for the TBN version as well.
-  CStdString tbnVersion = texturePath.substr(0, texturePath.size()-4) + ".tbn";
-  CStdString finalPath = texturePath;
-  if (XFILE::CFile::Exists(texturePath) == false && XFILE::CFile::Exists(tbnVersion))
-    finalPath = tbnVersion;
-  /* END PLEX */
-
-#ifndef __PLEX__
   if(!dll.LoadImage(texturePath.c_str(), width, height, &image))
-#else
-  if(!dll.LoadImage(finalPath.c_str(), width, height, &image))
-#endif
   {
     CLog::Log(LOGERROR, "Texture manager unable to load file: %s", texturePath.c_str());
     return false;

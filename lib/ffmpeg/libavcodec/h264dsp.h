@@ -74,15 +74,6 @@ typedef struct H264DSPContext{
     void (*h264_idct_add16intra)(uint8_t *dst/*align 16*/, const int *blockoffset, DCTELEM *block/*align 16*/, int stride, const uint8_t nnzc[15*8]);
     void (*h264_luma_dc_dequant_idct)(DCTELEM *output, DCTELEM *input/*align 16*/, int qmul);
     void (*h264_chroma_dc_dequant_idct)(DCTELEM *block, int qmul);
-
-    /**
-     * Search buf from the start for up to size bytes. Return the index
-     * of a zero byte, or >= size if not found. Ideally, use lookahead
-     * to filter out any zero bytes that are known to not be followed by
-     * one or more further zero bytes and a one byte. Better still, filter
-     * out any bytes that form the trailing_zero_8bits syntax element too.
-     */
-    int (*h264_find_start_code_candidate)(const uint8_t *buf, int size);
 }H264DSPContext;
 
 void ff_h264dsp_init(H264DSPContext *c, const int bit_depth, const int chroma_format_idc);

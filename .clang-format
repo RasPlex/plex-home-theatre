@@ -9,11 +9,11 @@ AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakTemplateDeclarations: false
 AlwaysBreakBeforeMultilineStrings: false
-BreakBeforeBinaryOperators: true
-BreakBeforeTernaryOperators: true
+BreakBeforeBinaryOperators: false
+BreakBeforeTernaryOperators: false
 BreakConstructorInitializersBeforeComma: false
-BinPackParameters: false
-ColumnLimit:     120
+BinPackParameters: true
+ColumnLimit:     100
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 DerivePointerBinding: false
 ExperimentalAutoDetectBinPacking: false
@@ -42,6 +42,6 @@ SpaceInEmptyParentheses: false
 SpacesInCStyleCastParentheses: false
 SpaceAfterControlStatementKeyword: true
 SpaceBeforeAssignmentOperators: true
-ContinuationIndentWidth: 4
+ContinuationIndentWidth: 0
 ...
 

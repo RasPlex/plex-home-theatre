@@ -7,22 +7,21 @@
 #include "threads/Event.h"
 #include "dialogs/GUIDialogProgress.h"
 
-class CPlexGlobalCacher : public CPlexThumbCacher, public CThread
+class CPlexGlobalCacher : public CThread
 {
 public :
-    static CPlexGlobalCacher* GetInstance();
-    static void DeleteInstance();
-	~CPlexGlobalCacher();
-	void Start();
-	void Process();
-	void OnExit();
-	void Continue(bool cont);
+  static CPlexGlobalCacher* GetInstance();
+  static void DeleteInstance();
+  void Start();
+  void Process();
+  void OnExit();
+  void Continue(bool cont);
 
 private:
-	CPlexGlobalCacher();
-    static CPlexGlobalCacher* m_globalCacher;
-    bool m_continue;
-    CGUIDialogProgress *m_dlgProgress;
+  CPlexGlobalCacher();
+  static CPlexGlobalCacher* m_globalCacher;
+  bool m_continue;
+  CGUIDialogProgress *m_dlgProgress;
 
 };
 

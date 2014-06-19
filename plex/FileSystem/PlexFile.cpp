@@ -130,9 +130,20 @@ int
 CPlexFile::Stat(const CURL &url, struct __stat64 *buffer)
 {
   CURL newUrl(url);
+
+  // ImageLib makes stupid Stat() calls just to figure out
+  // if this is a directory or not. Let's just shortcut that
+  // and tell it everything it requests from photo/:/transcode
+  // is a file
+  if (newUrl.GetFileName() == "photo/:/transcode")
+  {
+    buffer->st_mode = _S_IFREG;
+    return 0;
+  }
+
   if (BuildHTTPURL(newUrl))
     return CCurlFile::Stat(newUrl, buffer);
-  return false;
+  return -1;
 }
 
 bool
@@ -162,4 +173,13 @@ CStdString CPlexFile::GetMimeType(const CURL& url)
 
   CStdString extension = URIUtils::GetExtension(path);
   return CMime::GetMimeType(extension);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+int CPlexFile::IoControl(EIoControl request, void* param)
+{
+  if ( (request == IOCTRL_SEEK_POSSIBLE) && (boost::starts_with(m_url, ":/transcode")) )
+    return 1;
+  else
+    return CCurlFile::IoControl(request, param);
 }
