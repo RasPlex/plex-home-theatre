@@ -85,7 +85,7 @@
 				<width>350</width>
 				<onleft>997</onleft>
 				<onright>301</onright>
-				<onup>-</onup>
+				<onup>3</onup>
 				<ondown>3</ondown>
 				<itemgap>0</itemgap>
 				<orientation>vertical</orientation>
