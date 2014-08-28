@@ -310,9 +310,9 @@ bool CAESinkALSA::InitializeHW(AEAudioFormat &format)
       int bits    = snd_pcm_hw_params_get_sbits(hw_params);
       if (bits != fmtBits)
       {
-        /* if we opened in 32bit and only have 24bits, pack into 24 */
+        /* if we opened in 32bit and only have 24bits, signal it accordingly */
         if (fmtBits == 32 && bits == 24)
-          i = AE_FMT_S24NE4;
+          i = AE_FMT_S24NE4MSB;
         else
           continue;
       }
