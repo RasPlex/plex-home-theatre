@@ -35,9 +35,9 @@ CStdString CPlexTextureCache::GetCachedImage(const CStdString &image, CTextureDe
 CStdString CPlexTextureCache::CheckCachedImage(const CStdString &url, bool returnDDS, bool &needsRecaching)
 {
   CTextureDetails details;
-  CStdString cachedImage = GetCachedImage(url,details);
+  CStdString cachedImage = GetCachedImage(url, details);
 
-  needsRecaching = (cachedImage == "");
+  needsRecaching = (!cachedImage.IsEmpty());
   return cachedImage;
 }
 
@@ -45,7 +45,7 @@ CStdString CPlexTextureCache::CheckCachedImage(const CStdString &url, bool retur
 void CPlexTextureCache::BackgroundCacheImage(const CStdString &url)
 {
   CTextureDetails details;
-  if (GetCachedTexture(url,details))
+  if (GetCachedTexture(url, details))
     return; // image is already cached and doesn't need to be checked further
 
   // needs (re)caching

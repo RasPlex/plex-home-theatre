@@ -7,6 +7,7 @@
 #include "Client/PlexServerManager.h"
 #include "PlexApplication.h"
 #include "ApplicationMessenger.h"
+#include "GUISettings.h"
 
 using namespace PLAYLIST;
 
@@ -87,6 +88,17 @@ bool CPlexPlayQueueServer::create(const CFileItem& container, const CStdString& 
 
   if (u.Get().empty())
     return false;
+
+  // add any creation URL option
+  u.AddOptions(options.urlOptions);
+
+  // add trailers option count to creation url if required
+  if (container.GetPlexDirectoryType() == PLEX_DIR_TYPE_MOVIE)
+  {
+    int trailerCount = g_guiSettings.GetInt("videoplayer.playtrailercount");
+    if ((trailerCount) && (container.GetProperty("viewOffset").asInteger() == 0))
+      u.SetOption("extrasPrefixCount", boost::lexical_cast<std::string>(trailerCount));
+  }
 
   return sendRequest(u, "POST", options);
 }
@@ -182,8 +194,7 @@ void CPlexPlayQueueServer::OnJobComplete(unsigned int jobID, bool success, CJob*
 
     if (playlist == PLAYLIST_NONE)
     {
-      CGUIDialogOK::ShowAndGetInput("Error creating the Play Queue",
-                                    "The reponse from the server did not make sense.", "", "");
+      CLog::Log(LOGERROR, "CPlexPlayQueueServer::OnJobComplete : The response from the server did not make sense (PlayList Type is Unknown)");
       return;
     }
 
@@ -194,8 +205,8 @@ void CPlexPlayQueueServer::OnJobComplete(unsigned int jobID, bool success, CJob*
       return;
     }
 
-    CLog::Log(LOGDEBUG, "CPlexPlayQueueServer::OnJobComplete got playQueue of size %d and type %d",
-              fj->m_items.Size(), playlist);
+    CLog::Log(LOGDEBUG, "CPlexPlayQueueServer::OnJobComplete got playQueue (%lld) of size %d and type %d",
+              fj->m_items.GetProperty("playQueueID").asInteger(), fj->m_items.Size(), type);
 
     CFileItemListPtr pqCopy = CFileItemListPtr(new CFileItemList);
     pqCopy->Assign(fj->m_items);

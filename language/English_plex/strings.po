@@ -885,6 +885,41 @@ msgctxt "#44406"
 msgid "Use FFMPEG AVIO for Network transport"
 msgstr "Use FFMPEG AVIO for Network transport"
 
+msgctxt "#44407"
+msgid "Number of cinema trailers before movies"
+msgstr "Number of cinema trailers before movies"
+
+msgctxt "#44408"
+msgid "Extras"
+msgstr "Extras"
+
+#### Extra / trailers related strings
+
+### Extra Types
+msgctxt "#44501"
+msgid "Trailer"
+msgstr "Trailer"
+
+msgctxt "#44502"
+msgid "Deleted Scene"
+msgstr "Deleted Scene"
+
+msgctxt "#44503"
+msgid "Interview"
+msgstr "Interview"
+
+msgctxt "#44504"
+msgid "Music Video"
+msgstr "Music Video"
+
+msgctxt "#44505"
+msgid "Behind the Scenes"
+msgstr "Behind the Scenes"
+
+msgctxt "#44506"
+msgid "Scene"
+msgstr "Scene"
+
 #### These are error strings shown from channels
 #### errorcode + 50000
 msgctxt "#52000"
@@ -1031,3 +1066,7 @@ msgstr "This will clear the contents of Up Next"
 msgctxt "#52606"
 msgid "and play the selection instead"
 msgstr "and play the selection instead"
+
+msgctxt "#52607"
+msgid "Queue"
+msgstr "Queue"

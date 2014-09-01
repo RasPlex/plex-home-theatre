@@ -4,6 +4,8 @@
 #include "JobManager.h"
 #include "threads/Event.h"
 #include "PlexNavigationHelper.h"
+#include "FileSystem/PlexExtraDataLoader.h"
+#include "GUIPlexWindowFocusSaver.h"
 
 class CGUIWindowPlexPreplayVideo : public CGUIPlexMediaWindow
 {
@@ -17,6 +19,7 @@ public:
 
   void Recommend();
   void Share();
+  CFileItemPtr getSelectedExtraItem();
 
   void OnJobComplete(unsigned int jobID, bool success, CJob *job);
   bool Update(const CStdString &strDirectory, bool updateFilterPath);
@@ -30,6 +33,8 @@ public:
 
   CCriticalSection m_navigationLock;
   bool m_navigating;
+  CPlexExtraDataLoader m_extraDataLoader;
 
   CPlexNavigationHelper m_navHelper;
+  CGUIPlexWindowFocusSaver m_focusSaver;
 };

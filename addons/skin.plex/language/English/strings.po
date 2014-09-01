@@ -1170,3 +1170,7 @@ msgstr ""
 msgctxt "#41007"
 msgid "Progress"
 msgstr ""
+
+msgctxt "#41008"
+msgid "Extras"
+msgstr ""

@@ -75,6 +75,10 @@
 		</control>
 	</include>
 	<!-- animations open/close -->
+	<include name="extrasSlide">
+		<animation effect="slide" start="0" end="297" time="500" condition="Window.IsActive(10209)">Conditional</animation>
+		<animation effect="fade" start="100" end="50" time="300" condition="Window.IsActive(10209)">Conditional</animation>
+	</include>
 	<include name="DialogFadeInOut">
 		<animation effect="fade" time="300">WindowOpen</animation>
 		<animation effect="fade" time="100">WindowClose</animation>
@@ -324,6 +328,66 @@
 						<width>20</width>
 						<height>220</height>
 						<showonepage>true</showonepage>
+					</control>
+				</control>
+			</control>
+		</control>
+	</include>
+	<!-- DialogPlexExtras.xml -->
+	<include name="DialogPlexExtras">
+		<control type="group">
+			<posx>-223</posx>
+			<animation effect="slide" start="0" end="297" time="500">WindowOpen</animation>
+			<animation effect="slide" start="297" end="0" time="500">WindowClose</animation>
+			<control type="group">
+				<posx>0</posx>
+				<posy>20</posy>
+				<control type="label">
+					<posx>36</posx>
+					<posy>40</posy>
+					<label>$LOCALIZE[41008] ($INFO[Container(3).NumItems])</label>
+					<font>Bold-36</font>
+					<include>WhiteShadow</include>
+				</control>
+				<control type="group">
+					<posy>85</posy>
+					<posx>26</posx>
+					<control type="list" id="3">
+						<width>260</width>
+						<height>600</height>
+						<onleft>Dialog.Close(10209)</onleft>
+						<onright>Dialog.Close(10209)</onright>
+						<onup>3</onup>
+						<ondown>3</ondown>
+						<pagecontrol>61</pagecontrol>
+						<scrolltime>200</scrolltime>
+						<itemlayout height="200">
+							<include>ExtraThumbCard</include>
+							<include>ExtraThumb</include>
+							<control type="label">
+								<include>ExtraTitle</include>
+							</control>
+							<include>ExtraSecondTitle</include>
+						</itemlayout>
+						<focusedlayout height="200">
+							<include>ExtraThumbCard</include>
+							<include>ExtraThumb</include>
+							<!--><include>ExtraIconPlay</include>-->
+							<control type="label">
+								<include>ExtraTitle</include>
+								<textcolor>orangeLight</textcolor>
+							</control>
+							<include>ExtraSecondTitle</include>
+							<include>ExtraThumbSelectedBorder</include>
+						</focusedlayout>
+					</control>
+					<control type="scrollbar" id="61">
+						<description>Scroll Bar</description>
+						<posy>3</posy>
+						<posx>250</posx>
+						<width>20</width>
+						<height>584</height>
+						<animation effect="fade" start="0" end="100" time="500" condition="true" delay="500">WindowOpen</animation>
 					</control>
 				</control>
 			</control>

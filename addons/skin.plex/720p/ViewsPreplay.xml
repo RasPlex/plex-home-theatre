@@ -149,6 +149,87 @@
 			<animation effect="fade" start="0" end="40" time="0" condition="true">Conditional</animation>
 		</control>
 	</include>
+	<!-- extras -->
+	<include name="ExtraThumb">
+		<control type="image">
+			<posx>13</posx>
+			<posy>13</posy>
+			<width>220</width>
+			<height>124</height>
+			<texture background="true">default-thumb-small.png</texture>
+		</control>
+		<control type="image">
+			<posx>13</posx>
+			<posy>13</posy>
+			<width>220</width>
+			<height>124</height>
+			<texture background="true" diffuse="mask-wide-big.png">$INFO[ListItem.Art(thumb)]</texture>
+			<aspectratio scalediffuse="false" align="center" aligny="top">scale</aspectratio>
+		</control>
+	</include>
+	<include name="ExtraThumbCard">
+		<control type="image">
+			<posx>13</posx>
+			<posy>97</posy>
+			<width>220</width>
+			<height>100</height>
+			<include>Card</include>
+			<animation effect="fade" start="0" end="40" time="400" condition="true">Conditional</animation>
+		</control>
+	</include>
+	<include name="ExtraIconPlay">
+		<control type="image">
+			<posx>92</posx>
+			<posy>44</posy>
+			<width>64</width>
+			<height>64</height>
+			<texture>b-play-extra-s.png</texture>
+			<animation effect="fade" start="0" end="100" time="400" condition="true">Conditional</animation>
+		</control>
+	</include>
+	<include name="ExtraThumbSelectedBorder">
+		<control type="image">
+			<width>226</width>
+			<height>190</height>
+			<include>Border</include>
+		</control>
+	</include>
+	<include name="ExtraTypeTitle">
+		<posy>109</posy>
+		<posx>24</posx>
+		<width>190</width>
+		<height>20</height>
+		<align>left</align>
+		<aligny>center</aligny>
+		<label>$INFO[ListItem.Property(extraTypeStr)]</label>
+		<font>Bold-22</font>
+		<shadowcolor>FF222222</shadowcolor>
+	</include>
+	<include name="ExtraTitle">
+		<posy>146</posy>
+		<posx>24</posx>
+		<width>190</width>
+		<height>20</height>
+		<align>left</align>
+		<aligny>center</aligny>
+		<label>$INFO[ListItem.Label]</label>
+		<font>Regular-14</font>
+		<shadowcolor>FF222222</shadowcolor>
+	</include>
+	<include name="ExtraSecondTitle">
+		<control type="label">
+			<posy>170</posy>
+			<posx>24</posx>
+			<width>190</width>
+			<height>20</height>
+			<align>left</align>
+			<aligny>center</aligny>
+			<font>Regular-14</font>
+			<textcolor>FF999999</textcolor>
+			<label>$INFO[ListItem.DurationStr]</label>
+			<shadowcolor>FF222222</shadowcolor>
+		</control>
+	</include>
 	<!-- all episodes are from the same season -->
 	<include name="EpisodeThumbOverlayTitle">
 		<posy>88</posy>
@@ -945,21 +1026,129 @@
 	</include>
 	<!-- Pre-play Movie -->
 	<include name="PreplayMovie">
+		<!-- extras bg's -->
+		<control type="group">
+			<posy>O</posy>
+			<posx>-223</posx>
+			<animation effect="slide" start="0" end="148.5" time="500" condition="Window.IsActive(10209)">Conditional</animation>
+			<animation effect="slide" start="148.5" end="0" time="500" condition="!Window.IsActive(10209)">Conditional</animation>
+			<control type="image">
+				<posy>0</posy>
+				<width>297</width>
+				<height>720</height>
+				<texture border="10">black.png</texture>
+				<animation effect="fade" start="0" end="50" time="0" condition="true">Conditional</animation>
+			</control>
+			<!--><control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>296</width>
+					<height>90</height>
+					<texture background="true">black.png</texture>
+					<animation effect="fade" start="0" end="50" time="0" condition="true">Conditional</animation>
+				</control>-->
+			<!-- title bg -->
+			<!--><control type="image">
+				<width>297</width>
+				<height>80</height>
+				<texture border="10">black.png</texture>
+			</control>
+			<control type="image">
+				<posy>30</posy>
+				<width>297</width>
+				<height>50</height>
+				<texture>border-bottom-grey.png</texture>
+			</control>-->
+		</control>
+		<!-- extras -->
+		<include>leftMenuBg</include>
+		<control type="group">
+			<animation effect="slide" start="0" end="297" time="500" condition="Control.HasFocus(3)">Conditional</animation>
+			<posx>-224</posx>
+			<control type="group">
+				<posx>0</posx>
+				<posy>20</posy>
+				<control type="label">
+					<posx>36</posx>
+					<posy>40</posy>
+					<label>$LOCALIZE[41008] ($INFO[Container(3).NumItems])</label>
+					<font>Bold-36</font>
+					<include>WhiteShadow</include>
+				</control>
+				<control type="group">
+					<posy>68</posy>
+					<posx>26</posx>
+					<control type="list" id="3">
+						<width>260</width>
+						<height>600</height>
+						<onleft>998</onleft>
+						<onright>998</onright>
+						<onup>3</onup>
+						<ondown>3</ondown>
+						<pagecontrol>61</pagecontrol>
+						<scrolltime>200</scrolltime>
+						<itemlayout height="200">
+							<include>ExtraThumb</include>
+							<include>ExtraThumbCard</include>
+							<control type="label">
+								<include>ExtraTypeTitle</include>
+							</control>
+							<control type="label">
+								<include>ExtraTitle</include>
+							</control>
+							<include>ExtraSecondTitle</include>
+						</itemlayout>
+						<focusedlayout height="200">
+							<include>ExtraThumb</include>
+							<include>ExtraThumbCard</include>
+							<!--><include>ExtraIconPlay</include>-->
+							<control type="label">
+								<include>ExtraTypeTitle</include>
+								<textcolor>orangeLight</textcolor>
+							</control>
+							<control type="label">
+								<include>ExtraTitle</include>
+								<textcolor>orangeLight</textcolor>
+							</control>
+							<include>ExtraSecondTitle</include>
+							<include>ExtraThumbSelectedBorder</include>
+						</focusedlayout>
+					</control>
+					<control type="scrollbar" id="61">
+						<description>Scroll Bar</description>
+						<posy>3</posy>
+						<posx>250</posx>
+						<width>20</width>
+						<height>584</height>
+						<animation effect="fade" start="0" end="100" time="500" condition="true" delay="500">WindowOpen</animation>
+					</control>
+				</control>
+			</control>
+		</control>
+		<!-- /extras -->
 		<control type="group">
 			<posy>-28</posy>
 			<visible>Container.PlexContent(Movie) | [Container.PlexContent(Channel) + ListItem.Type(movie)]</visible>
 			<include>FadeDialog</include>
-			<include>rightSideSlide</include>
+			<animation effect="slide" start="0" end="297" time="500" condition="Control.HasFocus(3)">Conditional</animation>
 			<!-- backgrounds -->
 			<control type="group">
 				<control type="largeimage">
 					<posy>28</posy>
-					<posx>0</posx>
-					<width>1280</width>
+					<posx>74</posx>
+					<width>1206</width>
 					<height>720</height>
-					<texture>preplay-movie-episode-bg.png</texture>
+					<texture>preplay-movie-episode-bg2.png</texture>
 					<aspectratio>scale</aspectratio>
 				</control>
+				<!--><control type="largeimage">
+					<posy>384</posy>
+					<posx>74</posx>
+					<width>1280</width>
+					<height>262</height>
+					<texture>black.png</texture>
+					<animation effect="fade" start="0" end="50" time="0" condition="true">Conditional</animation>
+				</control>-->
 			</control>
 			<!-- poster -->
 			<include>MoviePosterBig</include>

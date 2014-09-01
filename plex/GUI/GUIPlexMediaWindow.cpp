@@ -68,6 +68,13 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
     CGUIDialog *dialog = (CGUIDialog*) g_windowManager.GetWindow(WINDOW_DIALOG_FILTER_SORT);
     if (dialog && dialog->IsActive())
       dialog->Close();
+
+    // Store the current selected item
+    if (m_vecItems)
+    {
+      CURL u(m_vecItems->GetPath());
+      m_lastSelectedIndex[u.GetUrlWithoutOptions()] = m_viewControl.GetSelectedItem();
+    }
   }
   else if (message.GetMessage() == GUI_MSG_WINDOW_DEINIT)
     m_sectionFilter.reset();
@@ -78,7 +85,7 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
   {
     case GUI_MSG_UPDATE:
     {
-      Update(m_sectionRoot.Get(), false, false);
+      Update(m_vecItems->GetPath(), false, false);
       break;
     }
     case GUI_MSG_LOAD_SKIN:
@@ -98,6 +105,13 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
       m_returningFromSkinLoad = false;
       g_plexApplication.timelineManager->RefreshSubscribers();
       m_fetchedPages.clear();
+
+      // Restore selected item for the section
+      int idx = 0;
+      CURL u(m_vecItems->GetPath());
+      if (m_lastSelectedIndex.find(u.GetUrlWithoutOptions()) != m_lastSelectedIndex.end())
+        idx = m_lastSelectedIndex[u.GetUrlWithoutOptions()];
+      m_viewControl.SetSelectedItem(idx);
       break;
     }
 
@@ -149,6 +163,7 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
     case GUI_MSG_PLEX_PAGE_LOADED:
     {
       InsertPage((CFileItemList*)message.GetPointer(), message.GetParam2());
+      break;
     }
 
     case GUI_MSG_CHANGE_VIEW_MODE:
@@ -749,6 +764,7 @@ bool CGUIPlexMediaWindow::OnPlayMedia(int iItem)
   else
   {
     std::string uri = GetFilteredURI(*item);
+
     g_plexApplication.playQueueManager->create(*item, uri);
   }
 
@@ -765,11 +781,22 @@ void CGUIPlexMediaWindow::GetContextButtons(int itemNumber, CContextButtons &but
   if (g_application.IsPlaying())
     buttons.Add(CONTEXT_BUTTON_NOW_PLAYING, 13350);
 
-  buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52602);
+  buttons.Add(CONTEXT_BUTTON_PLAY_ITEM, 208);
+
+  CFileItemList pqlist;
+  g_plexApplication.playQueueManager->getCurrentPlayQueue(pqlist);
+
+  if (pqlist.Size())
+    buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52602);
+  else
+    buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52607);
 
   ePlexMediaType itemType = PlexUtils::GetMediaTypeFromItem(*m_vecItems);
   if (g_plexApplication.playQueueManager->getCurrentPlayQueueType() == itemType)
     buttons.Add(CONTEXT_BUTTON_QUEUE_ITEM, 52603);
+
+  if (m_vecItems->Size())
+    buttons.Add(CONTEXT_BUTTON_SHUFFLE, 52600);
 
   if (IsVideoContainer() && item->IsPlexMediaServerLibrary())
   {
@@ -823,6 +850,12 @@ bool CGUIPlexMediaWindow::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     case CONTEXT_BUTTON_PLAY_AND_QUEUE:
     {
       PlayAll(false, item);
+      break;
+    }
+
+    case CONTEXT_BUTTON_PLAY_ITEM:
+    {
+      OnAction(ACTION_PLAYER_PLAY);
       break;
     }
 
@@ -1006,15 +1039,6 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
 
   UpdateSectionTitle();
 
-  /* try to restore selection a bit better */
-  int idx = 0;
-  CURL u(m_vecItems->GetPath());
-  if (m_lastSelectedIndex.find(u.GetUrlWithoutOptions()) != m_lastSelectedIndex.end())
-    idx = m_lastSelectedIndex[u.GetUrlWithoutOptions()];
-
-  if (m_viewControl.GetSelectedItem() == 0 && idx != 0)
-    m_viewControl.SetSelectedItem(idx);
-
   return ret;
 }
 
@@ -1044,12 +1068,14 @@ void CGUIPlexMediaWindow::CheckPlexFilters(CFileItemList &list)
   CURL newPath(list.GetPath());
   if (m_startDirectory != newPath.GetUrlWithoutOptions())
   {
-    EPlexDirectoryType type = list.GetPlexDirectoryType();
-    if (type == PLEX_DIR_TYPE_SEASON ||
-        type == PLEX_DIR_TYPE_EPISODE ||
-        type == PLEX_DIR_TYPE_ALBUM ||
-        type == PLEX_DIR_TYPE_TRACK ||
-        type == PLEX_DIR_TYPE_VIDEO)
+    if (list.Size())
+      m_directoryType = list.GetPlexDirectoryType();
+
+    if (m_directoryType == PLEX_DIR_TYPE_SEASON ||
+        m_directoryType == PLEX_DIR_TYPE_EPISODE ||
+        m_directoryType == PLEX_DIR_TYPE_ALBUM ||
+        m_directoryType == PLEX_DIR_TYPE_TRACK ||
+        m_directoryType == PLEX_DIR_TYPE_VIDEO)
     {
       CLog::Log(LOGDEBUG, "CGUIPlexMediaWindow::CheckPlexFilters setting preplay flag");
       list.SetProperty("PlexPreplay", "yes");

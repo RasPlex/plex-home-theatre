@@ -21,8 +21,13 @@
 #include "guilib/GUIWindowManager.h"
 #include "LocalizeStrings.h"
 #include "PlexPlayQueueManager.h"
+#include "GUISettings.h"
 
 #include "DirectoryCache.h"
+#include "Application.h"
+#include "GUIUserMessages.h"
+
+#define EXTRAS_LIST_CONTROL_ID   3  // preplay window Extras list control ID
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CGUIWindowPlexPreplayVideo::CGUIWindowPlexPreplayVideo(void)
@@ -67,6 +72,36 @@ bool CGUIWindowPlexPreplayVideo::OnMessage(CGUIMessage &message)
     else if (message.GetSenderId() == 107)
       Share();
   }
+  else if (message.GetMessage() == GUI_MSG_PLEX_EXTRA_DATA_LOADED)
+  {
+    CFileItemList extralist;
+    extralist.Copy(*(m_extraDataLoader.getItems()));
+    CLog::Log(LOGDEBUG,"CGUIWindowPlexPreplayVideo::OnMessage GUI_MSG_PLEX_EXTRA_DATA_LOADED (%d)", extralist.Size());
+
+    if (extralist.Size())
+    {
+      m_vecItems->Get(0)->SetProperty("PlexExtras", "1");
+
+      if (extralist.Size() > 1)
+        m_vecItems->SetProperty("PlexExtras", "extras");
+      else
+        m_vecItems->SetProperty("PlexExtras", "extra");
+    }
+    else
+    {
+      m_vecItems->Get(0)->SetProperty("PlexExtras", "");
+      m_vecItems->SetProperty("PlexExtras", "");
+    }
+
+    // feed the preplay list with the items
+    CGUIMessage msg(GUI_MSG_LABEL_BIND, 0, EXTRAS_LIST_CONTROL_ID, 0, 0, &extralist);
+    OnMessage(msg);
+    m_focusSaver.RestoreFocus(true);
+  }
+  else if (message.GetMessage() == GUI_MSG_PLAYBACK_STARTED)
+  {
+    m_focusSaver.SaveFocus(this);
+  }
 
   return ret;
 }
@@ -109,7 +144,24 @@ bool CGUIWindowPlexPreplayVideo::OnAction(const CAction &action)
   {
     MoveToItem(-1);
   }
-  
+  else if (action.GetID() == ACTION_SELECT_ITEM)
+  {
+    // if we pick an extra, play it !
+    CFileItemPtr extraItem = getSelectedExtraItem();
+    if (extraItem)
+    {
+      g_application.PlayFile(*extraItem, true);
+      return true;
+    }
+  }
+  else if (action.GetID() == ACTION_BUILT_IN_FUNCTION)
+  {
+    // we dont want to handle builtins functions as they should
+    // be handled by application. This will typically avoid returning to homescreen
+    // when extras list is openned.
+    return false;
+  }
+
   return CGUIMediaWindow::OnAction(action);
 }
 
@@ -270,6 +322,8 @@ void CGUIWindowPlexPreplayVideo::UpdateItem()
   {
     g_plexApplication.m_preplayItem = m_vecItems->Get(0);
     g_plexApplication.themeMusicPlayer->playForItem(*m_vecItems->Get(0));
+
+    m_extraDataLoader.loadDataForItem(m_vecItems->Get(0));
   }
 }
 
@@ -292,5 +346,22 @@ CFileItemPtr CGUIWindowPlexPreplayVideo::GetCurrentListItem(int offset)
   if (offset == 0 && m_vecItems->Size() > 0)
     return m_vecItems->Get(0);
   
+  return CFileItemPtr();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+CFileItemPtr CGUIWindowPlexPreplayVideo::getSelectedExtraItem()
+{
+  int focusedControl = GetFocusedControlID();
+  if (focusedControl == EXTRAS_LIST_CONTROL_ID)
+  {
+    CGUIBaseContainer* container = (CGUIBaseContainer*)(GetControl(focusedControl));
+    if (container)
+    {
+      CGUIListItemPtr listItem = container->GetListItem(0);
+      if (listItem && listItem->IsFileItem())
+        return boost::static_pointer_cast<CFileItem>(listItem);
+    }
+  }
   return CFileItemPtr();
 }

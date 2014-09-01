@@ -126,7 +126,7 @@ bool CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
     return GetPlayQueueDirectory(fileItems);
   }
 
-  if (boost::starts_with(m_url.GetFileName(), "library/metadata") && !boost::ends_with(m_url.GetFileName(), "children"))
+  if (boost::starts_with(m_url.GetFileName(), "library/metadata") && !boost::ends_with(m_url.GetFileName(), "children") && !boost::ends_with(m_url.GetFileName(), "extras"))
     m_url.SetOption("checkFiles", "1");
 
   if (m_url.HasProtocolOption("containerSize"))
@@ -173,7 +173,8 @@ bool CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
       // first compute the hash on retrieved xml
       newHash = PlexUtils::GetFastHash(m_data);
 
-      if (g_plexApplication.directoryCache->GetCacheHit(cacheURL, newHash, fileItems))
+      if (g_plexApplication.directoryCache &&
+          g_plexApplication.directoryCache->GetCacheHit(cacheURL, newHash, fileItems))
       {
         float elapsed = timer.GetElapsedSeconds();
         CLog::Log(LOGDEBUG, "CPlexDirectory::GetDirectory::Timing returning a directory after total %f seconds with %d items with content %s", elapsed, fileItems.Size(), fileItems.GetContent().c_str());
@@ -230,7 +231,8 @@ bool CPlexDirectory::GetDirectory(const CURL& url, CFileItemList& fileItems)
 #endif
 
     // add evetually to the cache
-    g_plexApplication.directoryCache->AddToCache(cacheURL, newHash, fileItems, m_cacheStrategy);
+    if (g_plexApplication.directoryCache)
+      g_plexApplication.directoryCache->AddToCache(cacheURL, newHash, fileItems, m_cacheStrategy);
   }
 
   // add evetually to the cache

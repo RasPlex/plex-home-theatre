@@ -108,6 +108,27 @@ bool CGUIPlexScreenSaverPhoto::OnMessage(CGUIMessage &message)
           m_overlayImage->SetFileName("special://xbmc/media/SlideshowOverlay.png");
         }
 
+        if (screensaver->GetSetting("showtype") == "Photos")
+          m_showType = PHOTOS;
+        else
+          m_showType = FANART;
+
+        art.SetOption("sort", "random");
+
+        if (m_showType == PHOTOS)
+        {
+          art.SetOption("type", boost::lexical_cast<std::string>(PLEX_MEDIA_FILTER_TYPE_PHOTO));
+        }
+        else
+        {
+          std::stringstream optval;
+          optval << PLEX_MEDIA_FILTER_TYPE_MOVIE << "," << PLEX_MEDIA_FILTER_TYPE_SHOW << ","
+                 << PLEX_MEDIA_FILTER_TYPE_ARTIST;
+          art.SetOption("type", optval.str());
+        }
+
+        CJobManager::GetInstance().AddJob(new CPlexDirectoryFetchJob(art), this);
+
         m_moveTimer.restart();
       }
       break;
@@ -303,7 +324,12 @@ void CGUIPlexScreenSaverPhoto::OnJobComplete(unsigned int jobID, bool success, C
                                         15000, 500, true, true, 0);
       m_multiImage->SetVisible(true);
 
-      CAspectRatio ar(CAspectRatio::AR_SCALE);
+      CAspectRatio ar;
+      if (m_showType == PHOTOS)
+        ar.ratio = CAspectRatio::AR_KEEP;
+      else
+        ar.ratio = CAspectRatio::AR_SCALE;
+
       ar.align = ASPECT_ALIGN_CENTER | ASPECT_ALIGNY_TOP;
       m_multiImage->SetAspectRatio(ar);
 

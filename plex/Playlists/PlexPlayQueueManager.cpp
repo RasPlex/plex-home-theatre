@@ -16,6 +16,7 @@
 #include "LocalizeStrings.h"
 #include "Application.h"
 #include "dialogs/GUIDialogKaiToast.h"
+#include "URIUtils.h"
 
 using namespace PLAYLIST;
 
@@ -149,6 +150,7 @@ void CPlexPlayQueueManager::playQueueUpdated(const ePlexMediaType& type, bool st
   {
     g_application.StopPlaying();
     g_playlistPlayer.SetCurrentPlaylist(playlist);
+    g_playlistPlayer.SetRepeat(playlist, PLAYLIST::REPEAT_NONE);
     if (selectedId == -1)
       g_playlistPlayer.Play(0);
     else
@@ -190,20 +192,35 @@ CStdString CPlexPlayQueueManager::getURIFromItem(const CFileItem& item, const CS
   if (item.m_bIsFolder)
     itemDirStr = "directory";
 
+  CStdString librarySectionUUID;
   if (!item.HasProperty("librarySectionUUID"))
   {
-    CLog::Log(LOGWARNING,
-              "CPlexPlayQueueManager::getURIFromItem item %s doesn't have a section UUID",
-              item.GetPath().c_str());
-    return "";
+    if (!item.HasProperty("extraType"))
+    {
+      CLog::Log(LOGWARNING,
+                "CPlexPlayQueueManager::getURIFromItem item %s doesn't have a section UUID",
+                item.GetPath().c_str());
+      return "";
+    }
+    else
+      librarySectionUUID = "extras";
+  }
+  else
+    librarySectionUUID = item.GetProperty("librarySectionUUID").asString();
+
+  CStdString realURI;
+  if (uri.empty())
+  {
+    realURI = (CStdString)item.GetProperty("unprocessed_key").asString();
+    CURL::Encode(realURI);
+  }
+  else
+  {
+    realURI = uri;
   }
 
-  CStdString realURI =
-  uri.empty() ? (CStdString)item.GetProperty("unprocessed_key").asString() : uri;
-  CURL::Encode(realURI);
-
   CStdString ret;
-  ret.Format("library://%s/%s/%s", item.GetProperty("librarySectionUUID").asString(), itemDirStr,
+  ret.Format("library://%s/%s/%s", librarySectionUUID, itemDirStr,
              realURI);
 
   return ret;
@@ -226,7 +243,11 @@ bool CPlexPlayQueueManager::reconcilePlayQueueChanges(int playlistType, const CF
       listItemId = playlist[playlistCursor]->GetMusicInfoTag()->GetDatabaseId();
 
     if (listCursor >= list.Size())
+    {
+      if (list.Size() != playlist.size())
+        hasChanged = true;
       break;
+    }
 
     int serverItemId = list.Get(listCursor)->GetMusicInfoTag()->GetDatabaseId();
 
@@ -342,11 +363,13 @@ IPlexPlayQueueBasePtr CPlexPlayQueueManager::getImpl(const CFileItem& container)
   CPlexServerPtr server = g_plexApplication.serverManager->FindFromItem(container);
   if (server)
   {
-    CLog::Log(LOGDEBUG, "CPlexPlayQueueManager::getImpl identifier: %s server: %s",
+    CLog::Log(LOGDEBUG, "CPlexPlayQueueManager::getImpl identifier: %s server: %s, filename: %s",
               container.GetProperty("identifier").asString().c_str(),
-              server->toString().c_str());
+              server->toString().c_str(),
+              URIUtils::GetFileName(container.GetPath()).c_str());
 
     if (container.GetProperty("identifier").asString() == "com.plexapp.plugins.library" &&
+        URIUtils::GetFileName(container.GetPath()) != "folder" &&
         CPlexPlayQueueServer::isSupported(server))
     {
       CLog::Log(LOGDEBUG, "CPlexPlayQueueManager::getImpl selecting PlexPlayQueueServer");

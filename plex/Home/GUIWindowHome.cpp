@@ -255,8 +255,13 @@ void CGUIWindowHome::GetItemContextMenu(CContextButtons& buttons, const CFileIte
       buttons.Add(CONTEXT_BUTTON_MARK_WATCHED, 16103);
   }
 
+  CFileItemList pqlist;
+  g_plexApplication.playQueueManager->getCurrentPlayQueue(pqlist);
 
-  buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52602);
+  if (pqlist.Size())
+    buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52602);
+  else
+    buttons.Add(CONTEXT_BUTTON_PLAY_ONLY_THIS, 52607);
 
   ePlexMediaType itemType = PlexUtils::GetMediaTypeFromItem(item);
   if (g_plexApplication.playQueueManager->getCurrentPlayQueueType() == itemType)
@@ -517,6 +522,9 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
 
     case GUI_MSG_PLEX_PLAYQUEUE_UPDATED:
     {
+      // Add eventually the PQ Menu if we dont have it yet
+      UpdateSections();
+
       RefreshSection("plexserver://playqueue/", CPlexSectionFanout::SECTION_TYPE_PLAYQUEUE);
       return true;
     }
@@ -546,6 +554,15 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
       if (message.GetParam1() == ACTION_SELECT_ITEM || message.GetParam1() == ACTION_PLAYER_PLAY)
         return OnClick(message);
       break;
+
+    case GUI_MSG_PLEX_MULTIIMAGE_ROLLOVER:
+      if (m_sections.find(m_currentFanArt) != m_sections.end())
+      {
+        CPlexSectionFanout *fan = m_sections[m_currentFanArt];
+        fan->LoadArts();
+      }
+
+      break;
   }
 
   return ret;
@@ -566,7 +583,7 @@ void CGUIWindowHome::OnSectionLoaded(const CGUIMessage& message)
 
   if (type == CONTENT_LIST_FANART)
   {
-    if (url != m_currentFanArt && (url == sectionToLoad || url == "global://art/"))
+    if ((url == sectionToLoad) || (url == "global://art/"))
     {
       CFileItemList list;
       if (GetContentListFromSection(url, CONTENT_LIST_FANART, list))
@@ -609,6 +626,10 @@ void CGUIWindowHome::OnSectionLoaded(const CGUIMessage& message)
             CGUIMessage msg(GUI_MSG_LABEL_BIND, GetID(), p, selectedItem, 0, &list);
             OnMessage(msg);
             SET_CONTROL_VISIBLE(p);
+
+            // restore last focused controls
+            if (p == m_focusSaver.getLastFocusedControlID())
+             m_focusSaver.RestoreFocus(true);
           }
           else
             SET_CONTROL_HIDDEN(p);
@@ -676,6 +697,9 @@ bool CGUIWindowHome::OnClick(const CGUIMessage& message)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void CGUIWindowHome::OpenItem(CFileItemPtr item)
 {
+  // save current focused controls
+  m_focusSaver.SaveFocus(this);
+
   CStdString url = m_navHelper.navigateToItem(item, CURL(), GetID());
   if (!url.empty())
     CLog::Log(LOGDEBUG, "CGUIWindowHome::OpenItem got %s back from navigateToItem, not sure what to do with it?", url.c_str());

@@ -641,7 +641,7 @@ void CGUISettings::Initialize()
 
   // Playback/Subtitles
   CSettingsCategory* sub = AddCategory(SETTINGS_VIDEOS, "subtitles", 287);
-  AddString(sub, "subtitles.font", 14089, "Plex", SPIN_CONTROL_TEXT);
+  AddString(sub, "subtitles.font", 14089, "plex.ttf", SPIN_CONTROL_TEXT);
   AddInt(sub, "subtitles.height", 289, 28, 16, 2, 74, SPIN_CONTROL_TEXT); // use text as there is a disk based lookup needed
 
   map<int, int> fontStyles;
@@ -904,6 +904,11 @@ void CGUISettings::Initialize()
   AddBool(adv, "videoplayer.useffmpegavio", 44406, false);
 #endif
 
+  /* PLEX */
+  // Extras Category
+  CSettingsCategory* extras = AddCategory(SETTINGS_VIDEOS, "Extras", 44408);
+  AddInt(extras, "videoplayer.playtrailercount", 44407, 0, 0, 1, 5, SPIN_CONTROL_INT);
+  /* END PLEX */
 
   // Plex "Network" Settings
   AddGroup(SETTINGS_SERVICE, 14036);
