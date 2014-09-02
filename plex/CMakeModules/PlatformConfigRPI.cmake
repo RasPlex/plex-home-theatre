@@ -152,7 +152,6 @@ add_definitions(
     -DDEBUG
     -DUSE_RAPIDXML
     -DOPENELEC
-    -DUSE_PAGING
 )
 
 ## remove annying useless warnings
