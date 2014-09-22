@@ -352,6 +352,7 @@ CDVDOverlayCodec* CDVDFactoryCodec::CreateOverlayCodec( CDVDStreamInfo &hint )
       break;
 
     case CODEC_ID_SSA:
+    case AV_CODEC_ID_ASS:
       pCodec = OpenCodec(new CDVDOverlayCodecSSA(), hint, options);
       if( pCodec ) return pCodec;
 
