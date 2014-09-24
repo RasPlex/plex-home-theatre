@@ -45,7 +45,7 @@ CDVDMessageQueue::CDVDMessageQueue(const string &owner) : m_hEvent(true)
 CDVDMessageQueue::~CDVDMessageQueue()
 {
   // remove all remaining messages
-  Flush();
+  Flush(CDVDMsg::NONE);
 }
 
 void CDVDMessageQueue::Init()
@@ -92,7 +92,7 @@ void CDVDMessageQueue::End()
 {
   CSingleLock lock(m_section);
 
-  Flush();
+  Flush(CDVDMsg::NONE);
 
   m_bInitialized  = false;
   m_iDataSize     = 0;
