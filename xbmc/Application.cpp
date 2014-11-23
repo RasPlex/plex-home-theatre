@@ -3819,7 +3819,8 @@ void CApplication::Stop(int exitCode)
 {
   try
   {
-    CVariant vExitCode(exitCode);
+    CVariant vExitCode(CVariant::VariantTypeObject);
+    vExitCode["exitcode"] = exitCode;
     CAnnouncementManager::Announce(System, "xbmc", "OnQuit", vExitCode);
 
 #ifndef __PLEX__
