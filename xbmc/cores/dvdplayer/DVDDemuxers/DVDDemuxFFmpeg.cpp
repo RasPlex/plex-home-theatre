@@ -937,6 +937,12 @@ bool CDVDDemuxFFmpeg::SeekTime(int time, bool backwords, double *startpts)
     else if (ret < 0 && m_pInput->IsEOF())
       ret = 0;
 
+    // demuxer will return failure, if you seek behind eof
+    if (ret < 0 && m_pFormatContext->duration && seek_pts >= (m_pFormatContext->duration + m_pFormatContext->start_time))
+      ret = 0;
+    else if (ret < 0 && m_pInput->IsEOF())
+      ret = 0;
+
     if(ret >= 0)
       UpdateCurrentPTS();
   }
