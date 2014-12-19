@@ -1137,7 +1137,7 @@ void CPeripheralCecAdapter::CecSourceActivated(void *cbParam, const CEC::cec_log
     bool bShowingSlideshow = (g_windowManager.GetActiveWindow() == WINDOW_SLIDESHOW);
     CGUIWindowSlideShow *pSlideShow = bShowingSlideshow ? (CGUIWindowSlideShow *)g_windowManager.GetWindow(WINDOW_SLIDESHOW) : NULL;
     bool bPlayingAndDeactivated = activated == 0 && (
-        (pSlideShow && pSlideShow->IsPlaying()) || g_application.IsPlaying());
+        (pSlideShow && pSlideShow->IsPlaying()) || !g_application.IsPaused());
     bool bPausedAndActivated = activated == 1 && adapter->m_bPlaybackPaused && (
         (pSlideShow && pSlideShow->IsPaused()) || g_application.IsPaused());
     if (bPlayingAndDeactivated)
