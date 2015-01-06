@@ -1599,8 +1599,17 @@ bool CApplication::Initialize()
 #ifndef TARGET_RASPBERRY_PI
       if (g_SkinInfo->HasSkinFile("PlexStartupHelper.xml") && !g_guiSettings.GetBool("system.firstrunwizard"))
       {
-        g_windowManager.ActivateWindow(WINDOW_PLEX_STARTUP_HELPER);
+#ifdef TARGET_RASPBERRY_PI
+        g_guiSettings.SetInt("audiooutput.mode", AUDIO_HDMI);
+        g_guiSettings.SetInt("audiooutput.channels", AE_CH_LAYOUT_2_0); // this is why sound is stereo FIXME
+        g_guiSettings.SetBool("audiooutput.ac3passthrough", false);
+        g_guiSettings.SetBool("audiooutput.dtspassthrough", false);
         g_guiSettings.SetBool("system.firstrunwizard", true);
+        g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
+#else
+        g_guiSettings.SetBool("system.firstrunwizard", true);
+        g_windowManager.ActivateWindow(WINDOW_PLEX_STARTUP_HELPER);
+#endif
       }
       else if (g_plexApplication.myPlexManager->IsPinProtected())
       {
@@ -1609,7 +1618,6 @@ bool CApplication::Initialize()
       else
       {
         g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
-      }
 #endif
     }
 
