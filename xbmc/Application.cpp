@@ -1596,7 +1596,6 @@ bool CApplication::Initialize()
         g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
       }
 #else
-#ifndef TARGET_RASPBERRY_PI
       if (g_SkinInfo->HasSkinFile("PlexStartupHelper.xml") && !g_guiSettings.GetBool("system.firstrunwizard"))
       {
 #ifdef TARGET_RASPBERRY_PI
@@ -1616,7 +1615,6 @@ bool CApplication::Initialize()
         g_windowManager.ActivateWindow(WINDOW_STARTUP_ANIM);
       }
       else
-      {
         g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
 #endif
     }
