@@ -1265,3 +1265,4 @@ plex/Dependencies/built-depends/*
 *.includes
 *.AppleDouble
 GitRevision.txt
+rasplex_version.txt
