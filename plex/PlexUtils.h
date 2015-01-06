@@ -65,10 +65,18 @@ namespace PlexUtils
   std::string GetCompositeImageUrl(const CFileItem& item, const CStdString& args);
   std::string GetPlexContent(const CFileItem& item);
   ePlexMediaFilterTypes GetFilterType(const CFileItem& item);
+  ePlexMediaFilterTypes GetFilterType(EPlexDirectoryType type);
   void SetItemResumeOffset(const CFileItemPtr& item, int64_t offint);
 
   CFileItemPtr GetItemWithKey(const CFileItemList& list, const std::string& key);
   void PauseRendering(bool bPause, bool bUseWaitDialog);
+  int GetItemListID(const CFileItemPtr& item);
+  int GetItemListID(const CFileItem& item);
+  
+  std::string GetPlayListIDfromPath(CStdString plpath);
+  void PrintItemProperties(CGUIListItemPtr item);
+
+  CURL MakeUrlSecret(CURL url);
 }
 
 #if defined(HAVE_EXECINFO_H)

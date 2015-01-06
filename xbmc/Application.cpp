@@ -374,6 +374,9 @@
 #include "plex/GUI/GUIDialogPlexError.h"
 #include "plex/GUI/GUIDialogPlexGlobalCacher.h"
 #include "plex/GUI/GUIDialogPlexVideoOSD.h"
+#include "plex/GUI/GUIWindowPlexPlaylistSelection.h"
+#include "plex/GUI/GUIDialogPlayListSelection.h"
+#include "plex/GUI/GUIDialogPlexUserSelect.h"
 /* END PLEX */
 
 #if defined(TARGET_ANDROID)
@@ -795,6 +798,9 @@ bool CApplication::Create()
     g_curlInterface.Load();
   g_curlInterface.global_init(CURL_GLOBAL_ALL);
 #endif
+  
+  CDirectory::Create("special://masterprofile/plexprofiles");
+  CDirectory::Create("special://plexprofile");
   /* END PLEX */
 
   CLog::Log(LOGINFO, "creating subdirectories");
@@ -1538,6 +1544,9 @@ bool CApplication::Initialize()
     g_windowManager.Add(new CGUIDialogPlexPlayQueue);
     g_windowManager.Add(new CGUIDialogPlexGlobalCacher);
     g_windowManager.Add(new CGUIDialogPlexVideoOSD);
+    g_windowManager.Add(new CGUIWindowPlexPlaylistSelection);
+    g_windowManager.Add(new CGUIDialogPlaylistSelection);
+    g_windowManager.Add(new CGUIDialogPlexUserSelect);
     /* END PLEX */
 
     /* window id's 3000 - 3100 are reserved for python */
@@ -1557,12 +1566,14 @@ bool CApplication::Initialize()
     if (g_advancedSettings.m_splashImage)
       SAFE_DELETE(m_splash);
 
+#ifndef __PLEX__
     if (g_guiSettings.GetBool("masterlock.startuplock") &&
         g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
        !g_settings.GetMasterProfile().getLockCode().IsEmpty())
     {
        g_passwordManager.CheckStartUpLock();
     }
+#endif
 
     // check if we should use the login screen
     if (g_settings.UsingLoginScreen())
@@ -1591,20 +1602,14 @@ bool CApplication::Initialize()
         g_windowManager.ActivateWindow(WINDOW_PLEX_STARTUP_HELPER);
         g_guiSettings.SetBool("system.firstrunwizard", true);
       }
-      else
-#else
-
-      if (!g_guiSettings.GetBool("system.firstrunwizard"))
+      else if (g_plexApplication.myPlexManager->IsPinProtected())
       {
-        g_guiSettings.SetInt("audiooutput.mode", AUDIO_HDMI);
-        g_guiSettings.SetInt("audiooutput.channels", AE_CH_LAYOUT_2_0); // this is why sound is stereo FIXME
-        g_guiSettings.SetBool("audiooutput.ac3passthrough", false);
-        g_guiSettings.SetBool("audiooutput.dtspassthrough", false);
-        g_guiSettings.SetBool("system.firstrunwizard", true);
+        g_windowManager.ActivateWindow(WINDOW_STARTUP_ANIM);
       }
-
-#endif
+      else
+      {
         g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
+      }
 #endif
     }
 
@@ -3624,6 +3629,7 @@ bool CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_PLEX_STARTUP_HELPER);
     g_windowManager.Delete(WINDOW_PLEX_PLAY_QUEUE);
     g_windowManager.Delete(WINDOW_DIALOG_PLEX_PLAYQUEUE);
+    g_windowManager.Delete(WINDOW_PLEX_PLAYLIST_SELECTION);
     /* END PLEX */
 
     g_windowManager.Delete(WINDOW_MUSIC_PLAYLIST);
@@ -4293,8 +4299,10 @@ bool CApplication::PlayFile(const CFileItem& item_, bool bRestart)
     CPlexMediaDecisionEngine plexMDE;
     if (plexMDE.resolveItem(item, newItem))
     {
-     // Matroska seeking check
-      if (CPlexTranscoderClient::getItemTranscodeMode(item) == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_MKV)
+      // Matroska seeking check
+      CPlexTranscoderClient::PlexTranscodeMode mode = CPlexTranscoderClient::getItemTranscodeMode(item);
+
+      if (mode == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_MKV)
       {
         if (item.HasProperty("viewOffsetSeek"))
         {
@@ -4303,6 +4311,13 @@ bool CApplication::PlayFile(const CFileItem& item_, bool bRestart)
 
           newItem.SetProperty("viewOffset", offsetSeek);
           newItem.m_lStartOffset = item.m_lStartOffset = ((offsetSeek / 10) - newItem.m_lEndOffset) * 0.75;
+        }
+        else if (mode == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_HLS && newItem.m_lStartOffset == STARTOFFSET_RESUME)
+        {
+          CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(newItem.GetProperty("plexserver").asString());
+          
+          CStdString transcodeURL = CPlexTranscoderClient::GetTranscodeURL(server, newItem).Get();
+          newItem.SetPath(transcodeURL);
         }
       }
 

@@ -7,26 +7,27 @@ class UpdateDialogPrivate;
 
 class UpdateDialogCocoa : public UpdateDialog
 {
-	public:
-		UpdateDialogCocoa();
-		~UpdateDialogCocoa();
+public:
+  UpdateDialogCocoa();
+  ~UpdateDialogCocoa();
 
-		// implements UpdateDialog
-		virtual void init(int argc, char** argv);
-		virtual void exec();
-		virtual void quit();
+  // implements UpdateDialog
+  virtual void init(int argc, char** argv);
+  virtual void exec();
+  virtual void quit();
 
-		// implements UpdateObserver
-		virtual void updateError(const std::string& errorMessage);
-		virtual void updateProgress(int percentage);
-		virtual void updateFinished();
+  // implements UpdateObserver
+  virtual void updateError(const std::string& errorMessage);
+  virtual void updateProgress(int percentage);
+  virtual void updateFinished();
+  virtual void updateMessage(const std::string& message);
+  virtual bool didCancel();
 
-		static void* createAutoreleasePool();
-		static void releaseAutoreleasePool(void* data);
+  static void* createAutoreleasePool();
+  static void releaseAutoreleasePool(void* data);
 
-	private:
-		void enableDockIcon();
+private:
+  void enableDockIcon();
 
-		UpdateDialogPrivate* d;
+  UpdateDialogPrivate* d;
 };
-
