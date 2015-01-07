@@ -45,6 +45,8 @@ void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service
   m_discoveredServers[server->GetUUID()] = server;
   dprintf("CPlexNetworkServiceBrowser::handleServiceArrival %s arrived",
           service->address().to_string().c_str());
+
+  g_plexApplication.serverManager->UpdateReachability(true);
   g_plexApplication.timer->RestartTimeout(5000, this);
 }
 
