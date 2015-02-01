@@ -36,6 +36,8 @@ CPeripheralNyxboard::CPeripheralNyxboard(const PeripheralScanResult& scanResult)
 bool CPeripheralNyxboard::LookupSymAndUnicode(XBMC_keysym &keysym, uint8_t *key, char *unicode)
 {
   CStdString strCommand;
+
+#ifndef TARGET_RASPBERRY_PI
   if (keysym.sym == XBMCK_F7 && keysym.mod == XBMCKMOD_NONE && GetSettingBool("enable_flip_commands"))
   {
     /* switched to keyboard side */
@@ -48,7 +50,6 @@ bool CPeripheralNyxboard::LookupSymAndUnicode(XBMC_keysym &keysym, uint8_t *key,
     CLog::Log(LOGDEBUG, "%s - switched to remote side", __FUNCTION__);
     strCommand = GetSettingString("flip_remote");
   }
-
   if (!strCommand.IsEmpty())
   {
     CLog::Log(LOGDEBUG, "%s - executing command '%s'", __FUNCTION__, strCommand.c_str());
@@ -59,6 +60,6 @@ bool CPeripheralNyxboard::LookupSymAndUnicode(XBMC_keysym &keysym, uint8_t *key,
       return true;
     }
   }
-
+#endif
   return false;
 }

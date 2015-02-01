@@ -187,7 +187,6 @@ static const XBMCKEYTABLE XBMCKeyTable[] =
 , { XBMCK_F4,                     0,    0, XBMCVK_F4,            "f4"}
 , { XBMCK_F5,                     0,    0, XBMCVK_F5,            "f5"}
 , { XBMCK_F6,                     0,    0, XBMCVK_F6,            "f6"}
-, { XBMCK_F7,                     0,    0, XBMCVK_F7,            "f7"}
 , { XBMCK_F8,                     0,    0, XBMCVK_F8,            "f8"}
 , { XBMCK_F9,                     0,    0, XBMCVK_F9,            "f9"}
 , { XBMCK_F10,                    0,    0, XBMCVK_F10,           "f10"}
