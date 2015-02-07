@@ -97,7 +97,7 @@ include(CheckFFmpegIncludes)
 if(NOT TARGET_RPI)
   include(CheckCrystalHDInclude)
 endif()
-include(CheckLibshairportConfig)
+include(CheckLibshairplayConfig)
 
 if(DEFINED SDL_FOUND)
   set(HAVE_SDL 1)

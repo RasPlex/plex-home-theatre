@@ -115,7 +115,7 @@ endif()
 set(non_link_libs
   rtmp
   plist
-  shairport
+  shairplay
   curl
   FLAC
   modplug
