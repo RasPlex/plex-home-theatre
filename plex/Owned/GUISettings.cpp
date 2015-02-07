@@ -399,13 +399,11 @@ void CGUISettings::Initialize()
 #endif
 #endif
 
-#if !defined(TARGET_RASPBERRY_PI)
   map<int,int> guimode;
   guimode.insert(make_pair(34121, AE_SOUND_IDLE  ));
   guimode.insert(make_pair(34122, AE_SOUND_ALWAYS));
   guimode.insert(make_pair(34123, AE_SOUND_OFF   ));
   AddInt(NULL, "audiooutput.guisoundmode", 34120, AE_SOUND_ALWAYS, guimode, SPIN_CONTROL_TEXT);
-#endif
 
 
 
