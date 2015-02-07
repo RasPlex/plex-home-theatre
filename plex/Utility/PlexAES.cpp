@@ -9,16 +9,11 @@
 std::vector<std::string> CPlexAES::chunkData(const std::string& data)
 {
   std::vector<std::string> chunks;
-  int i = 0;
 
-  while (true)
+  for (int i = 0, len = data.length(); i < len; i += AES_BLOCK_SIZE)
   {
     std::string chunk = data.substr(i, AES_BLOCK_SIZE);
     chunks.push_back(chunk);
-    if (chunk.length() < AES_BLOCK_SIZE)
-      break;
-
-    i += AES_BLOCK_SIZE;
   }
 
   return chunks;
@@ -27,23 +22,23 @@ std::vector<std::string> CPlexAES::chunkData(const std::string& data)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 std::string CPlexAES::encrypt(const std::string &data)
 {
-  if (data.empty()) {
+  if (data.empty())
     return "";
-  }
 
+  // aes_encrypt expects a full block size for input so ensure its available
+  // by using a temporary buffed "block".
   unsigned char block[AES_BLOCK_SIZE], buffer[AES_BLOCK_SIZE];
   std::string outData;
-
   BOOST_FOREACH(const std::string& chunk, chunkData(data))
   {
-    strncpy((char *)&block[0], chunk.c_str(), chunk.length());
+    strncpy((char *)&block[0], chunk.c_str(), AES_BLOCK_SIZE);
     if (aes_encrypt(block, buffer, &m_encryptCtx) == EXIT_FAILURE)
     {
       CLog::Log(LOGWARNING, "CPlexAES::encrypt failed to encrypt data...");
       return "";
     }
 
-    outData.append((const char*)buffer, chunk.length());
+    outData.append((const char*)buffer, AES_BLOCK_SIZE);
   }
 
   return outData;
@@ -52,23 +47,19 @@ std::string CPlexAES::encrypt(const std::string &data)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 std::string CPlexAES::decrypt(const std::string &data)
 {
-  if (data.empty()) {
+  if (data.empty())
     return "";
-  }
 
   std::string outData;
-  unsigned char block[AES_BLOCK_SIZE], buffer[AES_BLOCK_SIZE];
-
+  unsigned char buffer[AES_BLOCK_SIZE];
   BOOST_FOREACH(const std::string& chunk, chunkData(data))
   {
-    strncpy((char *)&block[0], chunk.c_str(), chunk.length());
-    if (aes_decrypt(block, buffer, &m_decryptCtx) == EXIT_FAILURE)
+    if (aes_decrypt((const unsigned char*)chunk.c_str(), buffer, &m_decryptCtx) == EXIT_FAILURE)
     {
       CLog::Log(LOGWARNING, "CPlexAES::decrypt failed to decrypt data...");
       return "";
     }
-
-    outData.append((const char*)buffer, chunk.length());
+    outData.append((const char*)buffer, strnlen((const char*)buffer, AES_BLOCK_SIZE));
   }
 
   return outData;
