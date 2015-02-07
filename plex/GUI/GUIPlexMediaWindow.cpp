@@ -375,7 +375,7 @@ void CGUIPlexMediaWindow::OnFilterButton(int filterButtonId)
       if (busy)
       {
         busy->Show();
-        while(!m_filterValuesEvent.WaitMSec(10))
+        while(!m_filterValuesEvent.WaitMSec(100))
         {
           g_windowManager.ProcessRenderLoop(false);
           if (busy->IsCanceled())

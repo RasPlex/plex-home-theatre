@@ -584,7 +584,7 @@ bool CAMLPlayer::OpenFile(const CFileItem &file, const CPlayerOptions &options)
     {
       CGUIDialogBusy *dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
       dialog->Show();
-      while (!m_ready.WaitMSec(1))
+      while (!m_ready.WaitMSec(100))
         g_windowManager.ProcessRenderLoop(false);
       dialog->Close();
     }

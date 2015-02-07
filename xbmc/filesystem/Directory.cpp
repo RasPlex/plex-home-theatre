@@ -157,7 +157,7 @@ bool CDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items, c
             CGUIDialogBusy* dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
             dialog->Show();
 
-            while(!get.Wait(10))
+            while(!get.Wait(100))
             {
               CSingleLock lock(g_graphicsContext);
 
