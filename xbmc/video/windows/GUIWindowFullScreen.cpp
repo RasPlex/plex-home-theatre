@@ -123,6 +123,7 @@ CGUIWindowFullScreen::CGUIWindowFullScreen(void)
   // subtitles
   //  - delay
   //  - language
+
 }
 
 CGUIWindowFullScreen::~CGUIWindowFullScreen(void)
@@ -165,12 +166,11 @@ bool CGUIWindowFullScreen::OnAction(const CAction &action)
 
   case ACTION_PLAYER_PLAY:
   case ACTION_PAUSE:
-      if (m_timeCodePosition > 0)
-      {
-        SeekToTimeCodeStamp(SEEK_ABSOLUTE);
-        return true;
-      }
-//      return true;
+    if (m_timeCodePosition > 0)
+    {
+      SeekToTimeCodeStamp(SEEK_ABSOLUTE);
+      return true;
+    }
     break;
 
   case ACTION_STEP_BACK:

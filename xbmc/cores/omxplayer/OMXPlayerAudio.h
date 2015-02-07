@@ -55,35 +55,18 @@ protected:
   bool                      m_use_hw_decode;
   bool                      m_hw_decode;
   AEAudioFormat             m_format;
-  CAEChannelInfo            m_channelLayout;
   COMXAudioCodecOMX         *m_pAudioCodec;
   int                       m_speed;
   bool                      m_silence;
   double                    m_audioClock;
-  double m_error;    //last average error
-
-  int64_t m_errortime; //timestamp of last time we measured
-  int64_t m_freq;
-
-  void   HandleSyncError(double duration);
-  double m_errorbuff; //place to store average errors
-  int    m_errorcount;//number of errors stored
-  bool   m_syncclock;
-
-  double m_integral; //integral correction for resampler
-  int    m_skipdupcount; //counter for skip/duplicate synctype
-  bool   m_prevskipped;
 
   bool                      m_stalled;
   bool                      m_started;
 
   BitstreamStats            m_audioStats;
 
-  struct timespec           m_starttime, m_endtime;
   bool                      m_buffer_empty;
   bool                      m_flush;
-  //SYNC_DISCON, SYNC_SKIPDUP, SYNC_RESAMPLE
-  int                       m_synctype;
   int                       m_nChannels;
   bool                      m_DecoderOpen;
 
@@ -118,12 +101,17 @@ public:
   void CloseDecoder();
   double GetDelay();
   double GetCacheTime();
-  double GetCurrentPTS() { return m_audioClock; };
+  double GetCacheTotal();
+  double GetCurrentPts() { return m_audioClock; };
   void WaitCompletion();
   void SubmitEOS();
-  void  RegisterAudioCallback(IAudioCallback* pCallback);
-  void  UnRegisterAudioCallback();
-  void SetCurrentVolume(float fVolume);
+
+  void  RegisterAudioCallback(IAudioCallback* pCallback) { m_omxAudio.RegisterAudioCallback(pCallback); }
+  void  UnRegisterAudioCallback()                        { m_omxAudio.UnRegisterAudioCallback(); }
+  void SetVolume(float fVolume)                          { m_omxAudio.SetVolume(fVolume); }
+  void SetMute(bool bOnOff)                              { m_omxAudio.SetMute(bOnOff); }
+  void SetDynamicRangeCompression(long drc)              { m_omxAudio.SetDynamicRangeCompression(drc); }
+  float GetDynamicRangeAmplification()                   { return m_omxAudio.GetDynamicRangeAmplification(); }
   void SetSpeed(int iSpeed);
   int  GetAudioBitrate();
   std::string GetPlayerInfo();

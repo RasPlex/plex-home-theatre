@@ -36,10 +36,6 @@
 #include "filesystem/AndroidAppFile.h"
 #endif
 
-#if defined(HAS_OMXPLAYER)
-#include "xbmc/cores/omxplayer/OMXImage.h"
-#endif
-
 /* PLEX */
 #include "filesystem/File.h"
 /* END PLEX */
@@ -102,8 +98,13 @@ void CBaseTexture::Allocate(unsigned int width, unsigned int height, unsigned in
   CLAMP(m_textureHeight, g_Windowing.GetMaxTextureSize());
   CLAMP(m_imageWidth, m_textureWidth);
   CLAMP(m_imageHeight, m_textureHeight);
+
   delete[] m_pixels;
-  m_pixels = new unsigned char[GetPitch() * GetRows()];
+  m_pixels = NULL;
+  if (GetPitch() * GetRows() > 0)
+  {
+    m_pixels = new unsigned char[GetPitch() * GetRows()];
+  }
 }
 
 void CBaseTexture::Update(unsigned int width, unsigned int height, unsigned int pitch, unsigned int format, const unsigned char *pixels, bool loadToGPU)
@@ -175,7 +176,7 @@ void CBaseTexture::ClampToEdge()
   }
 }
 
-CBaseTexture *CBaseTexture::LoadFromFile(const CStdString& texturePath, unsigned int idealWidth, unsigned int idealHeight, bool autoRotate)
+CBaseTexture *CBaseTexture::LoadFromFile(const CStdString& texturePath, unsigned int idealWidth, unsigned int idealHeight, bool autoRotate, bool requirePixels)
 {
 #if defined(TARGET_ANDROID)
   CURL url(texturePath);
@@ -203,7 +204,7 @@ CBaseTexture *CBaseTexture::LoadFromFile(const CStdString& texturePath, unsigned
   }
 #endif
   CTexture *texture = new CTexture();
-  if (texture->LoadFromFileInternal(texturePath, idealWidth, idealHeight, autoRotate))
+  if (texture->LoadFromFileInternal(texturePath, idealWidth, idealHeight, autoRotate, requirePixels))
     return texture;
   delete texture;
   return NULL;
@@ -218,131 +219,8 @@ CBaseTexture *CBaseTexture::LoadFromFileInMemory(unsigned char *buffer, size_t b
   return NULL;
 }
 
-bool CBaseTexture::LoadFromFileInternal(const CStdString& texturePath, unsigned int maxWidth, unsigned int maxHeight, bool autoRotate)
+bool CBaseTexture::LoadFromFileInternal(const CStdString& texturePath, unsigned int maxWidth, unsigned int maxHeight, bool autoRotate, bool requirePixels)
 {
-#if defined(HAS_OMXPLAYER)
-  if (URIUtils::GetExtension(texturePath).Equals(".jpg"))
-  {
-    #ifndef TARGET_RASPBERRY_PI
-    COMXImage omx_image;
-
-    if(omx_image.ReadFile(texturePath))
-    {
-      if(omx_image.Decode(maxWidth, maxHeight))
-      {
-        Allocate(omx_image.GetDecodedWidth(), omx_image.GetDecodedHeight(), XB_FMT_A8R8G8B8);
-
-        if(!m_pixels)
-        {
-          CLog::Log(LOGERROR, "Texture manager (OMX) out of memory");
-          omx_image.Close();
-          return false;
-        }
-
-        m_originalWidth  = omx_image.GetOriginalWidth();
-        m_originalHeight = omx_image.GetOriginalHeight();
-
-        m_hasAlpha = omx_image.IsAlpha();
-
-        if (autoRotate && omx_image.GetOrientation())
-          m_orientation = omx_image.GetOrientation() - 1;
-
-        if(m_textureWidth != omx_image.GetDecodedWidth() || m_textureHeight != omx_image.GetDecodedHeight())
-        {
-          unsigned int imagePitch = GetPitch(m_imageWidth);
-          unsigned int imageRows = GetRows(m_imageHeight);
-          unsigned int texturePitch = GetPitch(m_textureWidth);
-
-          unsigned char *src = omx_image.GetDecodedData();
-          unsigned char *dst = m_pixels;
-          for (unsigned int y = 0; y < imageRows; y++)
-          {
-            memcpy(dst, src, imagePitch);
-            src += imagePitch;
-            dst += texturePitch;
-          }
-        }
-        else
-        {
-          if(omx_image.GetDecodedData())
-          {
-            int size = ( ( GetPitch() * GetRows() ) > omx_image.GetDecodedSize() ) ?
-                             omx_image.GetDecodedSize() : ( GetPitch() * GetRows() );
-
-            memcpy(m_pixels, (unsigned char *)omx_image.GetDecodedData(), size);
-          }
-        }
-
-        omx_image.Close();
-
-        return true;
-      }
-      else
-      {
-        omx_image.Close();
-      }
-    }
-    // this limits the sizes of jpegs we failed to decode
-    omx_image.ClampLimits(maxWidth, maxHeight);
-  #else
-      COMXImage* pImage = COMXImage::GetInstance();
-
-      if (pImage->DecodeFile(texturePath,0,0))
-      {
-        Allocate(pImage->GetDecodedWidth(), pImage->GetDecodedHeight(), XB_FMT_A8R8G8B8);
-
-        if(!m_pixels)
-        {
-          CLog::Log(LOGERROR, "Texture manager (OMX) out of memory");
-          pImage->Close();
-          return false;
-        }
-
-        m_originalWidth  = pImage->GetOriginalWidth();
-        m_originalHeight = pImage->GetOriginalHeight();
-
-        m_hasAlpha = pImage->IsAlpha();
-
-        if (autoRotate && pImage->GetOrientation())
-          m_orientation = pImage->GetOrientation() - 1;
-
-        if(m_textureWidth != pImage->GetDecodedWidth() || m_textureHeight != pImage->GetDecodedHeight())
-        {
-          unsigned int imagePitch = GetPitch(m_imageWidth);
-          unsigned int imageRows = GetRows(m_imageHeight);
-          unsigned int texturePitch = GetPitch(m_textureWidth);
-
-          unsigned char *src = pImage->GetDecodedData();
-          unsigned char *dst = m_pixels;
-          for (unsigned int y = 0; y < imageRows; y++)
-          {
-            memcpy(dst, src, imagePitch);
-            src += imagePitch;
-            dst += texturePitch;
-          }
-        }
-        else
-        {
-          if(pImage->GetDecodedData())
-          {
-            int size = ( ( GetPitch() * GetRows() ) > pImage->GetDecodedSize() ) ?
-                             pImage->GetDecodedSize() : ( GetPitch() * GetRows() );
-             memcpy(m_pixels, (unsigned char *)pImage->GetDecodedData(), size);
-          }
-        }
-
-        pImage->Release();
-
-        return true;
-      }
-      else
-      {
-        pImage->Close();
-        pImage->Release();
-      }
-  #endif
-  }
-#endif
   if (URIUtils::GetExtension(texturePath).Equals(".dds"))
   { // special case for DDS images
     CDDSImage image;

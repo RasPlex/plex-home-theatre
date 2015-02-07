@@ -35,10 +35,6 @@
 #include "URL.h"
 #include <assert.h>
 
-/* PLEX */
-#include "plex/PlexUtils.h"
-/* END PLEX */
-
 using namespace std;
 
 
