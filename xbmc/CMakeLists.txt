@@ -39,6 +39,12 @@ set(SRCS ${xbmc_SRCS} ${ALL_SRCS})
 ADD_MSVC_PRECOMPILED_HEADER("pch.h" "win32/pch.cpp" SRCS)
 #ADD_MSVC_PRECOMPILED_HEADER("${root}/xbmc/win32/pch.h" "${root}/xbmc/win32/pch.cpp" ALL_SRCS)
 
+enable_language(ASM)
+set_property(SOURCE ./cores/VideoRenderers/yuv2rgb.neon.S PROPERTY LANGUAGE ASM)
+set_property(SOURCE ./utils/fastmemcpy-arm.S PROPERTY LANGUAGE ASM)
+list(APPEND SRCS ./cores/VideoRenderers/yuv2rgb.neon.S)
+list(APPEND SRCS ./utils/fastmemcpy-arm.S)
+
 add_library(xbmc STATIC ${SRCS})
 set_target_properties(xbmc PROPERTIES
   XCODE_ATTRIBUTE_GCC_PREFIX_HEADER ${plexdir}/pch_plex.h
