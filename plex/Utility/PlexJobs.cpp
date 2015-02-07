@@ -20,6 +20,9 @@
 #include "PlexUtils.h"
 #include "xbmc/Util.h"
 #include "ApplicationMessenger.h"
+#if defined(HAS_OMXPLAYER)
+#include "cores/omxplayer/OMXImage.h"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 bool CPlexHTTPFetchJob::DoWork()
@@ -446,6 +449,19 @@ bool CPlexTextureCacheJob::CacheTexture(CBaseTexture **texture)
     return false;
   else if (m_details.hash == m_oldHash)
     return true;
+
+#if defined(HAS_OMXPLAYER)
+  if (COMXImage::CreateThumb(image, width, height, additional_info, CTextureCache::GetCachedPath(m_cachePath + ".jpg")))
+  {
+    m_details.width = width;
+    m_details.height = height;
+    m_details.file = m_cachePath + ".jpg";
+    if (texture)
+      *texture = CTextureCacheJob::LoadImage(CTextureCache::GetCachedPath(m_details.file), width, height, additional_info);
+    CLog::Log(LOGDEBUG, "Fast %s image '%s' to '%s': %p", m_oldHash.IsEmpty() ? "Caching" : "Recaching", image.c_str(), m_details.file.c_str(), texture);
+    return true;
+  }
+#endif
 
   int bytesRead, bufferSize = 131072;
   unsigned char buffer[131072];

@@ -182,7 +182,7 @@ bool COMXImage::CreateThumb(const CStdString& srcFile, unsigned int maxHeight, u
   COMXImageReEnc reenc;
   void *pDestBuffer;
   unsigned int nDestSize;
-  if ((URIUtils::GetExtension(srcFile).Equals(".jpg") || URIUtils::GetExtension(srcFile).Equals(".tbn")) &&
+  if ((srcFile.substr(0, 13) == "plexserver://" || URIUtils::GetExtension(srcFile).Equals(".jpg") || URIUtils::GetExtension(srcFile).Equals(".tbn")) &&
       file.ReadFile(srcFile) && reenc.ReEncode(file, maxWidth, maxHeight, pDestBuffer, nDestSize))
   {
     XFILE::CFile outfile;
@@ -838,7 +838,7 @@ bool COMXImageFile::ReadFile(const CStdString& inputFile)
 {
   XFILE::CFile      m_pFile;
   m_filename = inputFile.c_str();
-  if(!m_pFile.Open(inputFile, 0))
+  if(!m_pFile.Open(inputFile, READ_NO_CACHE))
   {
     CLog::Log(LOGERROR, "%s::%s %s not found\n", CLASSNAME, __func__, inputFile.c_str());
     return false;
