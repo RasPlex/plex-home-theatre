@@ -8,11 +8,8 @@ endif(HAVE_DUMP_SYMBOLS)
 
 OPTION(ENABLE_DUMP_SYMBOLS "Create breakpad symbols" ON)
 
-
-
-
 set(DO_DUMP_SYMBOLS 0)
-find_program(DUMP_SYMS dump_syms HINTS ${dependdir}/bin ${BREAKPAD_PATH}/bin ${HOST_BREAKPAD_HOME}/bin)
+find_program(DUMP_SYMS dump_syms HINTS ${dependdir}/bin ${BREAKPAD_PATH}/bin)
 if(DUMP_SYMS MATCHES "-NOTFOUND")
   message(STATUS "dump_syms not found, will not create breakpad symbols")
 else(DUMP_SYMS MATCHES "-NOTFOUND")
@@ -34,15 +31,12 @@ else(APPLE)
   set(PLAT "windows")
 endif(APPLE)
 
-
-message(STATUS "Looking in ${IMAGE_BREAKPAD_HOME}")
-find_path(BREAKPAD_INCLUDES exception_handler.h PATH ${dependdir}/include/breakpad ${BREAKPAD_PATH}/include ${IMAGE_BREAKPAD_HOME}/include/ PATH_SUFFIXES client/${PLAT}/handler )
+find_path(BREAKPAD_INCLUDES client/${PLAT}/handler/exception_handler.h HINTS ${dependdir}/include ${BREAKPAD_PATH}/include PATH_SUFFIXES breakpad)
 if(BREAKPAD_INCLUDES MATCHES "-NOTFOUND")
   message(STATUS "Can't find exception_handler.h")
 else(BREAKPAD_INCLUDES MATCHES "-NOTFOUND")
   STRING(REPLACE "/client/${PLAT}/handler" "" BREAKPAD_INC_DIR ${BREAKPAD_INCLUDES})
-  find_library(LIBBREAKPAD_CLIENT NAMES breakpad_client PATHS ${dependdir}/lib ${BREAKPAD_PATH}/lib ${IMAGE_BREAKPAD_HOME}/lib )
-  set(LIBBREAKPAD_CLIENT ${IMAGE_BREAKPAD_HOME}/lib/libbreakpad_client.a)
+  find_library(LIBBREAKPAD_CLIENT NAMES breakpad_client breakpad breakpad-d HINTS ${dependdir}/lib ${BREAKPAD_PATH}/lib)
   if(LIBBREAKPAD_CLIENT MATCHES "-NOTFOUND")
     message(STATUS "No breakpad support")
   else(LIBBREAKPAD_CLIENT MATCHES "-NOTFOUND")
