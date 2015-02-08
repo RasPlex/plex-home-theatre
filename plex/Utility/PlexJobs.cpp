@@ -450,19 +450,6 @@ bool CPlexTextureCacheJob::CacheTexture(CBaseTexture **texture)
   else if (m_details.hash == m_oldHash)
     return true;
 
-#if defined(HAS_OMXPLAYER)
-  if (COMXImage::CreateThumb(image, width, height, additional_info, CTextureCache::GetCachedPath(m_cachePath + ".jpg")))
-  {
-    m_details.width = width;
-    m_details.height = height;
-    m_details.file = m_cachePath + ".jpg";
-    if (texture)
-      *texture = CTextureCacheJob::LoadImage(CTextureCache::GetCachedPath(m_details.file), width, height, additional_info);
-    CLog::Log(LOGDEBUG, "Fast %s image '%s' to '%s': %p", m_oldHash.IsEmpty() ? "Caching" : "Recaching", image.c_str(), m_details.file.c_str(), texture);
-    return true;
-  }
-#endif
-
   int bytesRead, bufferSize = 131072;
   unsigned char buffer[131072];
   bool outputFileOpenned = false;
@@ -499,6 +486,10 @@ bool CPlexTextureCacheJob::CacheTexture(CBaseTexture **texture)
     m_outputFile.Flush();
     m_inputFile.Close();
     m_outputFile.Close();
+	
+    if (texture)
+      *texture = CTextureCacheJob::LoadImage(CTextureCache::GetCachedPath(m_details.file), width, height, additional_info, true);
+	
     return true;
   }
   else
