@@ -35,6 +35,7 @@ set(LINK_PKG
   Avahi
   LibDl
   LibRt
+  DBUS
 )
 
 if(NOT USE_INTERNAL_FFMPEG)
@@ -148,6 +149,7 @@ add_definitions(
 	  -DTARGET_LINUX
     -DHAS_GLES=2
     -DHAVE_LIBGLESV2
+    -DHAVE_DBUS
     -DHAVE_OMXLIB
     -DOMX_SKIP64BIT
     -DHAS_BUILTIN_SYNC_ADD_AND_FETCH
