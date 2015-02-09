@@ -903,7 +903,7 @@ void CGUISettings::Initialize()
 #endif
 
 #ifdef TARGET_RASPBERRY_PI
-  AddBool(adv, "videoplayer.useffmpegavio", 44406, true);
+  AddBool(adv, "videoplayer.useffmpegavio", 44406, false);
 #else
   AddBool(adv, "videoplayer.useffmpegavio", 44406, false);
 #endif
