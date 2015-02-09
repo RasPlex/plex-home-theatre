@@ -697,7 +697,7 @@ void CGUIPlexMediaWindow::LoadPage(int iPage)
   u.SetOption("X-Plex-Container-Start", boost::lexical_cast<std::string>(start));
   u.SetOption("X-Plex-Container-Size", boost::lexical_cast<std::string>(pageSize));
   
-#if TARGET_RASPBERRY_PI
+#if defined RPI_VERSION && RPI_VERSION == 1
   PlexUtils::PauseRendering(true, true);
 #endif
 
@@ -730,7 +730,7 @@ void CGUIPlexMediaWindow::OnJobComplete(unsigned int jobID, bool success, CJob* 
     }
   }
 
-#if TARGET_RASPBERRY_PI
+#if defined RPI_VERSION && RPI_VERSION == 1
   PlexUtils::PauseRendering(false, true);
 #endif
   // remove FetchJob from List
