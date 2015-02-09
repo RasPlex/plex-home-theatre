@@ -584,7 +584,11 @@ bool CAMLPlayer::OpenFile(const CFileItem &file, const CPlayerOptions &options)
     {
       CGUIDialogBusy *dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
       dialog->Show();
+#if defined RPI_VERSION && RPI_VERSION == 2
       while (!m_ready.WaitMSec(100))
+#else
+      while (!m_ready.WaitMSec(1))
+#endif
         g_windowManager.ProcessRenderLoop(false);
       dialog->Close();
     }

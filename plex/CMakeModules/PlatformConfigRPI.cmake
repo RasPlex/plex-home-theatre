@@ -5,6 +5,16 @@ set(EXTRA_CFLAGS "-fPIC -DPIC")
 
 option(USE_INTERNAL_FFMPEG "" OFF)
 
+if(NOT DEFINED RPI_PROJECT)
+  set(RPI_PROJECT "RPi")
+endif()
+
+if(RPI_PROJECT STREQUAL "RPi")
+  add_definitions(-RPI_VERSION=1)
+elseif(RPI_PROJECT STREQUAL "RPi2")
+  add_definitions(-RPI_VERSION=2)
+endif()
+
 set(LINK_PKG
   Freetype
   ZLIB
@@ -40,7 +50,7 @@ if(ENABLE_PYTHON)
 endif(ENABLE_PYTHON)
 
 
-#        --disable-optical-drive 
+#        --disable-optical-drive
 #  --disable-debug \
 #   \
 # --with-platform=raspberry-pi --enable-optimizations \
@@ -53,7 +63,7 @@ endforeach()
 #find_package(OpenGLES2 REQUIRED)
 #include_directories(${OpenGLES2_INCLUDE_DIRS})
 #set(CONFIG_PLEX_LINK_LIBRARIES ${CONFIG_PLEX_LINK_LIBRARIES} ${OpenGLES2_LIBRARIES})
-#  
+#
 find_package(Boost COMPONENTS thread system REQUIRED)
 if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
@@ -128,12 +138,12 @@ set(SKIP_CONFIG_DVDCSS 1)
 set(DVDREAD_CFLAGS "-D_XBMC -UHAVE_DVDCSS_DVDCSS_H")
 
 add_definitions(
-    -DTARGET_LINUX 
-    -D_LINUX 
-    -D_ARMEL 
+    -DTARGET_LINUX
+    -D_LINUX
+    -D_ARMEL
     -DTARGET_RASPBERRY_PI
     -DTARGET_RPI
-	-DTARGET_LINUX
+	  -DTARGET_LINUX
     -DHAS_GLES=2
     -DHAVE_LIBGLESV2
     -DHAVE_OMXLIB
@@ -144,11 +154,11 @@ add_definitions(
     -DHAS_OMXPLAYER
     -DHAVE_CEC_RPI_API
     -DHAVE_LIBCEC
-    -DPIC 
-    -D_REENTRANT 
-    -D_LARGEFILE64_SOURCE 
-    -D_FILE_OFFSET_BITS=64 
-    -DNDEBUG=1 
+    -DPIC
+    -D_REENTRANT
+    -D_LARGEFILE64_SOURCE
+    -D_FILE_OFFSET_BITS=64
+    -DNDEBUG=1
     -DDEBUG
     -DUSE_RAPIDXML
     -DOPENELEC

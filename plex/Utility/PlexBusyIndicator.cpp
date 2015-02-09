@@ -48,7 +48,11 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
   while (m_callbackMap.size() > 0)
   {
     lk.Leave();
+#if defined RPI_VERSION && RPI_VERSION == 2
     while (!m_blockEvent.WaitMSec(100))
+#else
+    while (!m_blockEvent.WaitMSec(20))
+#endif
     {
       lk.Enter();
       if (busy && busy->IsCanceled())

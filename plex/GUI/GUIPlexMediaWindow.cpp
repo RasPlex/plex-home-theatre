@@ -375,7 +375,11 @@ void CGUIPlexMediaWindow::OnFilterButton(int filterButtonId)
       if (busy)
       {
         busy->Show();
+#if defined RPI_VERSION && RPI_VERSION == 2
         while(!m_filterValuesEvent.WaitMSec(100))
+#else
+        while(!m_filterValuesEvent.WaitMSec(10))
+#endif
         {
           g_windowManager.ProcessRenderLoop(false);
           if (busy->IsCanceled())
