@@ -10,10 +10,12 @@ if(NOT DEFINED RPI_PROJECT)
 endif()
 
 if(RPI_PROJECT STREQUAL "RPi")
-  add_definitions(-RPI_VERSION=1)
+  add_definitions(-DRPI_VERSION=1)
 elseif(RPI_PROJECT STREQUAL "RPi2")
-  add_definitions(-RPI_VERSION=2)
+  add_definitions(-DRPI_VERSION=2)
 endif()
+
+message(STATUS "Building for Raspberry Pi version " ${RPI_PROJECT})
 
 set(LINK_PKG
   Freetype
