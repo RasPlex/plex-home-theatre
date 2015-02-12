@@ -2525,7 +2525,7 @@ void CApplication::Render()
   bool decrement = false;
   bool hasRendered = false;
   bool limitFrames = false;
-  #if defined(TARGET_RASPBERRY_PI)
+  #if defined(TARGET_RASPBERRY_PI_1)
   unsigned int singleFrameTime = 66; // default limit 15 fps
   #else
   unsigned int singleFrameTime = 10; // default limit 100 fps
@@ -2621,7 +2621,11 @@ void CApplication::Render()
   if (limitFrames || !flip)
   {
     if (!limitFrames)
-      singleFrameTime = 100; //if not flipping, loop at 25 fps
+  #if defined(TARGET_RASPBERRY_PI_1)
+      singleFrameTime = 100; //if not flipping, loop at 10 fps
+  #else
+      singleFrameTime = 40; //if not flipping, loop at 25 fps
+  #endif
 
     unsigned int frameTime = now - m_lastFrameTime;
     if (frameTime < singleFrameTime)
