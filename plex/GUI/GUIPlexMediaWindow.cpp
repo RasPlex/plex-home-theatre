@@ -375,11 +375,7 @@ void CGUIPlexMediaWindow::OnFilterButton(int filterButtonId)
       if (busy)
       {
         busy->Show();
-#if defined RPI_VERSION && RPI_VERSION == 2
         while(!m_filterValuesEvent.WaitMSec(100))
-#else
-        while(!m_filterValuesEvent.WaitMSec(10))
-#endif
         {
           g_windowManager.ProcessRenderLoop(false);
           if (busy->IsCanceled())
@@ -701,10 +697,9 @@ void CGUIPlexMediaWindow::LoadPage(int iPage)
   u.SetOption("X-Plex-Container-Start", boost::lexical_cast<std::string>(start));
   u.SetOption("X-Plex-Container-Size", boost::lexical_cast<std::string>(pageSize));
   
-#if defined RPI_VERSION && RPI_VERSION == 1
+#ifdef TARGET_RASPBERRY_PI_1
   PlexUtils::PauseRendering(true, true);
 #endif
-
   m_fetchJobs[iPage] = CJobManager::GetInstance().AddJob(new CPlexDirectoryFetchJob(u), this);
 }
 
@@ -734,7 +729,7 @@ void CGUIPlexMediaWindow::OnJobComplete(unsigned int jobID, bool success, CJob* 
     }
   }
 
-#if defined RPI_VERSION && RPI_VERSION == 1
+#ifdef TARGET_RASPBERRY_PI_1
   PlexUtils::PauseRendering(false, true);
 #endif
   // remove FetchJob from List

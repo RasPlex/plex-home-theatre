@@ -157,11 +157,7 @@ bool CDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items, c
             CGUIDialogBusy* dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
             dialog->Show();
 
-#if defined RPI_VERSION && RPI_VERSION == 2
             while(!get.Wait(100))
-#else
-            while(!get.Wait(10))
-#endif
             {
               CSingleLock lock(g_graphicsContext);
 

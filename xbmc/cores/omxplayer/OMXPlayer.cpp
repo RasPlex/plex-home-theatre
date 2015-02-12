@@ -519,7 +519,7 @@ bool COMXPlayer::OpenFile(const CFileItem &file, const CPlayerOptions &options)
       if(dialog)
       {
         dialog->Show();
-        while(!m_ready.WaitMSec(1))
+        while(!m_ready.WaitMSec(100))
         {
           /* PLEX */
           if (dialog->IsCanceled())

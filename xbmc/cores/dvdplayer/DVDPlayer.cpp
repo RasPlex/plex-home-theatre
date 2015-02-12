@@ -496,11 +496,7 @@ bool CDVDPlayer::OpenFile(const CFileItem& file, const CPlayerOptions &options)
 #endif
 
     Create();
-#if defined RPI_VERSION && RPI_VERSION == 2
     if(!m_ready.WaitMSec(100))
-#else
-    if(!m_ready.WaitMSec(1))
-#endif
     {
       CGUIDialogBusy* dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
       if(dialog)
