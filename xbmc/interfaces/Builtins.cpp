@@ -94,7 +94,6 @@
 /* PLEX */
 #include "PlexApplication.h"
 #include "AutoUpdate/PlexAutoUpdate.h"
-#include "Utility/PlexGlobalCacher.h"
 /* END PLEX */
 
 using namespace std;
@@ -272,29 +271,7 @@ int CBuiltins::Execute(const CStdString& execString)
 
   if (execute.Equals("reboot") || execute.Equals("restart") || execute.Equals("reset"))  //Will reboot the system
   {
-#ifdef TARGET_RASPBERRY_PI
-    CLog::Log(LOGINFO,"Trying to reboot");
-    FILE* fp = popen("/sbin/reboot","r");
-    while (!fp)
-    {
-      CLog::Log(LOGNOTICE,"Failed to open process, got error %s", strerror(errno));
-      fp = popen("/sbin/reboot", "r");
-    }
-
-    char buffer[128];
-    CStdString commandOutput; 
-
-    while(!feof(fp)){
-      if ( fgets(buffer, sizeof(buffer), fp)!=NULL )
-      {
-        commandOutput = CStdString(buffer);
-        CLog::Log(LOGNOTICE, "CPlexUpdaterJob::StreamExec: %s",commandOutput.c_str());
-      }
-    }
-
-#else
     CApplicationMessenger::Get().Restart();
-#endif
   }
   else if (execute.Equals("shutdown"))
   {

@@ -19,6 +19,7 @@
 #include "Stopwatch.h"
 #include "PlexUtils.h"
 #include "xbmc/Util.h"
+#include "ApplicationMessenger.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 bool CPlexHTTPFetchJob::DoWork()
@@ -336,7 +337,7 @@ bool CPlexUpdaterJob::DoWork()
       m_autoupdater -> WriteUpdateInfo();
       CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Update is complete!", "System will reboot twice to apply.", 10000, false);
       m_updating = false;
-      StreamExec("/sbin/reboot");
+      CApplicationMessenger::Get().Restart();
     }
   }else{
     CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, "Invalid action", "Update already in progress.", 10000, false);
