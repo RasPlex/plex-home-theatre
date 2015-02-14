@@ -118,7 +118,7 @@ list(APPEND CONFIG_INTERNAL_LIBS lib_dllsymbols)
 
 
 #### default lircdevice
-set(LIRC_DEVICE "/dev/lircd")
+#set(LIRC_DEVICE "/dev/lircd")
 
 #### on linux we want to use a "easy" name
 set(EXECUTABLE_NAME "plexhometheater")
