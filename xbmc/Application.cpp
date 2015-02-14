@@ -891,11 +891,12 @@ bool CApplication::Create()
 
   m_lastFrameTime = XbmcThreads::SystemClockMillis();
   m_lastRenderTime = m_lastFrameTime;
-  
+
   /* PLEX */
-  g_plexApplication.Start();
+  if (g_application.getNetwork().IsAvailable(true))
+    g_plexApplication.Start();
   /* END PLEX */
-  
+
   return true;
 }
 
