@@ -341,6 +341,9 @@ bool COMXVideo::Open(CDVDStreamInfo &hints, OMXClock *clock, EDEINTERLACEMODE de
   m_settings_changed = false;
   m_setStartTime = true;
 
+  m_res_ctx           = NULL;
+  m_res_callback      = NULL;
+
   m_video_codec_name      = "";
   m_codingType            = OMX_VIDEO_CodingUnused;
 
@@ -691,8 +694,10 @@ void COMXVideo::Close()
 
   m_video_codec_name  = "";
   m_deinterlace       = false;
-  m_first_frame       = true;
   m_av_clock          = NULL;
+
+  m_res_ctx           = NULL;
+  m_res_callback      = NULL;
 }
 
 void COMXVideo::SetDropState(bool bDrop)
@@ -778,7 +783,8 @@ int COMXVideo::Decode(uint8_t *pData, int iSize, double pts)
         }
       }
 
-      if(m_first_frame && m_deinterlace)
+      omx_err = m_omx_decoder.WaitForEvent(OMX_EventPortSettingsChanged, 0);
+      if (omx_err == OMX_ErrorNone)
       {
         if(!PortSettingsChanged())
         {

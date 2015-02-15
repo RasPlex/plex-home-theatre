@@ -112,12 +112,6 @@ CLinuxRendererGLES::CLinuxRendererGLES()
 
   m_dllSwScale = new DllSwScale;
   m_sw_context = NULL;
-  /* PLEX */
-#if defined(TARGET_RASPBERRY_PI)
-  m_bRGBImageSet = false;
-#endif
-  /* END PLEX */
-
 }
 
 CLinuxRendererGLES::~CLinuxRendererGLES()
@@ -349,14 +343,8 @@ void CLinuxRendererGLES::LoadPlane( YUVPLANE& plane, int type, unsigned flipinde
                                 , unsigned width, unsigned height
                                 , int stride, void* data )
 {
-#if defined(__PLEX__)
-  if(!m_bRGBImageSet && plane.flipindex == flipindex)
-    return;
-#else
   if(plane.flipindex == flipindex)
     return;
-#endif
-
 
   const GLvoid *pixelData = data;
 
@@ -1326,7 +1314,6 @@ void CLinuxRendererGLES::RenderCoreVideoRef(int index, int field)
 #endif
 }
 
-
 bool CLinuxRendererGLES::RenderCapture(CRenderCapture* capture)
 {
   if (!m_bValidated)
@@ -1373,7 +1360,7 @@ bool CLinuxRendererGLES::RenderCapture(CRenderCapture* capture)
   // OpenGLES returns in RGBA order but CRenderCapture needs BGRA order
   // XOR Swap RGBA -> BGRA
   unsigned char* pixels = (unsigned char*)capture->GetRenderBuffer();
-  for (int i = 0; i < capture->GetWidth() * capture->GetHeight(); i++, pixels+=4)
+  for (unsigned int i = 0; i < capture->GetWidth() * capture->GetHeight(); i++, pixels+=4)
   {
     std::swap(pixels[0], pixels[2]);
   }
@@ -2021,66 +2008,5 @@ void CLinuxRendererGLES::AddProcessor(struct __CVBuffer *cvBufferRef)
 }
 #endif
 
-/* PLEX */
-void CLinuxRendererGLES::SetRGB32Image(const char *image, int nHeight, int nWidth, int nPitch)
-{
-  CSingleLock lock(g_graphicsContext);
-  if (m_rgbBuffer == 0)
-  {
-    m_rgbBufferSize = nWidth*nHeight*4;
-    m_rgbBuffer = new BYTE[m_rgbBufferSize];
-    memset(m_rgbBuffer, 0, m_rgbBufferSize);
-  }
-
-  if (nHeight * nWidth * 4 > m_rgbBufferSize)
-  {
-    CLog::Log(LOGERROR,"%s, incorrect image size", __FUNCTION__);
-    return;
-  }
-
-  if (nPitch == nWidth * 4)
-    memcpy(m_rgbBuffer, image, nHeight * nPitch);
-  else
-    for (int i=0; i<nHeight; i++)
-      memcpy(m_rgbBuffer + (i * nWidth * 4), image + (i * nPitch),  nWidth * 4);
-
-  m_bRGBImageSet = true;
-  m_renderMethod = RENDER_SW;
-
-  if (m_pYUVShader)
-  {
-    delete m_pYUVShader;
-    m_pYUVShader = NULL;
-  }
-}
-/* END PLEX */
 #endif
-
-
-/* PLEX */
-bool CLinuxRendererGLES::ValidateRenderer()
-{
-  if (!m_bConfigured)
-    return false;
-
-  // if its first pass, just init textures and return
-  if (ValidateRenderTarget())
-    return false;
-
-  // this needs to be checked after texture validation
-  if (!m_bRGBImageSet && !m_bImageReady)
-    return false;
-
-  int index = m_iYV12RenderBuffer;
-  YUVBUFFER& buf =  m_buffers[index];
-
-  if (!m_bRGBImageSet && !buf.fields[FIELD_FULL][0].id)
-    return false;
-
-  if (!m_bRGBImageSet && buf.image.flags==0)
-    return false;
-
-  return true;
-}
-/* END PLEX */
 

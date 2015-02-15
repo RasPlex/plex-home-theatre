@@ -94,7 +94,6 @@ protected:
   bool              m_deinterlace;
   EDEINTERLACEMODE  m_deinterlace_request;
   bool              m_hdmi_clock_sync;
-  bool              m_first_frame;
   ResolutionUpdateCallBackFn m_res_callback;
   void              *m_res_ctx;
   bool              m_submitted_eos;

@@ -23,12 +23,6 @@
 #include "cores/IPlayer.h"
 #include "threads/Thread.h"
 
-/* PLEX */
-#include "Variant.h"
-/* END PLEX */
-
-
-
 #include "cores/dvdplayer/IDVDPlayer.h"
 
 #include "DVDMessageQueue.h"
@@ -164,9 +158,6 @@ struct OMXSelectionStream
 #else
 };
 #endif
-
-
-
 
 typedef std::vector<OMXSelectionStream> OMXSelectionStreams;
 
@@ -323,8 +314,7 @@ public:
   virtual void  GetAudioCapabilities(std::vector<int> &audioCaps);
   virtual void  GetSubtitleCapabilities(std::vector<int> &subCaps);
 
-
-   /* PLEX */
+  /* PLEX */
   virtual int GetSubtitlePlexID();
   virtual int GetAudioStreamPlexID();
   virtual void SetAudioStreamPlexID(int plexID);
@@ -340,7 +330,6 @@ public:
   virtual bool CanOpenAsync() { return false; }
   virtual void Abort() { m_bAbortRequest = true; }
   /* END PLEX */
-
 protected:
   friend class COMXSelectionStreams;
 
@@ -416,6 +405,10 @@ protected:
   double m_UpdateApplication;
 
   bool m_bAbortRequest;
+
+  /* PLEX */
+  bool m_EndPlaybackRequest;
+  /* END PLEX */
 
   std::string           m_filename; // holds the actual filename
   std::string  m_mimetype;  // hold a hint to what content file contains (mime type)
@@ -573,9 +566,6 @@ protected:
 
   CPlayerOptions          m_PlayerOptions;
 
-  bool m_HasVideo;
-  bool m_HasAudio;
-
   /* PLEX */
   void RelinkPlexStreams();
 
@@ -584,10 +574,10 @@ protected:
   bool         m_hidingSub;
   int          m_vobsubToDisplay;
 
-
   unsigned int m_readRate;
   void UpdateReadRate();
   /* END PLEX */
 
-
+  bool m_HasVideo;
+  bool m_HasAudio;
 };

@@ -79,11 +79,6 @@ void COMXCoreTunel::Initialize(COMXCoreComponent *src_component, unsigned int sr
   m_dst_port    = dst_port;
 }
 
-bool COMXCoreTunel::IsInitialized()
-{
-  return m_tunnel_set;
-}
-
 OMX_ERRORTYPE COMXCoreTunel::Deestablish(bool noWait)
 {
   if(!m_src_component || !m_dst_component || !IsInitialized())
@@ -312,7 +307,7 @@ COMXCoreComponent::COMXCoreComponent()
   m_flush_input         = false;
   m_flush_output        = false;
   m_resource_error      = false;
-  m_bitstream_error     = false;
+
   m_eos                 = false;
 
   m_exit = false;
@@ -416,30 +411,6 @@ OMX_ERRORTYPE COMXCoreComponent::FreeOutputBuffer(OMX_BUFFERHEADERTYPE *omx_buff
   return omx_err;
 }
 
-unsigned int COMXCoreComponent::GetInputBufferSize()
-{
-  int free = m_input_buffer_count * m_input_buffer_size;
-  return free;
-}
-
-unsigned int COMXCoreComponent::GetOutputBufferSize()
-{
-  int free = m_output_buffer_count * m_output_buffer_size;
-  return free;
-}
-
-unsigned int COMXCoreComponent::GetInputBufferSpace()
-{
-  int free = m_omx_input_avaliable.size() * m_input_buffer_size;
-  return free;
-}
-
-unsigned int COMXCoreComponent::GetOutputBufferSpace()
-{
-  int free = m_omx_output_available.size() * m_output_buffer_size;
-  return free;
-}
-
 void COMXCoreComponent::FlushAll()
 {
   FlushInput();
@@ -448,7 +419,7 @@ void COMXCoreComponent::FlushAll()
 
 void COMXCoreComponent::FlushInput()
 {
-  if(!m_handle)
+  if(!m_handle || m_resource_error)
     return;
 
   OMX_ERRORTYPE omx_err = OMX_ErrorNone;
@@ -465,7 +436,7 @@ void COMXCoreComponent::FlushInput()
 
 void COMXCoreComponent::FlushOutput()
 {
-  if(!m_handle)
+  if(!m_handle || m_resource_error)
     return;
 
   OMX_ERRORTYPE omx_err = OMX_ErrorNone;
@@ -631,11 +602,9 @@ OMX_ERRORTYPE COMXCoreComponent::AllocInputBuffers(bool use_buffers /* = false *
   m_input_buffer_count  = portFormat.nBufferCountActual;
   m_input_buffer_size   = portFormat.nBufferSize;
 
-#if OMX_DEBUG_VERBOSE
   CLog::Log(LOGDEBUG, "COMXCoreComponent::AllocInputBuffers component(%s) - port(%d), nBufferCountMin(%u), nBufferCountActual(%u), nBufferSize(%u), nBufferAlignmen(%u)\n",
             m_componentName.c_str(), GetInputPort(), portFormat.nBufferCountMin,
             portFormat.nBufferCountActual, portFormat.nBufferSize, portFormat.nBufferAlignment);
-#endif
 
   for (size_t i = 0; i < portFormat.nBufferCountActual; i++)
   {
@@ -714,11 +683,9 @@ OMX_ERRORTYPE COMXCoreComponent::AllocOutputBuffers(bool use_buffers /* = false 
   m_output_buffer_count  = portFormat.nBufferCountActual;
   m_output_buffer_size   = portFormat.nBufferSize;
 
-#if OMX_DEBUG_VERBOSE
   CLog::Log(LOGDEBUG, "COMXCoreComponent::AllocOutputBuffers component(%s) - port(%d), nBufferCountMin(%u), nBufferCountActual(%u), nBufferSize(%u) nBufferAlignmen(%u)\n",
             m_componentName.c_str(), m_output_port, portFormat.nBufferCountMin,
             portFormat.nBufferCountActual, portFormat.nBufferSize, portFormat.nBufferAlignment);
-#endif
 
   for (size_t i = 0; i < portFormat.nBufferCountActual; i++)
   {
@@ -1146,7 +1113,7 @@ OMX_ERRORTYPE COMXCoreComponent::SetStateForComponent(OMX_STATETYPE state)
   return omx_err;
 }
 
-OMX_STATETYPE COMXCoreComponent::GetState()
+OMX_STATETYPE COMXCoreComponent::GetState() const
 {
   if(!m_handle)
     return (OMX_STATETYPE)0;
@@ -1173,7 +1140,7 @@ OMX_ERRORTYPE COMXCoreComponent::SetParameter(OMX_INDEXTYPE paramIndex, OMX_PTR 
   return omx_err;
 }
 
-OMX_ERRORTYPE COMXCoreComponent::GetParameter(OMX_INDEXTYPE paramIndex, OMX_PTR paramStruct)
+OMX_ERRORTYPE COMXCoreComponent::GetParameter(OMX_INDEXTYPE paramIndex, OMX_PTR paramStruct) const
 {
   if(!m_handle)
     return OMX_ErrorUndefined;
@@ -1205,7 +1172,7 @@ OMX_ERRORTYPE COMXCoreComponent::SetConfig(OMX_INDEXTYPE configIndex, OMX_PTR co
   return omx_err;
 }
 
-OMX_ERRORTYPE COMXCoreComponent::GetConfig(OMX_INDEXTYPE configIndex, OMX_PTR configStruct)
+OMX_ERRORTYPE COMXCoreComponent::GetConfig(OMX_INDEXTYPE configIndex, OMX_PTR configStruct) const
 {
   if(!m_handle)
     return OMX_ErrorUndefined;
@@ -1473,11 +1440,6 @@ bool COMXCoreComponent::Initialize( const std::string &component_name, OMX_INDEX
   m_flush_output  = false;
 
   return true;
-}
-
-bool COMXCoreComponent::IsInitialized()
-{
-  return (m_handle != NULL);
 }
 
 void COMXCoreComponent::ResetEos()

@@ -66,12 +66,7 @@ protected:
   bool                      m_bAllowFullscreen;
 
   float                     m_fForcedAspectRatio;
-  unsigned int              m_width;
-  unsigned int              m_height;
-  unsigned int              m_video_width;
-  unsigned int              m_video_height;
   unsigned                  m_flags;
-  float                     m_fps;
 
   CRect                     m_dst_rect;
   int                       m_view_mode;
@@ -83,8 +78,6 @@ protected:
   CDVDMessageQueue      &m_messageParent;
 
   BitstreamStats m_videoStats;
-
-  DVDVideoPicture* m_pTempOverlayPicture;
 
   void ProcessOverlays(int iGroupId, double pts);
   double NextOverlay(double pts);
@@ -132,23 +125,7 @@ public:
   int GetFreeSpace();
   void  SetVideoRect(const CRect &SrcRect, const CRect &DestRect);
   static void RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect);
-
-  inline int GetCacheLevel()
-  {
-    if (m_omxVideo.GetInputBufferSize() > 0)
-      return 100 - ((100 * m_omxVideo.GetFreeSpace()) / m_omxVideo.GetInputBufferSize());
-    else
-      return 0;
-  }
-
   void ResolutionUpdateCallBack(uint32_t width, uint32_t height, float pixel_aspect);
   static void ResolutionUpdateCallBack(void *ctx, uint32_t width, uint32_t height, float pixel_aspect);
 };
-
-/* PLEX */
-extern CEvent g_CacheSyncEvent;
-extern double g_VideoCachePts;
-extern double g_AudioCachePts;
-/* END PLEX */
-
 #endif

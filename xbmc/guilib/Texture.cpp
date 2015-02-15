@@ -36,11 +36,6 @@
 #include "filesystem/AndroidAppFile.h"
 #endif
 
-/* PLEX */
-#include "filesystem/File.h"
-/* END PLEX */
-
-#include "Stopwatch.h"
 /************************************************************************/
 /*                                                                      */
 /************************************************************************/
