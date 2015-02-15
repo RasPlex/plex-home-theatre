@@ -105,7 +105,7 @@ void CPlexSectionFanout::Refresh(bool force)
     if (!g_advancedSettings.m_bHideFanouts)
     {
 /* On slow/limited systems we don't want to have the full list */
-#if defined RPI_VERSION && RPI_VERSION == 1
+#ifdef TARGET_RASPBERRY_PI_1
       trueUrl.SetOption("X-Plex-Container-Start", "0");
       trueUrl.SetOption("X-Plex-Container-Size", "10");
 #endif

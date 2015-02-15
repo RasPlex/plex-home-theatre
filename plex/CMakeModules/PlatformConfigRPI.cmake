@@ -11,10 +11,8 @@ endif()
 
 if(RPI_PROJECT STREQUAL "RPi")
   add_definitions(-DTARGET_RASPBERRY_PI_1)
-  add_definitions(-DRPI_VERSION=1)
 elseif(RPI_PROJECT STREQUAL "RPi2")
   add_definitions(-DTARGET_RASPBERRY_PI_2)
-  add_definitions(-DRPI_VERSION=2)
 endif()
 
 message(STATUS "Building for Raspberry Pi version " ${RPI_PROJECT})
