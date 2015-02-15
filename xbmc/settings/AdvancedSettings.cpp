@@ -347,11 +347,7 @@ void CAdvancedSettings::Initialize()
 #endif
 
   m_bCollapseSingleSeason = true;
-#ifdef TARGET_RASPBERRY_PI
-  m_smartCacheUpperLimit = 1024 * 1024 * 50;
-#else
   m_smartCacheUpperLimit = 1024 * 1024 * 100;
-#endif
 
   m_iShowFirstRun = 1;
   m_bEnableGDM = true;
