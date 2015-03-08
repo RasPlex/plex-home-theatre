@@ -206,9 +206,8 @@ bool COMXImage::CreateThumb(const CStdString& srcFile, unsigned int maxHeight, u
   COMXImageReEnc reenc;
   void *pDestBuffer;
   unsigned int nDestSize;
-  int orientation = additional_info == "flipped" ? 1:0;
-  if ((srcFile.substr(0, 13) == "plexserver://" || URIUtils::GetExtension(srcFile).Equals(".jpg") || URIUtils::GetExtension(srcFile).Equals(".tbn")) &&
-      file.ReadFile(srcFile, orientation) && reenc.ReEncode(file, maxWidth, maxHeight, pDestBuffer, nDestSize))
+  if ((URIUtils::GetExtension(srcFile).Equals(".jpg") || URIUtils::GetExtension(srcFile).Equals(".tbn")) &&
+      file.ReadFile(srcFile) && reenc.ReEncode(file, maxWidth, maxHeight, pDestBuffer, nDestSize))
   {
     XFILE::CFile outfile;
     if (outfile.OpenForWrite(destFile, true))
@@ -880,7 +879,7 @@ bool COMXImageFile::ReadFile(const CStdString& inputFile, int orientation)
 {
   XFILE::CFile      m_pFile;
   m_filename = inputFile.c_str();
-  if(!m_pFile.Open(inputFile, READ_NO_CACHE))
+  if(!m_pFile.Open(inputFile, 0))
   {
     CLog::Log(LOGERROR, "%s::%s %s not found\n", CLASSNAME, __func__, inputFile.c_str());
     return false;

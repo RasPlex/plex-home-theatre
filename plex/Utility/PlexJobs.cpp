@@ -20,9 +20,6 @@
 #include "PlexUtils.h"
 #include "xbmc/Util.h"
 #include "ApplicationMessenger.h"
-#if defined(HAS_OMXPLAYER)
-#include "cores/omxplayer/OMXImage.h"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 bool CPlexHTTPFetchJob::DoWork()
