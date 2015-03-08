@@ -33,7 +33,7 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
     if (busy)
       busy->Show();
 
-#ifdef TARGET_RASPBERRY_PI_1
+#ifdef TARGET_RASPBERRY_PI
     // we dont want to have renderloop called
     // too often as it slows a lot the ongoing job
     std::vector<CAnimation> emptyAnims;
@@ -64,7 +64,7 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
         success = false;
       }
       lk.Leave();
-#ifndef TARGET_RASPBERRY_PI_1
+#ifndef TARGET_RASPBERRY_PI
       g_windowManager.ProcessRenderLoop();
 #endif
     }

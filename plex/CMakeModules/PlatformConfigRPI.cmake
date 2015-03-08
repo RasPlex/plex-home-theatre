@@ -9,6 +9,7 @@ if(NOT DEFINED RPI_PROJECT)
   set(RPI_PROJECT "RPi")
 endif()
 
+add_definitions(-DTARGET_RASPBERRY_PI)
 if(RPI_PROJECT STREQUAL "RPi")
   add_definitions(-DTARGET_RASPBERRY_PI_1)
 elseif(RPI_PROJECT STREQUAL "RPi2")
@@ -144,7 +145,6 @@ add_definitions(
     -DTARGET_LINUX
     -D_LINUX
     -D_ARMEL
-    -DTARGET_RASPBERRY_PI
     -DTARGET_RPI
 	  -DTARGET_LINUX
     -DHAS_GLES=2
