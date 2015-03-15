@@ -304,7 +304,7 @@ bool CGUIWindowPlexPreplayVideo::Update(const CStdString &strDirectory, bool upd
   bool ret = CGUIMediaWindow::Update(strDirectory, updateFilterPath);
 
   CURL currentURL(strDirectory);
-  if (!currentURL.HasOption("checkfiles"))
+  if (!currentURL.HasOption("checkFiles"))
   {
     currentURL.SetOption("checkFiles", "1");
     CPlexDirectoryFetchJob *job = new CPlexDirectoryFetchJob(currentURL, CPlexDirectoryCache::CACHE_STRATEGY_ALWAYS);
