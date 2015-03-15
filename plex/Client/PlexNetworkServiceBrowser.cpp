@@ -36,6 +36,10 @@ void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service
       CPlexConnectionPtr(new CPlexConnection(CPlexConnection::CONNECTION_DISCOVERED, address, port));
   server->AddConnection(conn);
 
+  if (conn->TestReachability(server) == CPlexConnection::CONNECTION_STATE_REACHABLE) {
+    server->SetActiveConnection(conn);
+  }
+
   g_plexApplication.serverManager->UpdateFromDiscovery(server);
 
   if (!server || server->GetUUID().empty())
@@ -45,8 +49,6 @@ void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service
   m_discoveredServers[server->GetUUID()] = server;
   dprintf("CPlexNetworkServiceBrowser::handleServiceArrival %s arrived",
           service->address().to_string().c_str());
-
-  g_plexApplication.serverManager->UpdateReachability(true);
   g_plexApplication.timer->RestartTimeout(5000, this);
 }
 
