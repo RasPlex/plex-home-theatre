@@ -397,6 +397,7 @@ class CAdvancedSettings
     void SetDirtyRegionsAlgorithm(int algorithm);
     void SetDirtyRegionsNoFlipTimeout(int timeout);
     bool m_bUseMatroskaTranscodes;
+    bool m_bSharedSectionsOnHome;
     /* END PLEX */
 };
 
