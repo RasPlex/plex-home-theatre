@@ -161,7 +161,7 @@ bool CGUIWindowHome::OnAction(const CAction &action)
         m_lastSelectedItem = GetCurrentItemName();
         m_lastSelectedSubItem.Empty();
         if (g_plexApplication.timer)
-          g_plexApplication.timer->SetTimeout(200, this);
+          g_plexApplication.timer->RestartTimeout(200, this);
       }
 
       if (action.GetID() == ACTION_SELECT_ITEM && pItem->HasProperty("sectionPath") &&
@@ -379,12 +379,16 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
     {
       UpdateSections();
 
+      SectionsNeedsRefresh();
+
       RestoreSection();
 
       if (m_lastSelectedItem == "Search")
         RefreshSection("global://art/", CPlexSectionFanout::SECTION_TYPE_GLOBAL_FANART);
-      
-      RefreshAllSections(false);
+
+      if (g_plexApplication.timer)
+        g_plexApplication.timer->RestartTimeout(200, this);
+
       g_plexApplication.themeMusicPlayer->playForItem(CFileItem());
       
       break;
@@ -392,7 +396,7 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
 
     case GUI_MSG_PLEX_BEST_SERVER_UPDATED:
     {
-      RefreshAllSections(true);
+      SectionsNeedsRefresh();
       return true;
     }
 
@@ -410,7 +414,7 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
           UpdateSections();
           
           // we have a new section, refresh it
-          if (message.GetMessage() == GUI_MSG_PLEX_SERVER_DATA_LOADED)
+          if (message.GetParam1() == GUI_MSG_PLEX_SERVER_DATA_LOADED)
             RefreshSectionsForServer(message.GetStringParam());
           break;
         }
@@ -645,7 +649,7 @@ void CGUIWindowHome::OnWatchStateChanged(const CGUIMessage& message)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void CGUIWindowHome::OpenItem(CFileItemPtr item)
 {
-  if (item->GetProperty("sectionpath").asString().empty())
+  if (item->GetProperty("sectionPath").asString().empty())
   {
     if ((item->GetPlexDirectoryType() == PLEX_DIR_TYPE_PLAYLIST) && item->GetProperty("leafCount").asInteger() == 0)
     {
@@ -735,13 +739,21 @@ void CGUIWindowHome::UpdateSections()
     return;
   }
 
-  vector<CGUIListItemPtr>& oldList = control->GetStaticItems();
+  bool listUpdated = false;
+
+  vector<CGUIListItemPtr> oldList;
+  BOOST_FOREACH(CGUIListItemPtr item, control->GetStaticItems())
+  {
+    if (!item->HasProperty("sectionPath") || m_sections.find(item->GetProperty("sectionPath").asString()) != m_sections.end())
+      oldList.push_back(item);
+    else
+      listUpdated = true;
+  }
 
   CFileItemListPtr sections = g_plexApplication.dataLoader->GetAllSections();
   vector<CGUIListItemPtr> newList;
   vector<CGUIListItemPtr> newSections;
 
-  bool listUpdated = false;
   bool haveShared = false;
   bool haveChannels = false;
   bool haveUpdate = false;
@@ -772,7 +784,7 @@ void CGUIWindowHome::UpdateSections()
       else if (item->HasProperty("playlists"))
       {
         havePlaylists = true;
-        if (g_plexApplication.serverManager->GetBestServer())
+        if (g_plexApplication.serverManager->GetBestServer() && g_plexApplication.dataLoader->AnyOwendServerHasPlaylists())
           newList.push_back(item);
         else
           listUpdated = true;
@@ -1047,6 +1059,15 @@ void CGUIWindowHome::SectionNeedsRefresh(const CStdString &url)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+void CGUIWindowHome::SectionsNeedsRefresh()
+{
+  BOOST_FOREACH(nameSectionPair p, m_sections)
+  {
+    p.second->m_needsRefresh = true;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void CGUIWindowHome::OnTimeout()
 {
   if (GetCurrentItemName() == m_lastSelectedItem)
@@ -1133,8 +1154,9 @@ bool CGUIWindowHome::ShowSection(const CStdString &url)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 bool CGUIWindowHome::ShowCurrentSection()
 {
-  if (GetCurrentItemName(true))
-    return ShowSection(GetCurrentItemName(true));
+  CStdString name = GetCurrentItemName(true);
+  if (!name.IsEmpty())
+    return ShowSection(name);
   return false;
 }
 
@@ -1183,6 +1205,7 @@ void CGUIWindowHome::RestoreSection()
 
           if (fItem->HasProperty("sectionPath"))
             ShowSection(fItem->GetProperty("sectionPath").asString());
+          return;
         }
       }
       idx++;
