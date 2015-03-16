@@ -74,12 +74,18 @@ void
 CPlexConnection::Merge(CPlexConnectionPtr otherConnection)
 {
   m_url = otherConnection->m_url;
-  m_type |= otherConnection->m_type;
+  if ((otherConnection->m_type & CONNECTION_DISCOVERED) == CONNECTION_DISCOVERED)
+    m_type = otherConnection->m_type;
+  else
+    m_type |= otherConnection->m_type;
 
   // If we don't have a token or if the otherConnection have a new token, then we
   // need to use that token instead of our own
   if (m_token.IsEmpty() || (!otherConnection->m_token.IsEmpty() && m_token != otherConnection->m_token))
     m_token = otherConnection->m_token;
+
+  if (m_state != CONNECTION_STATE_REACHABLE && otherConnection->m_state == CONNECTION_STATE_REACHABLE)
+    m_state = otherConnection->m_state;
 
   m_refreshed = true;
 }
