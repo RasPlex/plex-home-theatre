@@ -39,6 +39,13 @@ set(LINK_PKG
   DBUS
 )
 
+if(OPENELEC)
+  list(REMOVE_ITEM LINK_PKG SDL_image)
+  list(REMOVE_ITEM LINK_PKG SDL_mixer)
+  list(REMOVE_ITEM LINK_PKG FLAC)
+  add_definitions(-DHAVE_DBUS)
+endif(OPENELEC)
+
 if(NOT USE_INTERNAL_FFMPEG)
   list(APPEND LINK_PKG FFmpeg)
 else()
@@ -128,7 +135,7 @@ if(DEFINED OPENGL_FOUND)
 endif()
 
 #### default lircdevice
-set(LIRC_DEVICE "/dev/lircd")
+set(LIRC_DEVICE "/run/lirc/lircd")
 
 #### on linux we want to use a "easy" name
 set(EXECUTABLE_NAME "plexhometheater")
@@ -138,6 +145,10 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
 else()
   set(ARCH "i486-linux")
 endif()
+
+foreach(path ${CMAKE_INCLUDE_PATH})
+    include_directories(${path})
+endforeach()
 
 set(LIBPATH bin)
 set(BINPATH bin)

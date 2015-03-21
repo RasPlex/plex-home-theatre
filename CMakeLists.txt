@@ -113,7 +113,7 @@ if(TARGET_WIN32)
   )
 endif(TARGET_WIN32)
 
-if(NOT TARGET_RPI)
+if(NOT TARGET_RPI AND NOT OPENELEC)
   # Build the texturepacker
   add_subdirectory(tools/TexturePacker)
 endif()

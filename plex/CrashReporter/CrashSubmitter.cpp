@@ -16,7 +16,7 @@
 #include "URL.h"
 #include "utils/Base64.h"
 
-#ifdef TARGET_RASPBERRY_PI
+#if defined(TARGET_RASPBERRY_PI) || defined(OPENELEC)
 #define SUBMITTER_URL "http://crashreport.rasplex.com/crashes"
 #else
 #define SUBMITTER_URL "http://crashreport.plexapp.com:8881"
