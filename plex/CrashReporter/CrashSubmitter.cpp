@@ -86,7 +86,7 @@ void CrashSubmitter::Upload()
         continue;
 
       CStdString fname = URIUtils::AddFileToFolder(uploadPath, URIUtils::GetFileName(file->GetPath()));
-      CLog::Log(LOGDEBUG, "CrashReporter::Upload moving %s to %s", file->GetPath().c_str(), fname.c_str());
+      CLog::Log(LOGNOTICE, "CrashReporter::Upload moving %s to %s", file->GetPath().c_str(), fname.c_str());
 
       XFILE::CFile::Rename(file->GetPath(), fname);
 
@@ -119,7 +119,7 @@ CStdString CrashSubmitter::GetDumpData(const CStdString &path)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 bool CrashSubmitter::UploadFile(const CStdString& p)
 {
-  CLog::Log(LOGDEBUG,"CrashSubmitter::UploadFile Uploading crash report %s", p.c_str());
+  CLog::Log(LOGNOTICE,"CrashSubmitter::UploadFile Uploading crash report %s", p.c_str());
   XFILE::CCurlFile http;
   CURL u(SUBMITTER_URL);
 
@@ -151,7 +151,7 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
   CStdString data;
   if (!http.Post(u.Get(), "dumpfileb64=" + b64data, data))
   {
-    CLog::Log(LOGDEBUG, "CrashSubmitter::UploadFile failed to upload to %s", SUBMITTER_URL);
+    CLog::Log(LOGERROR, "CrashSubmitter::UploadFile failed to upload to %s", SUBMITTER_URL);
     return false;
   }
 
@@ -159,7 +159,7 @@ bool CrashSubmitter::UploadFile(const CStdString& p)
   {
     sprintf(message, "Please reference crash id: %s \nif you file a bug report at tiny.cc/rasplex-bugs", data.c_str());
     CGUIDialogOK::ShowAndGetInput("Crash report submitted", message,  "", "");
-    CLog::Log(LOGDEBUG, "CrashSubmitter::UploadFile got result: %s", data.c_str());
+    CLog::Log(LOGNOTICE, "CrashSubmitter::UploadFile got result: %s", data.c_str());
   }
 
   return true;
