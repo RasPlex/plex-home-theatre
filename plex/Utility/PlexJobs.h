@@ -223,7 +223,7 @@ class CPlexThemeMusicPlayerJob : public CJob
 class CPlexTextureCacheJob : public CTextureCacheJob
 {
 private:
-  XFILE::CFile m_inputFile;
+  XFILE::CPlexFile m_inputFile;
   XFILE::CFile m_outputFile;
 
 public:
