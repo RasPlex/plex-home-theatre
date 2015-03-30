@@ -627,12 +627,8 @@ bool COMXAudio::Initialize(AEAudioFormat format, OMXClock *clock, CDVDStreamInfo
     }
 
     omx_buffer->nOffset = 0;
-    omx_buffer->nFilledLen = sizeof(m_wave_header);
-    if(omx_buffer->nFilledLen > omx_buffer->nAllocLen)
-    {
-      CLog::Log(LOGERROR, "COMXAudio::Initialize - omx_buffer->nFilledLen > omx_buffer->nAllocLen");
-      return false;
-    }
+    omx_buffer->nFilledLen  = std::min(sizeof(m_wave_header), omx_buffer->nAllocLen);
+
     memset((unsigned char *)omx_buffer->pBuffer, 0x0, omx_buffer->nAllocLen);
     memcpy((unsigned char *)omx_buffer->pBuffer, &m_wave_header, omx_buffer->nFilledLen);
     omx_buffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG | OMX_BUFFERFLAG_ENDOFFRAME;
@@ -641,6 +637,7 @@ bool COMXAudio::Initialize(AEAudioFormat format, OMXClock *clock, CDVDStreamInfo
     if (omx_err != OMX_ErrorNone)
     {
       CLog::Log(LOGERROR, "%s::%s - OMX_EmptyThisBuffer() failed with result(0x%x)\n", CLASSNAME, __func__, omx_err);
+      m_omx_decoder.DecoderEmptyBufferDone(m_omx_decoder.GetComponent(), omx_buffer);
       return false;
     }
   } 
@@ -658,12 +655,7 @@ bool COMXAudio::Initialize(AEAudioFormat format, OMXClock *clock, CDVDStreamInfo
       }
   
       omx_buffer->nOffset = 0;
-      omx_buffer->nFilledLen = m_extrasize;
-      if(omx_buffer->nFilledLen > omx_buffer->nAllocLen)
-      {
-        CLog::Log(LOGERROR, "%s::%s - omx_buffer->nFilledLen > omx_buffer->nAllocLen", CLASSNAME, __func__);
-        return false;
-      }
+      omx_buffer->nFilledLen = std::min((OMX_U32)m_extrasize, omx_buffer->nAllocLen);
 
       memset((unsigned char *)omx_buffer->pBuffer, 0x0, omx_buffer->nAllocLen);
       memcpy((unsigned char *)omx_buffer->pBuffer, m_extradata, omx_buffer->nFilledLen);
@@ -673,6 +665,7 @@ bool COMXAudio::Initialize(AEAudioFormat format, OMXClock *clock, CDVDStreamInfo
       if (omx_err != OMX_ErrorNone)
       {
         CLog::Log(LOGERROR, "%s::%s - OMX_EmptyThisBuffer() failed with result(0x%x)\n", CLASSNAME, __func__, omx_err);
+        m_omx_decoder.DecoderEmptyBufferDone(m_omx_decoder.GetComponent(), omx_buffer);
         return false;
       }
     }
@@ -1059,26 +1052,14 @@ unsigned int COMXAudio::AddPackets(const void* data, unsigned int len, double dt
     if(demuxer_samples_sent == demuxer_samples)
       omx_buffer->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
-    int nRetry = 0;
-    while(true)
+    omx_err = m_omx_decoder.EmptyThisBuffer(omx_buffer);
+    if (omx_err != OMX_ErrorNone)
     {
-      omx_err = m_omx_decoder.EmptyThisBuffer(omx_buffer);
-      if (omx_err == OMX_ErrorNone)
-      {
-        //CLog::Log(LOGINFO, "AudiD: dts:%.0f pts:%.0f size:%d\n", dts, pts, len);
-        break;
-      }
-      else
-      {
-        CLog::Log(LOGERROR, "%s::%s - OMX_EmptyThisBuffer() failed with result(0x%x)\n", CLASSNAME, __func__, omx_err);
-        nRetry++;
-      }
-      if(nRetry == 5)
-      {
-        CLog::Log(LOGERROR, "%s::%s - OMX_EmptyThisBuffer() finaly failed\n", CLASSNAME, __func__);
-        return 0;
-      }
+      CLog::Log(LOGERROR, "%s::%s - OMX_EmptyThisBuffer() finaly failed\n", CLASSNAME, __func__);
+      m_omx_decoder.DecoderEmptyBufferDone(m_omx_decoder.GetComponent(), omx_buffer);
+      return 0;
     }
+    //CLog::Log(LOGINFO, "AudiD: dts:%.0f pts:%.0f size:%d\n", dts, pts, len);
 
     omx_err = m_omx_decoder.WaitForEvent(OMX_EventPortSettingsChanged, 0);
     if (omx_err == OMX_ErrorNone)
@@ -1320,6 +1301,7 @@ void COMXAudio::SubmitEOS()
   if (omx_err != OMX_ErrorNone)
   {
     CLog::Log(LOGERROR, "%s::%s - OMX_EmptyThisBuffer() failed with result(0x%x)\n", CLASSNAME, __func__, omx_err);
+    m_omx_decoder.DecoderEmptyBufferDone(m_omx_decoder.GetComponent(), omx_buffer);
     return;
   }
   CLog::Log(LOGINFO, "%s::%s", CLASSNAME, __func__);
