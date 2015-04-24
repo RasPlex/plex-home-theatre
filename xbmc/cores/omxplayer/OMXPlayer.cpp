@@ -2786,6 +2786,11 @@ void COMXPlayer::HandleMessages()
 
         CLog::Log(LOGDEBUG, "COMXPlayer::HandleMessages - player started %d (tpa:%d,a:%d,v:%d)", player, TPA(m_playSpeed), m_CurrentAudio.started, m_CurrentVideo.started);
       }
+      else if (pMsg->IsType(CDVDMsg::GENERAL_SYNCHRONIZE))
+      {
+        if (((CDVDMsgGeneralSynchronize*)pMsg)->Wait(100, SYNCSOURCE_OWNER))
+          CLog::Log(LOGDEBUG, "CDVDPlayer - CDVDMsg::GENERAL_SYNCHRONIZE");
+      }
     }
     catch (...)
     {
