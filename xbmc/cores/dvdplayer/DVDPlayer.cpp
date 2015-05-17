@@ -1015,7 +1015,6 @@ bool CDVDPlayer::ReadPacket(DemuxPacket*& packet, CDemuxStream*& stream)
             SelectionStream& s = m_SelectionStreams.Get(STREAM_SUBTITLE, i);
             if (s.plexID == m_vobsubToDisplay && OpenSubtitleStream(s.id, s.source))
             {
-              OpenSubtitleStream(s.id, s.source);
               break;
             }
           }
@@ -4439,7 +4438,6 @@ void CDVDPlayer::OpenDefaultStreams(bool reset)
         if (streamType == PLEX_STREAM_AUDIO && selected)
         {
           // ...see if we can match it up with our stream.
-          count = m_SelectionStreams.Count(STREAM_AUDIO);
           for (int i=0; i<count && !valid; i++)
           {
             SelectionStream& s = m_SelectionStreams.Get(STREAM_AUDIO, i);
@@ -4476,6 +4474,7 @@ void CDVDPlayer::OpenDefaultStreams(bool reset)
     return;
 
   // open subtitle stream
+  count = m_SelectionStreams.Count(STREAM_SUBTITLE);
   valid = false;
   m_dvdPlayerVideo.EnableSubtitle(true);
 
@@ -4488,8 +4487,6 @@ void CDVDPlayer::OpenDefaultStreams(bool reset)
       // If we've found the selected subtitle stream...
       if (stream->GetProperty("streamType").asInteger() == PLEX_STREAM_SUBTITLE && stream->GetProperty("selected").asBoolean())
       {
-        count = m_SelectionStreams.Count(STREAM_SUBTITLE);
-
         for (int i = 0; i<count && !valid; i++)
         {
           SelectionStream& s = m_SelectionStreams.Get(STREAM_SUBTITLE, i);
