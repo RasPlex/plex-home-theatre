@@ -2,6 +2,7 @@
 #include "JobManager.h"
 #include "dialogs/GUIDialogBusy.h"
 #include "guilib/GUIWindowManager.h"
+#include "settings/AdvancedSettings.h"
 #include "boost/foreach.hpp"
 #include "log.h"
 #include "Application.h"
@@ -9,6 +10,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CPlexBusyIndicator::CPlexBusyIndicator()
+  : m_blockEvent(true)
 {
 }
 
@@ -23,7 +25,10 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
   m_resultMap[id] = result;
 
   lk.Leave();
-  m_blockEvent.WaitMSec(300); // wait an initial 300ms if this is a fast operation.
+
+  // wait an initial 300ms if this is a fast operation.
+  if (m_blockEvent.WaitMSec(g_advancedSettings.m_videoBusyDialogDelay_ms))
+    return true;
 
   CGUIDialogBusy* busy = NULL;
 
@@ -32,14 +37,6 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
     busy = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
     if (busy)
       busy->Show();
-
-#ifdef TARGET_RASPBERRY_PI
-    // we dont want to have renderloop called
-    // too often as it slows a lot the ongoing job
-    std::vector<CAnimation> emptyAnims;
-    busy->SetAnimations(emptyAnims);
-    g_windowManager.ProcessRenderLoop();
-#endif
   }
 
   lk.Enter();
@@ -48,11 +45,16 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
   while (m_callbackMap.size() > 0)
   {
     lk.Leave();
+#ifdef TARGET_RASPBERRY_PI
     while (!m_blockEvent.WaitMSec(100))
+#else
+    while (!m_blockEvent.WaitMSec(20))
+#endif
     {
-      lk.Enter();
+      g_windowManager.ProcessRenderLoop(false);
       if (busy && busy->IsCanceled())
       {
+        lk.Enter();
         std::pair<int, IJobCallback*> p;
         BOOST_FOREACH(p, m_callbackMap)
           CJobManager::GetInstance().CancelJob(p.first);
@@ -62,16 +64,14 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
         m_resultMap.clear();
         m_blockEvent.Set();
         success = false;
+        lk.Leave();
+        break;
       }
-      lk.Leave();
-#ifndef TARGET_RASPBERRY_PI
-      g_windowManager.ProcessRenderLoop();
-#endif
     }
     lk.Enter();
   }
 
-  if (busy && busy->IsActive())
+  if (busy)
     busy->Close();
 
   return success;
@@ -85,9 +85,12 @@ void CPlexBusyIndicator::OnJobComplete(unsigned int jobID, bool success, CJob* j
   if (m_callbackMap.find(jobID) != m_callbackMap.end())
   {
     IJobCallback* cb = m_callbackMap[jobID];
-    lk.Leave();
     if (cb)
+    {
+      lk.Leave();
       cb->OnJobComplete(jobID, success, job);
+      lk.Enter();
+    }
 
     if (m_resultMap[jobID])
     {
@@ -98,7 +101,6 @@ void CPlexBusyIndicator::OnJobComplete(unsigned int jobID, bool success, CJob* j
       }
     }
 
-    lk.Enter();
     m_callbackMap.erase(jobID);
     m_resultMap.erase(jobID);
 
