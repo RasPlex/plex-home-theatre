@@ -749,7 +749,7 @@ void CGUIPlexMediaWindow::LoadPage(int iPage)
   u.SetOption("X-Plex-Container-Size", boost::lexical_cast<std::string>(pageSize));
   
 #ifdef TARGET_RASPBERRY_PI
-  PlexUtils::PauseRendering(true, true);
+  //PlexUtils::PauseRendering(true, true);
 #endif
   m_fetchJobs[iPage] = CJobManager::GetInstance().AddJob(new CPlexDirectoryFetchJob(u), this);
 }
@@ -781,7 +781,7 @@ void CGUIPlexMediaWindow::OnJobComplete(unsigned int jobID, bool success, CJob* 
   }
 
 #ifdef TARGET_RASPBERRY_PI
-  PlexUtils::PauseRendering(false, true);
+  //PlexUtils::PauseRendering(false, true);
 #endif
   // remove FetchJob from List
   m_fetchJobs.erase(pageNum);
