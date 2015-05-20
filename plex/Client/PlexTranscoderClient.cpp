@@ -34,11 +34,13 @@ typedef std::map<std::string, std::string> str2str;
 
 static str2str _resolutions = boost::assign::list_of<std::pair<std::string, std::string> >
   ("64", "220x180") ("96", "220x128") ("208", "284x160") ("320", "420x240") ("720", "576x320") ("1500", "720x480") ("2000", "1024x768")
-  ("3000", "1280x720") ("4000", "1280x720") ("8000", "1920x1080") ("10000", "1920x1080") ("12000", "1920x1080") ("20000", "1920x1080");
+  ("3000", "1280x720") ("4000", "1280x720") ("8000", "1920x1080") ("10000", "1920x1080") ("12000", "1920x1080") ("20000", "1920x1080")
+  (PLEX_TRANSCODER_MAX_BITRATE_STR, "1920x1080");
 
 static str2str _qualities = boost::assign::list_of<std::pair<std::string, std::string> >
   ("64", "10") ("96", "20") ("208", "30") ("320", "30") ("720", "40") ("1500", "60") ("2000", "60")
-  ("3000", "75") ("4000", "100") ("8000", "60") ("10000", "75") ("12000", "90") ("20000", "100");
+  ("3000", "75") ("4000", "100") ("8000", "60") ("10000", "75") ("12000", "90") ("20000", "100")
+  (PLEX_TRANSCODER_MAX_BITRATE_STR, "100");
 
 CPlexTranscoderClient *CPlexTranscoderClient::_Instance = NULL;
 
@@ -241,7 +243,10 @@ std::string CPlexTranscoderClient::GetPrettyBitrate(int rawbitrate)
   if (rawbitrate < 1000)
     return boost::lexical_cast<std::string>(rawbitrate) + " kbps";
   else
-    return boost::lexical_cast<std::string>(rawbitrate / 1000) + " Mbps";
+    if (rawbitrate == atoi(PLEX_TRANSCODER_MAX_BITRATE_STR))
+      return g_localizeStrings.Get(43010);
+    else
+      return boost::lexical_cast<std::string>(rawbitrate / 1000) + " Mbps";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -281,62 +286,27 @@ CURL CPlexTranscoderClient::GetTranscodeURL(CPlexServerPtr server, const CFileIt
 
   CURL tURL;
 
-  switch (getServerTranscodeMode(server))
+  tURL = server->BuildPlexURL("/video/:/transcode/universal/start.mkv");
+  tURL.SetOption("protocol", "http");
+  tURL.SetOption("copyts", "1");
+
+  if (item.HasProperty("viewOffset") &&item.m_lStartOffset == STARTOFFSET_RESUME)
   {
-    case PLEX_TRANSCODE_MODE_HLS:
-    {
-      tURL = server->BuildURL("/video/:/transcode/universal/start.m3u8");
-      tURL.SetOption("protocol", "hls");
-      tURL.SetOption("fastSeek", "1");
-
-      /* since we are passing the URL to FFMPEG we need to pass our
-       * headers as well */
-      std::vector<stringPair> hdrs = XFILE::CPlexFile::GetHeaderList();
-      BOOST_FOREACH(stringPair p, hdrs)
-      {
-        // Let's ignore X-Plex-Client-Capabilities, ffmpeg is cranky about {}
-        if (p.first == "X-Plex-Client-Capabilities")
-          continue;
-
-        tURL.SetOption(p.first, p.second);
-      }
-      break;
-    }
-
-    case PLEX_TRANSCODE_MODE_MKV:
-    {
-      tURL = server->BuildPlexURL("/video/:/transcode/universal/start.mkv");
-      tURL.SetOption("protocol", "http");
-      tURL.SetOption("copyts", "1");
-
-      if (item.HasProperty("viewOffset") &&
-          item.m_lStartOffset == STARTOFFSET_RESUME)
-      {
-        int offset = item.GetProperty("viewOffset").asInteger() / 1000;
-        tURL.SetOption("offset", boost::lexical_cast<std::string>(offset));
-      }
-      else if (item.HasProperty("viewOffsetSeek"))
-      {
-        // Here we handle seek offset for Matroska seeking
-        // Define transcoder start point
-        int offset = item.GetProperty("viewOffsetSeek").asInteger() / 1000;
-        tURL.SetOption("offset", boost::lexical_cast<std::string>(offset));
-      }
-      break;
-    }
-
-    default:
-    {
-      CLog::Log(LOGERROR,"CPlexTranscoderClient::GetTranscodeURL : item Transcode mode is unknown");
-      break;
-    }
+    int offset = item.GetProperty("viewOffset").asInteger() / 1000;
+    tURL.SetOption("offset", boost::lexical_cast<std::string>(offset));
+  }
+  else if (item.HasProperty("viewOffsetSeek"))
+  {
+    // Here we handle seek offset for Matroska seeking
+    // Define transcoder start point
+    int offset = item.GetProperty("viewOffsetSeek").asInteger() / 1000;
+    tURL.SetOption("offset", boost::lexical_cast<std::string>(offset));
   }
 
   tURL.SetOption("path", item.GetProperty("unprocessed_key").asString());
   tURL.SetOption("session", g_guiSettings.GetString("system.uuid"));
   tURL.SetOption("directPlay", "0");
   tURL.SetOption("directStream", "1");
-
 
   CFileItemPtr mediaItem = CPlexMediaDecisionEngine::getSelectedMediaItem(item);
   if (mediaItem)
@@ -379,41 +349,11 @@ std::string CPlexTranscoderClient::GetCurrentSession()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-CPlexTranscoderClient::PlexTranscodeMode CPlexTranscoderClient::getServerTranscodeMode(const CPlexServerPtr& server)
-{
-  if (!server)
-    return PLEX_TRANSCODE_MODE_NONE;
-  
-  // This is a ugly work-around, since OSX doesn't support transcoding in PHT
-  // we need to force the HLS mode, otherwise there can be certain codec
-  // combinations that will not work correctly. This should be removed
-  // when we merge with the next version of XBMC
-#ifdef TARGET_DARWIN_OSX
-  if (g_guiSettings.GetInt("audiooutput.mode") == AUDIO_IEC958)
-    return PLEX_TRANSCODE_MODE_HLS;
-#endif
-
-  if (g_advancedSettings.m_bUseMatroskaTranscodes)
-  {
-    CPlexServerVersion serverVersion(server->GetVersion());
-    CPlexServerVersion needVersion("0.9.10.0.0-abc123");
-    if (serverVersion > needVersion)
-      return PLEX_TRANSCODE_MODE_MKV;
-  }
-
-  // default to HLS
-  return PLEX_TRANSCODE_MODE_HLS;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 CPlexTranscoderClient::PlexTranscodeMode CPlexTranscoderClient::getItemTranscodeMode(const CFileItem& item)
 {
   if (item.GetProperty("plexDidTranscode").asBoolean(false) == false)
     return PLEX_TRANSCODE_MODE_NONE;
-
-  CFileItemPtr pItem(new CFileItem(item));
-  CPlexServerPtr pServer = g_plexApplication.serverManager->FindFromItem(pItem);
-  return getServerTranscodeMode(pServer);
+  return PLEX_TRANSCODE_MODE_MKV;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

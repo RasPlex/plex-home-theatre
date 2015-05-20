@@ -548,6 +548,8 @@ const CFileItem& CFileItem::operator=(const CFileItem& item)
   m_mediaParts = item.m_mediaParts;
   m_mediaItems = item.m_mediaItems;
   m_mediaPartStreams = item.m_mediaPartStreams;
+  m_overlayItems = item.m_overlayItems;
+  m_relatedItems = item.m_relatedItems;
 
   m_plexDirectoryType = item.m_plexDirectoryType;
   m_selectedMediaPart = item.m_selectedMediaPart;
@@ -882,6 +884,15 @@ bool CFileItem::IsVideo() const
 
   return (g_settings.m_videoExtensions.Find(extension) != -1);
 }
+
+/* PLEX */
+bool CFileItem::IsHomeMovie() const
+{
+  CURL url(GetProperty("guid").asString());
+  return  ((url.GetProtocol() == "com.plexapp.agents.none") &&
+           (GetPlexDirectoryType() == PLEX_DIR_TYPE_MOVIE));
+}
+/* END PLEX */
 
 bool CFileItem::IsEPG() const
 {

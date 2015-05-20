@@ -427,6 +427,11 @@ public:
   std::vector<CFileItemPtr> m_mediaItems;
   std::vector<CFileItemPtr> m_mediaParts;
   std::vector<CFileItemPtr> m_mediaPartStreams;
+  std::vector<CFileItemPtr> m_overlayItems;
+  std::vector<CFileItemPtr> m_relatedItems;
+
+  // for device declarations
+  std::vector<CFileItemPtr> m_connections;
 
   CFileItemPtr m_selectedMediaPart;
 
@@ -436,6 +441,7 @@ public:
   virtual bool IsPlexMediaServerMusic() const;
   bool IsPlexMediaServerLibrary() const;
   bool IsPlexWebkit() const;
+  bool IsHomeMovie() const;
 
   void AddProvider(const CFileItemPtr& provider) { m_chainedProviders.push_back(provider); }
   std::vector<CFileItemPtr>& GetProviders() { return m_chainedProviders; }

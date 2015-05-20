@@ -89,7 +89,7 @@ endforeach()
 
 if(NOT DISABLE_CEC)
   plex_find_package(CEC 0 0)
-endif(DISABLE_CEC)
+endif()
 
 plex_find_package(Threads 1 0)
 if(CMAKE_USE_PTHREADS_INIT)
@@ -135,7 +135,7 @@ if(DEFINED OPENGL_FOUND)
 endif()
 
 #### default lircdevice
-set(LIRC_DEVICE "/run/lirc/lircd")
+set(LIRC_DEVICE "/var/run/lirc/lircd")
 
 #### on linux we want to use a "easy" name
 set(EXECUTABLE_NAME "plexhometheater")

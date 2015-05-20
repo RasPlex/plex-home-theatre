@@ -19,6 +19,7 @@
 #include "guilib/GUIButtonControl.h"
 #include "PlexNavigationHelper.h"
 #include "gtest/gtest_prod.h"
+#include "FileSystem/PlexExtraDataLoader.h"
 #include <set>
 
 // for trunc.
@@ -124,6 +125,7 @@ private:
     std::string GetFilteredURI(const CFileItem &item) const;
 
     CStdString GetLevelURL();
+    CFileItemPtr getSelectedExtraItem();
 
     bool m_hasAdvancedFilters;
     CCriticalSection m_filterValuesSection;
@@ -145,6 +147,8 @@ private:
     CCriticalSection m_fetchMapsSection;
     FetchPages m_fetchedPages;
     FetchJobMap m_fetchJobs;
+
+    CPlexExtraDataLoader m_extraDataLoader;
 };
 
 class CGUIPlexMusicWindow : public CGUIPlexMediaWindow

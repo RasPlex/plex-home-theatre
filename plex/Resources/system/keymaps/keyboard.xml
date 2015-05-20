@@ -64,8 +64,6 @@
       <period>SkipNext</period>
       <comma>SkipPrevious</comma>
       <tab>FullScreen</tab>
-      <printscreen>Screenshot</printscreen>
-      <s mod="ctrl">Screenshot</s>
       <minus>VolumeDown</minus>
       <plus>VolumeUp</plus>
       <equals>VolumeUp</equals>
@@ -172,6 +170,11 @@
       <backspace>Backspace</backspace>
     </keyboard>
   </VirtualKeyboard>
+  <startup>
+    <keyboard>
+      <backspace>Backspace</backspace>
+    </keyboard>
+  </startup>
   <MyTV>
     <keyboard>
       <delete>Delete</delete>

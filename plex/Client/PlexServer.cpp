@@ -6,9 +6,11 @@
 #include "threads/SingleLock.h"
 #include "PlexConnection.h"
 #include "Utility/PlexTimer.h"
+#include "PlexTranscoderClient.h"
 
 #include <boost/foreach.hpp>
 #include <boost/timer.hpp>
+#include <settings/AdvancedSettings.h>
 
 using namespace std;
 
@@ -24,9 +26,9 @@ void CPlexServerConnTestThread::Process()
 {
   CPlexTimer t;
 
-  if (!m_conn->IsLocal())
+  if (!m_conn->IsLocal() || m_conn->m_type != CPlexConnection::CONNECTION_MYPLEX)
   {
-    // Delay for 50 ms to make sure we select a local connection first if possible
+    // Delay for 50 ms to make sure we select a local connection from plex.tv first if possible
     CLog::Log(LOGDEBUG, "CPlexServerConnTestThread::Process delaying 50ms for connection %s", m_conn->toString().c_str());
     Sleep(50);
   }
@@ -112,6 +114,9 @@ bool CPlexServer::CollectDataFromRoot(const CStdString xmlData)
 
     if (root->QueryStringAttribute("transcoderVideoBitrates", &stringValue) == TIXML_SUCCESS)
       m_transcoderBitrates = StringUtils::Split(stringValue, ",");
+
+    // we Add a max value to the transcoder provided ones
+    m_transcoderBitrates.push_back(PLEX_TRANSCODER_MAX_BITRATE_STR);
 
     if (root->QueryStringAttribute("transcoderVideoQualities", &stringValue) == TIXML_SUCCESS)
       m_transcoderQualities = StringUtils::Split(stringValue, ",");
@@ -235,11 +240,15 @@ bool CPlexServer::UpdateReachability()
   BOOST_FOREACH(CPlexConnectionPtr conn, sortedConnections)
   {
     CLog::Log(LOGDEBUG, "CPlexServer::UpdateReachability testing connection %s", conn->toString().c_str());
-    if (g_plexApplication.myPlexManager &&
-        g_plexApplication.myPlexManager->GetCurrentUserInfo().restricted &&
-        conn->GetAccessToken().IsEmpty())
+    if ((g_plexApplication.myPlexManager && g_plexApplication.myPlexManager->GetCurrentUserInfo().restricted && conn->GetAccessToken().IsEmpty()))
     {
       CLog::Log(LOGINFO, "CPlexServer::UpdateReachability skipping connection %s since we are restricted", conn->toString().c_str());
+      m_connectionsLeft --;
+      continue;
+    }
+    else if (g_advancedSettings.m_bRequireEncryptedConnection && conn->isSSL() == false)
+    {
+      CLog::Log(LOGINFO, "CPlexServer::UpdateReachability skipping connection %s since it's not encrypted", conn->toString().c_str());
       m_connectionsLeft --;
       continue;
     }
@@ -254,15 +263,6 @@ bool CPlexServer::UpdateReachability()
     if (!m_testEvent.WaitMSec(1000 * 120))
       CLog::Log(LOGWARNING, "CPlexServer::UpdateReachability waited 2 minutes and connection testing didn't finish.");
   }
-
-  /* kill any left over threads */
-  lk.lock();
-  BOOST_FOREACH(CPlexServerConnTestThread* thread, m_connTestThreads)
-  {
-    CLog::Log(LOGWARNING, "CPlexServer::UpdateReachability done but threads are still running: %s", thread->m_conn->toString().c_str());
-    thread->Cancel();
-  }
-  lk.unlock();
 
   CSingleLock tlk(m_testingLock);
   m_complete = true;
@@ -311,7 +311,7 @@ void CPlexServer::OnConnectionTest(CPlexServerConnTestThread* thread, CPlexConne
   {
     CSingleLock lk(m_connTestThreadLock);
     if (std::find(m_connTestThreads.begin(), m_connTestThreads.end(), thread) != m_connTestThreads.end())
-      m_connTestThreads.erase(std::remove(m_connTestThreads.begin(), m_connTestThreads.end(), thread),
+      m_connTestThreads.erase(std::remove(m_connTestThreads.begin(),m_connTestThreads.end(), thread),
                               m_connTestThreads.end());
     else
       return;
@@ -328,10 +328,16 @@ void CPlexServer::OnConnectionTest(CPlexServerConnTestThread* thread, CPlexConne
       if (!m_complete)
         m_testEvent.Set();
     }
-    else if (conn->IsLocal() && !m_bestConnection->IsLocal())
+    else
     {
-      CLog::Log(LOGDEBUG, "CPlexServer::OnConnectionTest found better connection on %s to %s", GetName().c_str(), conn->GetAddress().Get().c_str());
-      m_activeConnection = conn;
+      bool isBetterLocal = !m_bestConnection->IsLocal() && conn->IsLocal();
+      bool isBetterSSL = !m_bestConnection->isSSL() && conn->isSSL();
+
+      if ((isBetterSSL && conn->IsLocal()) || isBetterLocal)
+      {
+        CLog::Log(LOGDEBUG, "CPlexServer::OnConnectionTest found better connection on %s to %s", GetName().c_str(), conn->GetAddress().Get().c_str());
+        m_activeConnection = conn;
+      }
     }
   }
 
@@ -418,11 +424,21 @@ CURL CPlexServer::GetActiveConnectionURL() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CURL CPlexServer::BuildPlexURL(const CStdString& path) const
 {
-  CURL url;
-  url.SetProtocol("plexserver");
-  url.SetHostName(m_uuid);
-  url.SetFileName(path);
-  return url.Get();
+  if (m_uuid.empty() == false)
+  {
+    CURL url;
+    url.SetProtocol("plexserver");
+    url.SetHostName(m_uuid);
+    url.SetFileName(path);
+    return url.Get();
+  }
+  else
+  {
+    // this means that we have a synthesized server without a uuid
+    // so we can't use plexserver:// url's. Maybe try to return a
+    // real URL instead?
+    return BuildURL(path);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -23,6 +23,8 @@
 
 #define TEXTURE_CACHE_BUFFER_SIZE 131072
 
+#define TEXTURE_CACHE_BUFFER_SIZE 131072
+
 ////////////////////////////////////////////////////////////////////////////////
 bool CPlexHTTPFetchJob::DoWork()
 {

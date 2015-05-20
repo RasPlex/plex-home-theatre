@@ -27,7 +27,7 @@
 #include "Application.h"
 #include "GUIUserMessages.h"
 
-#define EXTRAS_LIST_CONTROL_ID   3  // preplay window Extras list control ID
+#define EXTRAS_LIST_CONTROL_ID   30  // preplay window Extras list control ID
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CGUIWindowPlexPreplayVideo::CGUIWindowPlexPreplayVideo(void)
@@ -126,6 +126,7 @@ bool CGUIWindowPlexPreplayVideo::OnAction(const CAction &action)
       m_vecItems->Get(0)->MarkAsUnWatched();
     else
       m_vecItems->Get(0)->MarkAsWatched();
+    SetInvalid();
     return true;
   }
   else if (action.GetID() == ACTION_MARK_AS_UNWATCHED)
@@ -301,7 +302,17 @@ bool CGUIWindowPlexPreplayVideo::OnBack(int actionID)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 bool CGUIWindowPlexPreplayVideo::Update(const CStdString &strDirectory, bool updateFilterPath)
 {
+  CLog::Log(LOGDEBUG,"CGUIWindowPlexPreplayVideo::Update");
+
+  CStdString plexExtras;
+
+  if (m_vecItems->Size())
+      plexExtras = m_vecItems->Get(0)->GetProperty("PlexExtras").asString();
+
   bool ret = CGUIMediaWindow::Update(strDirectory, updateFilterPath);
+
+  if (m_vecItems->Size())
+    m_vecItems->Get(0)->SetProperty("PlexExtras", plexExtras);
 
   CURL currentURL(strDirectory);
   if (!currentURL.HasOption("checkFiles"))

@@ -1607,19 +1607,20 @@ bool CApplication::Initialize()
         g_guiSettings.SetBool("system.firstrunwizard", true);
         g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
 #else
-        g_guiSettings.SetBool("system.firstrunwizard", true);
         g_windowManager.ActivateWindow(WINDOW_PLEX_STARTUP_HELPER);
+        g_guiSettings.SetBool("system.firstrunwizard", true);
 #endif
-      }
-      else if (g_plexApplication.myPlexManager->IsPinProtected())
-      {
-        g_windowManager.ActivateWindow(WINDOW_STARTUP_ANIM);
       }
       else
+      {
+        CGUIWindowStartup *window = (CGUIWindowStartup*)g_windowManager.GetWindow(WINDOW_STARTUP_ANIM);
+        if (window)
+          window->allowEscOut(false);
+
         g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
+      }
 #endif
     }
-
   }
   else //No GUI Created
   {
@@ -1628,7 +1629,6 @@ bool CApplication::Initialize()
 #endif
     ADDON::CAddonMgr::Get().StartServices(false);
   }
-
   g_sysinfo.Refresh();
 
   CLog::Log(LOGINFO, "removing tempfiles");
@@ -4323,13 +4323,6 @@ bool CApplication::PlayFile(const CFileItem& item_, bool bRestart)
           newItem.SetProperty("viewOffset", offsetSeek);
           newItem.m_lStartOffset = item.m_lStartOffset = ((offsetSeek / 10) - newItem.m_lEndOffset) * 0.75;
         }
-        else if (mode == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_HLS && newItem.m_lStartOffset == STARTOFFSET_RESUME)
-        {
-          CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(newItem.GetProperty("plexserver").asString());
-          
-          CStdString transcodeURL = CPlexTranscoderClient::GetTranscodeURL(server, newItem).Get();
-          newItem.SetPath(transcodeURL);
-        }
       }
 
       item = newItem;
@@ -5238,8 +5231,23 @@ void CApplication::ActivateScreenSaver(bool forceType /*= false */)
 
   // Get Screensaver Mode
   m_screenSaver.reset();
-  if (!CAddonMgr::Get().GetAddon(g_guiSettings.GetString("screensaver.mode"), m_screenSaver))
-    m_screenSaver.reset(new CScreenSaver(""));
+
+  /* PLEX */
+  CStdString mode = g_guiSettings.GetString("screensaver.mode");
+
+#ifdef __PLEX__
+  // if we're on a Home and not with automatic login, then use black instead of dim
+  // to avoid confusion as waking it up will show login screen
+  if ((mode == "screensaver.xbmc.builtin.dim") && g_plexApplication.myPlexManager->IsPinProtected() && !g_guiSettings.GetBool("myplex.automaticlogin"))
+  {
+    mode = "screensaver.xbmc.builtin.black";
+  }
+#endif
+
+  if (!CAddonMgr::Get().GetAddon(mode, m_screenSaver))
+      m_screenSaver.reset(new CScreenSaver(""));
+
+  /* END PLEX */
 
 #ifdef HAS_LCD
   // turn off lcd backlight if requested

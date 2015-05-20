@@ -1,6 +1,28 @@
 <?xml version="1.0"?>
 <includes>
 	<!-- Thumbs -->
+	<include name="ListSelectedFanArt">
+		<control type="group">
+			<posy>-40</posy>
+			<posx>40</posx>
+			<control type="image">
+				<include>PosListItem</include>
+				<width>142</width>
+				<height>80</height>
+				<aspectratio scalediffuse="false" align="center">scale</aspectratio>
+				<texture diffuse="mask-wide-big.png" background="true">$INFO[ListItem.Art(fanart)]</texture>
+				<visible>ListItem.Type(movie)</visible>
+			</control>			
+			<control type="image">
+				<include>PosListItem</include>
+				<width>142</width>
+				<height>80</height>
+				<aspectratio scalediffuse="false" align="center">scale</aspectratio>
+				<texture diffuse="mask-wide-big.png" background="true" fallback="default-thumb-small.png">$INFO[ListItem.Art(thumb)]</texture>
+				<visible>ListItem.Type(episode)</visible>
+			</control>
+		</control>
+	</include>
 	<include name="ListSelectedArt">
 		<!-- TV Show Banner -->
 		<control type="group">
@@ -204,6 +226,7 @@
 				<animation effect="fade" end="40" time="0" condition="true">Conditional</animation>
 			</control>
 			<visible>!Container.PlexContent(Movie) + !Container.PlexContent(Episode) + !Container.PlexContent(Folders) + !Container.PlexContent(Clip) + !Container.PlexContent(Clips)</visible>
+			<animation effect="slide" start="0" end="297" time="500" condition="Control.HasFocus(3)">Conditional</animation>
 			<!-- selected item bg -->
 			<control type="image">
 				<posx>465</posx>

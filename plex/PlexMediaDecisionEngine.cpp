@@ -65,12 +65,8 @@ bool CPlexMediaDecisionEngine::resolveItem(const CFileItem& _item, CFileItem &re
   if (item.GetProperty("plexDidTranscode").asBoolean())
   {
     CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(item.GetProperty("plexserver").asString());
-
-    if ((CPlexTranscoderClient::getServerTranscodeMode(server) == CPlexTranscoderClient::PLEX_TRANSCODE_MODE_MKV))
-    {
-      CStdString transcodeURL = CPlexTranscoderClient::GetTranscodeURL(server, item).Get();
-      item.SetPath(transcodeURL);
-    }
+    CStdString transcodeURL = CPlexTranscoderClient::GetTranscodeURL(server, item).Get();
+    item.SetPath(transcodeURL);
   }
 
   if (!checkItemPlayability(item))
@@ -80,16 +76,18 @@ bool CPlexMediaDecisionEngine::resolveItem(const CFileItem& _item, CFileItem &re
 
   if (!item.GetProperty("isResolved").asBoolean())
   {
-    if (!g_playlistPlayer.HasPlayedFirstFile() && item.IsVideo())
+    if ((g_playlistPlayer.GetCurrentSong() == 0)  && item.IsVideo())
     {
       int selectedMedia = CGUIDialogPlexMedia::ProcessMediaChoice(item);
       if (selectedMedia == -1)
         return false;
       item.SetProperty("selectedMediaItem", selectedMedia);
       offset = CGUIDialogPlexMedia::ProcessResumeChoice(item);
+      item.m_lStartOffset = offset;
       
       // if we have trailers and that we restart movie from beginning, create a new PQ askign for trailers.
-      if (item.HasProperty("viewOffset") && (g_guiSettings.GetInt("videoplayer.playtrailercount") > 0) && (offset == 0))
+      if (item.HasProperty("viewOffset") && (g_guiSettings.GetInt("videoplayer.playtrailercount") > 0) &&
+         (offset == 0) && !item.IsHomeMovie())
       {
         CPlexPlayQueuePtr pq = g_plexApplication.playQueueManager->getPlayQueueOfType(PLEX_MEDIA_TYPE_VIDEO);
         if (pq && !pq->m_options.isFlung)
@@ -285,6 +283,10 @@ CFileItemPtr CPlexMediaDecisionJob::ResolveIndirect(CFileItemPtr item)
 
     if (!i || i->m_mediaItems.size() == 0)
       return CFileItemPtr();
+
+    /* check if we got some httpHeaders from indirect item */
+    if (i->HasProperty("httpHeaders"))
+      i->m_mediaItems[0]->SetProperty("httpHeaders", i->GetProperty("httpHeaders"));
 
     item = i->m_mediaItems[0];
   }

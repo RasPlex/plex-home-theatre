@@ -887,7 +887,9 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory, bool updateFilterPa
     items.SetLabel(CUtil::GetTitleFromPath(items.GetPath(), true));
   
   ClearFileItems();
+
   m_vecItems->Copy(items);
+
   CLog::Log(LOGDEBUG, "CGUIMediaWindow::Update viewMode = %lld %s", items.GetProperty("viewMode").asInteger(), items.GetPath().c_str());
   m_vecItems->SetProperty("viewMode", items.GetProperty("viewMode"));
 

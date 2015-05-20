@@ -42,6 +42,7 @@
 
 #include "Client/PlexExtraInfoLoader.h"
 #include "Playlists/PlexPlayQueueManager.h"
+#include "GUI/GUIWindowStartup.h"
 
 #ifdef ENABLE_AUTOUPDATE
 #include "AutoUpdate/PlexAutoUpdate.h"
@@ -127,7 +128,8 @@ public:
 void PlexApplication::OnWakeUp()
 {
   /* Scan servers */
-  m_serviceListener->ScanNow();
+  if (m_serviceListener)
+    m_serviceListener->ScanNow();
   myPlexManager->Poke();
 
 #ifdef TARGET_DARWIN_OSX
@@ -256,6 +258,8 @@ void PlexApplication::sendNetworkLog(int level, const std::string& logline)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void PlexApplication::preShutdown()
 {
+  ANNOUNCEMENT::CAnnouncementManager::RemoveAnnouncer(this);
+
   analytics->stopLogging();
   remoteSubscriberManager->Stop();
   timer->StopAllTimers();
@@ -276,10 +280,10 @@ void PlexApplication::Shutdown()
 {
   CLog::Log(LOGINFO, "CPlexApplication shutting down!");
 
-  delete extraInfo;
+  SAFE_DELETE(extraInfo);
 
-  delete myPlexManager;
-  delete analytics;
+  SAFE_DELETE(myPlexManager);
+  SAFE_DELETE(analytics);
 
   timer.reset();
 
@@ -302,16 +306,18 @@ void PlexApplication::Shutdown()
   directoryCache.reset();
   defaultActionHandler.reset();
 
+  themeMusicPlayer.reset();
+  playQueueManager.reset();
+
   OnTimeout();
 
-  delete remoteSubscriberManager;
-  remoteSubscriberManager = NULL;
+  SAFE_DELETE(remoteSubscriberManager);
 
 #ifdef ENABLE_AUTOUPDATE
-  delete autoUpdater;
+  SAFE_DELETE(autoUpdater);
 #endif
 
-  delete thumbCacher;
+  SAFE_DELETE(thumbCacher);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -352,8 +358,13 @@ void PlexApplication::Announce(ANNOUNCEMENT::AnnouncementFlag flag, const char* 
   {
     if (!g_application.IsPlaying() && g_plexApplication.myPlexManager->IsPinProtected() && !g_guiSettings.GetBool("myplex.automaticlogin"))
     {
+      m_hasAuthed = false;
       CLog::Log(LOGDEBUG, "PlexApplication::Announce resuming from screensaver");
       g_windowManager.ActivateWindow(WINDOW_STARTUP_ANIM);
+
+      CGUIWindowStartup *window = (CGUIWindowStartup*)g_windowManager.GetWindow(WINDOW_STARTUP_ANIM);
+      if (window)
+        window->allowEscOut(false);
     }
   }
 }

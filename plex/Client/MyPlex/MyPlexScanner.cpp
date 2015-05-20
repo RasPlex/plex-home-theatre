@@ -20,29 +20,37 @@
 CMyPlexManager::EMyPlexError CMyPlexScanner::DoScan()
 {
   CPlexServerPtr myplex = g_plexApplication.serverManager->FindByUUID("myplex");
-  CURL url = myplex->BuildPlexURL("pms/servers");
-  url.SetOption("includeLite", "1");
+  CURL url = myplex->BuildPlexURL("pms/resources");
+  url.SetOption("includeHttps", "1");
 
   XFILE::CPlexDirectory dir;
   CFileItemList list;
 
   if (!dir.GetDirectory(url.Get(), list))
   {
-    if (dir.GetHTTPResponseCode() == 401)
-    {
-      CLog::Log(LOGERROR, "CMyPlexScanner::DoScan not authorized from myPlex");
+    CLog::Log(LOGERROR, "CMyPlexScanner::DoScan not authorized from myPlex");
+    if (dir.IsTokenInvalid())
+      return CMyPlexManager::ERROR_INVALID_AUTH_TOKEN;
+    else if (dir.GetHTTPResponseCode() == 401)
       return CMyPlexManager::ERROR_WRONG_CREDS;
-    }
-    return CMyPlexManager::ERROR_NOERROR;
+    return CMyPlexManager::ERROR_NETWORK;
   }
 
   PlexServerList serverList;
   for (int i = 0; i < list.Size(); i ++)
   {
     CFileItemPtr serverItem = list.Get(i);
-    if (serverItem && serverItem->GetPlexDirectoryType() == PLEX_DIR_TYPE_SERVER)
+    if (serverItem && serverItem->GetPlexDirectoryType() == PLEX_DIR_TYPE_DEVICE)
     {
       bool synced = serverItem->GetProperty("synced").asBoolean();
+
+      // only process Devices that provides server.
+      CStdString provides = serverItem->GetProperty("provides").asString();
+      if (provides.Find("server") == -1)
+      {
+        CLog::Log(LOGDEBUG, "CMyPlexScanner::DoScan skipping %s since it doesn't provide server", serverItem->GetProperty("name").asString().c_str());
+        continue;
+      }
 
       if (synced && g_guiSettings.GetBool("myplex.hidecloudsync"))
       {
@@ -50,8 +58,9 @@ CMyPlexManager::EMyPlexError CMyPlexScanner::DoScan()
         continue;
       }
 
-      CStdString uuid = serverItem->GetProperty("machineIdentifier").asString();
+      CStdString uuid = serverItem->GetProperty("clientIdentifier").asString();
       CStdString name = serverItem->GetProperty("name").asString();
+      CStdString token = serverItem->GetProperty("accessToken").asString();
       bool owned = serverItem->GetProperty("owned").asBoolean();
       bool home = serverItem->GetProperty("home").asBoolean(false);
 
@@ -64,30 +73,19 @@ CMyPlexManager::EMyPlexError CMyPlexScanner::DoScan()
         server->SetOwner(serverItem->GetProperty("sourceTitle").asString());
       server->SetHome(home);
 
-      CStdString address = serverItem->GetProperty("address").asString();
-      CStdString token = serverItem->GetProperty("accessToken").asString();
-      CStdString localAddresses = serverItem->GetProperty("localAddresses").asString();
-      CStdString schema = serverItem->GetProperty("scheme").asString();
-      int port = serverItem->GetProperty("port").asInteger();
-
-      if (token.empty())
-        continue;
-
-      if (!address.empty())
+      BOOST_FOREACH(const CFileItemPtr& connection, serverItem->m_connections)
       {
-        CPlexConnectionPtr connection = CPlexConnectionPtr(new CPlexConnection(CPlexConnection::CONNECTION_MYPLEX, address, port, schema, token));
-        server->AddConnection(connection);
-      }
+        CStdString uri = connection->GetProperty("uri").asString();
+        CURL connectionurl(uri);
 
-      /* only add localConnections for non-shared servers */
-      if ((owned || home) && !localAddresses.empty())
-      {
-        CStdStringArray addressList = StringUtils::SplitString(localAddresses, ",", 0);
-        BOOST_FOREACH(CStdString laddress, addressList)
-        {
-          CPlexConnectionPtr lconn = CPlexConnectionPtr(new CPlexConnection(CPlexConnection::CONNECTION_MYPLEX, laddress, DEFAULT_PORT, schema, token));
-          server->AddConnection(lconn);
-        }
+        CPlexConnectionPtr conn = CPlexConnectionPtr(new CPlexConnection(
+          CPlexConnection::CONNECTION_MYPLEX,
+          connectionurl.GetHostName(),
+          connectionurl.GetPort(),
+          connectionurl.GetProtocol(),
+          token));
+
+        server->AddConnection(conn);
       }
 
       serverList.push_back(server);

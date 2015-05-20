@@ -125,7 +125,7 @@ void CAdvancedSettings::Initialize()
 
   m_slideshowPanAmount = 2.5f;
   m_slideshowZoomAmount = 5.0f;
-  m_slideshowBlackBarCompensation = 20.0f;
+  m_slideshowBlackBarCompensation = 2.0f;
 
   m_lcdHeartbeat = false;
   m_lcdDimOnScreenSave = false;
@@ -371,11 +371,9 @@ void CAdvancedSettings::Initialize()
 
   m_bForceJpegImageFormat = false;
   m_bUseMatroskaTranscodes = true;
+  m_bRequireEncryptedConnection = false;
   m_bSharedSectionsOnHome = false;
-
   /* END PLEX */
-
-
 }
 
 bool CAdvancedSettings::Load()
@@ -1172,6 +1170,7 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
   XMLUtils::GetBoolean(pRootElement, "hidefanouts", m_bHideFanouts);
   XMLUtils::GetBoolean(pRootElement, "forcejpegimageformat", m_bForceJpegImageFormat);
   XMLUtils::GetBoolean(pRootElement, "usematroskatranscode", m_bUseMatroskaTranscodes);
+  XMLUtils::GetBoolean(pRootElement, "requireencryptedconnection", m_bRequireEncryptedConnection);
   XMLUtils::GetBoolean(pRootElement, "sharedsectionsonhome", m_bSharedSectionsOnHome);
   /* END PLEX */
 

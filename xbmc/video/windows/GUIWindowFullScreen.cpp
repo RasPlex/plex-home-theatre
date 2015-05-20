@@ -66,6 +66,9 @@
 /* PLEX */
 #include "PlexApplication.h"
 #include "Client/PlexServerManager.h"
+#include "guilib/GUIImage.h"
+
+#define CONTROL_OVERLAY_START 99000
 /* END PLEX */
 
 using namespace PVR;
@@ -695,12 +698,84 @@ void CGUIWindowFullScreen::OnWindowLoaded()
   FillInTVGroups();
 }
 
+/* PLEX */
+void CGUIWindowFullScreen::createOverlays()
+{
+  // VEVO Overlay handling
+  if (g_application.CurrentFileItemPtr() && g_application.CurrentFileItemPtr()->m_overlayItems.size())
+  {
+    for (int i=0; i<g_application.CurrentFileItemPtr()->m_overlayItems.size(); i++)
+    {
+      CFileItemPtr overlayItem = g_application.CurrentFileItemPtr()->m_overlayItems[i];
+
+      // setup the overlay image path
+      CTextureInfo overlayInfo;
+      overlayInfo.filename = overlayItem->GetPath();
+
+      // compute the overlay position,
+      // we're lucky rendering into 720p surface makes UI pixels -> physical pixels ratio to be 1:1
+      int x1, y1;
+      int frameBufferWidth = 1280;
+      int frameBufferHeight = 720;
+
+      // x1
+      if (overlayItem->GetProperty("alignHorizontal").asString() == "left")
+        x1 = overlayItem->GetProperty("marginLeft").asInteger();
+      else if (overlayItem->GetProperty("alignHorizontal").asString() == "right")
+        x1 = frameBufferWidth - overlayItem->GetProperty("width").asInteger() - overlayItem->GetProperty("marginRight").asInteger();
+      else if (overlayItem->GetProperty("alignHorizontal").asString() == "center")
+        x1 = frameBufferWidth - overlayItem->GetProperty("width").asInteger();
+
+      // y1
+      if (overlayItem->GetProperty("alignVertical").asString() == "top")
+        y1 = overlayItem->GetProperty("marginTop").asInteger();
+      else if (overlayItem->GetProperty("alignVertical").asString() == "bottom")
+        y1 = frameBufferHeight - overlayItem->GetProperty("height").asInteger() - overlayItem->GetProperty("marginBottom").asInteger();
+      else if (overlayItem->GetProperty("alignVertical").asString() == "center")
+        y1 = frameBufferHeight  - overlayItem->GetProperty("height").asInteger();
+
+      // width & height
+      int w = overlayItem->GetProperty("width").asInteger();
+      int h = overlayItem->GetProperty("height").asInteger();
+
+      // add the overlay control
+      CGUIControl *overlayControl = new CGUIImage(GetID(), CONTROL_OVERLAY_START + i,
+                                                  x1,
+                                                  y1,
+                                                  w,
+                                                  h,
+                                                  overlayInfo, 1);
+      AddControl(overlayControl);
+    }
+  }
+}
+
+void CGUIWindowFullScreen::deleteOverlays()
+{
+  // remove all the overlays controls
+  if (g_application.CurrentFileItemPtr() && g_application.CurrentFileItemPtr()->m_overlayItems.size())
+  {
+    for (int i=0; i<g_application.CurrentFileItemPtr()->m_overlayItems.size(); i++)
+    {
+      CGUIControl *overlayControl = (CGUIControl*)GetControl(CONTROL_OVERLAY_START + i);
+      if (overlayControl)
+        RemoveControl(overlayControl);
+    }
+  }
+}
+
+/* END PLEX */
+
 bool CGUIWindowFullScreen::OnMessage(CGUIMessage& message)
 {
   switch (message.GetMessage())
   {
   case GUI_MSG_WINDOW_INIT:
     {
+      /* PLEX */
+      deleteOverlays();
+      /* END PLEX */
+
       // check whether we've come back here from a window during which time we've actually
       // stopped playing videos
       if (message.GetParam1() == WINDOW_INVALID && !g_application.IsPlayingVideo())
@@ -744,6 +819,10 @@ bool CGUIWindowFullScreen::OnMessage(CGUIMessage& message)
       }
       else
         m_subsLayout = NULL;
+
+      /* PLEX */
+      createOverlays();
+      /* END PLEX */
 
       return true;
     }
@@ -795,6 +874,10 @@ bool CGUIWindowFullScreen::OnMessage(CGUIMessage& message)
         delete m_subsLayout;
         m_subsLayout = NULL;
       }
+
+      /* PLEX */
+      deleteOverlays();
+      /* END PLEX */
 
       return true;
     }

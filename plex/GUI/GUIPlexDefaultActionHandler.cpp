@@ -1,4 +1,7 @@
 
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include "URL.h"
 #include "GUIPlexDefaultActionHandler.h"
 #include "PlexExtraDataLoader.h"
 #include "Application.h"
@@ -18,7 +21,7 @@
 #include "Client/PlexServer.h"
 #include "guilib/GUIKeyboardFactory.h"
 #include "LocalizeStrings.h"
-
+#include "PlexDirectory.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CGUIPlexDefaultActionHandler::CGUIPlexDefaultActionHandler()
@@ -37,7 +40,7 @@ CGUIPlexDefaultActionHandler::CGUIPlexDefaultActionHandler()
   m_ActionSettings.push_back(*action);
   
   action = new ACTION_SETTING(ACTION_PLEX_SHUFFLE_ALL);
-  action->WindowSettings[WINDOW_VIDEO_NAV].contextMenuVisisble = true;
+  action->WindowSettings[WINDOW_VIDEO_NAV].contextMenuVisisble = false;
   m_ActionSettings.push_back(*action);
 
   action = new ACTION_SETTING(ACTION_PLEX_NOW_PLAYING);
@@ -102,6 +105,10 @@ CGUIPlexDefaultActionHandler::CGUIPlexDefaultActionHandler()
   action->WindowSettings[WINDOW_VIDEO_NAV].contextMenuVisisble = true;
   m_ActionSettings.push_back(*action);
 
+  action = new ACTION_SETTING(ACTION_PLEX_PLAY_EXTRA);
+  action->WindowSettings[WINDOW_VIDEO_NAV].contextMenuVisisble = true;
+  m_ActionSettings.push_back(*action);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,6 +123,14 @@ void CGUIPlexDefaultActionHandler::GetContextButtons(int windowID, CFileItemPtr 
       GetContextButtonsForAction(it->actionID, item, container, buttons);
     }
   }
+
+  // Add the Related items action button
+  int relatedIndex = 0;
+  BOOST_FOREACH(CFileItemPtr it, item->m_relatedItems)
+  {
+    buttons.Add(ACTION_PLEX_RELATED_START + relatedIndex, "Start " + it->GetProperty("title").asString());
+    relatedIndex++;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,22 +140,25 @@ bool CGUIPlexDefaultActionHandler::OnAction(int windowID, CAction action, CFileI
   int actionID = action.GetID();
 
   // if the action is not known, then just exit
-  ACTION_SETTING* setting = NULL;
-  for (ActionsSettingListIterator it = m_ActionSettings.begin(); it != m_ActionSettings.end(); ++it)
+  if ((action.GetID() < ACTION_PLEX_RELATED_START) || (action.GetID() > ACTION_PLEX_RELATED_END))
   {
-    if (it->actionID == action.GetID())
+    ACTION_SETTING* setting = NULL;
+    for (ActionsSettingListIterator it = m_ActionSettings.begin(); it != m_ActionSettings.end(); ++it)
     {
-      setting = &(*it);
-      break;
+      if (it->actionID == action.GetID())
+      {
+        setting = &(*it);
+        break;
+      }
     }
+
+    if (!setting)
+      return false;
+
+    // if the action is known, but not available for the window, then exit
+    if (setting->WindowSettings.find(windowID) == setting->WindowSettings.end())
+      return false;
   }
-
-  if (!setting)
-    return false;
-
-  // if the action is known, but not available for the window, then exit
-  if (setting->WindowSettings.find(windowID) == setting->WindowSettings.end())
-    return false;
 
   if (item)
   {
@@ -290,8 +308,7 @@ bool CGUIPlexDefaultActionHandler::OnAction(int windowID, CAction action, CFileI
             CFileItemPtr plItem =  plDialog->GetSelectedItem();
             if (plItem)
             {
-              CStdString playlistID = plItem->GetProperty("unprocessed_ratingkey").asString();
-              
+              CStdString playlistID = plItem->GetProperty("ratingkey").asString();
               
               if (server)
               {
@@ -330,6 +347,39 @@ bool CGUIPlexDefaultActionHandler::OnAction(int windowID, CAction action, CFileI
         }
         break;
       }
+
+      case ACTION_PLEX_PLAY_EXTRA:
+      {
+        // build the extra url;
+        CURL url(item->GetPath());
+        url.SetFileName(item->GetProperty("primaryExtraKey").asString());
+
+        // get the extra information
+        XFILE::CPlexDirectory dir;
+        CFileItemList list;
+        if (dir.GetDirectory(url.Get(), list))
+        {
+          if (list.Size())
+          {
+            g_application.PlayFile(*list.Get(0));
+          }
+          else
+          {
+            CLog::Log(LOGERROR, "Extra URL didn't return any entry.");
+          }
+        }
+        break;
+      }
+    }
+
+    // Handle related items actions
+    if ((actionID >= ACTION_PLEX_RELATED_START) && (actionID <= ACTION_PLEX_RELATED_START))
+    {
+      CPlexPlayQueueOptions options;
+      options.startPlaying = true;
+
+      CFileItemPtr relatedItem = item->m_relatedItems[actionID - ACTION_PLEX_RELATED_START];
+      g_plexApplication.playQueueManager->create(*item.get(), CPlexPlayQueueManager::getURIFromItem(*relatedItem.get()), options);
     }
   }
 
@@ -408,7 +458,7 @@ void CGUIPlexDefaultActionHandler::GetContextButtonsForAction(int actionID, CFil
       {
         CStdString viewOffset = item->GetProperty("viewOffset").asString();
         
-        if (item->GetVideoInfoTag()->m_playCount > 0 || viewOffset.size() > 0)
+        if (item->GetVideoInfoTag()->m_playCount > 0 || viewOffset.size() != 0)
           buttons.Add(actionID, 16104);
       }
       break;
@@ -491,6 +541,15 @@ void CGUIPlexDefaultActionHandler::GetContextButtonsForAction(int actionID, CFil
       if (IsItemPlaylistCompatible(item))
       {
         buttons.Add(actionID, 52613);
+      }
+      break;
+    }
+
+    case ACTION_PLEX_PLAY_EXTRA:
+    {
+      if (item->HasProperty("primaryExtraKey"))
+      {
+        buttons.Add(actionID, 52633);
       }
       break;
     }
@@ -583,6 +642,10 @@ std::string CGUIPlexDefaultActionHandler::GetFilteredURI(const CFileItem& item) 
     itemUrl.SetFileName(fname);
   }
 
+  itemUrl.RemoveOption("X-Plex-Container-Start");
+  itemUrl.RemoveOption("X-Plex-Container-Size");
+  itemUrl.RemoveOption("includeRelated");
+
   // set sourceType
   if (item.m_bIsFolder)
   {
@@ -590,7 +653,7 @@ std::string CGUIPlexDefaultActionHandler::GetFilteredURI(const CFileItem& item) 
     itemUrl.SetOption("sourceType", sourceType);
   }
 
-  return CPlexPlayQueueManager::getURIFromItem(item,itemUrl.GetUrlWithoutOptions().substr(17, std::string::npos));
+  return CPlexPlayQueueManager::getURIFromItem(item,itemUrl.Get().substr(17, std::string::npos));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

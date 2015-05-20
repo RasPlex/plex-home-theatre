@@ -2,15 +2,16 @@
 #include "PlexApplication.h"
 #include "PlexMediaServerClient.h"
 #include "Network/NetworkInterface.h"
+#include "StringUtils.h"
 
 #include <vector>
 
 using namespace std;
 
+/////////////////////////////////////////////////////////////////////////////////////////
 void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service)
 {
-  CPlexServerPtr server = CPlexServerPtr(
-  new CPlexServer(service->getResourceIdentifier(), service->getParam("Name"), true));
+  CPlexServerPtr server = CPlexServerPtr(new CPlexServer(service->getResourceIdentifier(), service->getParam("Name"), true));
 
   int port = 32400;
   try
@@ -32,13 +33,33 @@ void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service
     return;
   }
 
-  CPlexConnectionPtr conn =
-      CPlexConnectionPtr(new CPlexConnection(CPlexConnection::CONNECTION_DISCOVERED, address, port));
-  server->AddConnection(conn);
+  // Secure connections are only available if the GDM Host header is set
+  // if the Host contains the servers UUID and if we are signed into plex.tv
+  //
+  string uri = service->getParam("Host");
+  CPlexConnectionPtr conn;
+  if (!uri.empty() && (g_plexApplication.myPlexManager && g_plexApplication.myPlexManager->IsSignedIn()))
+  {
+    string addr(address);
+    StringUtils::Replace(addr, ".", "-");
 
-  if (conn->TestReachability(server) == CPlexConnection::CONNECTION_STATE_REACHABLE) {
-    server->SetActiveConnection(conn);
+    CURL u;
+    u.SetHostName(addr + "." + uri);
+    u.SetProtocol("https");
+    u.SetPort(port);
+
+    CLog::Log(LOGDEBUG, "CPlexNetworkServiceBrowser::handleServiceArrival adding SSL connection: %s", u.Get().c_str());
+    conn = CPlexConnectionPtr(new CPlexConnection(CPlexConnection::CONNECTION_DISCOVERED, u.GetHostName(), u.GetPort(), u.GetProtocol()));
+    server->AddConnection(conn);
   }
+  else
+  {
+    conn = CPlexConnectionPtr(new CPlexConnection(CPlexConnection::CONNECTION_DISCOVERED, address, port));
+    server->AddConnection(conn);
+  }
+
+  if (conn->TestReachability(server) == CPlexConnection::CONNECTION_STATE_REACHABLE)
+    server->SetActiveConnection(conn);
 
   g_plexApplication.serverManager->UpdateFromDiscovery(server);
 
@@ -52,6 +73,7 @@ void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service
   g_plexApplication.timer->RestartTimeout(5000, this);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 void CPlexNetworkServiceBrowser::handleServiceDeparture(NetworkServicePtr& service)
 {
   CLog::Log(LOGDEBUG,
@@ -75,6 +97,7 @@ void CPlexNetworkServiceBrowser::handleServiceDeparture(NetworkServicePtr& servi
   g_plexApplication.timer->RestartTimeout(5000, this);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 void CPlexNetworkServiceBrowser::handleNetworkChange(const vector<NetworkInterface>& interfaces)
 {
   NetworkServiceBrowser::handleNetworkChange(interfaces);
@@ -91,6 +114,7 @@ void CPlexNetworkServiceBrowser::handleNetworkChange(const vector<NetworkInterfa
   g_plexApplication.timer->RestartTimeout(5000, this);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 void CPlexNetworkServiceBrowser::OnTimeout()
 {
   CSingleLock lk(m_serversSection);
@@ -108,6 +132,7 @@ void CPlexNetworkServiceBrowser::OnTimeout()
   g_plexApplication.timer->RestartTimeout(5 * 60 * 1000, this);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 void CPlexServiceListener::Process()
 {
   dprintf("CPlexServiceListener: Initializing.");

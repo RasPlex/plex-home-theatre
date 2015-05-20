@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<window id="2000">
+	<defaultcontrol always="true">3</defaultcontrol>
+	<controls>
+		<!-- ViewsUserSwitchLogin.xml -->
+		<control type="group">
+			<include>UserSwitchLoginBg</include>
+			<include>UserSwitchLogin</include>
+			<include>KbPIN</include>
+		</control>
+		<!-- Loading indicator -->
+		<control type="group">
+			<visible>!IsEmpty(Container.Property(UsersLoading))</visible>
+			<include>UserSwitchLoginLoadingIndicator</include>
+		</control>
+		<!-- top-level ui (Debug.xml + grid) -->
+		<include>debugInfos</include>
+		<include>Grid</include>
+	</controls>
+</window>

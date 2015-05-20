@@ -103,7 +103,17 @@ void CPlexServerDataLoader::OnJobComplete(unsigned int jobID, bool success, CJob
     }
     
     if (j->m_playlistList)
+    {
+      bool havePlaylists = AnyOwnedServerHasPlaylists();
       m_serverHasPlaylist[j->m_server->GetUUID()] = (j->m_playlistList->Size() > 0);
+
+      // server has new / no more playlists, we kick a message to notify
+      if (havePlaylists != AnyOwnedServerHasPlaylists())
+      {
+        CGUIMessage msg(GUI_MSG_PLEX_PLAYLIST_STATUS_CHANGED, PLEX_DATA_LOADER, 0);
+        g_windowManager.SendThreadMessage(msg);
+      }
+    }
 
     if (j->m_channelList)
     {
@@ -254,9 +264,17 @@ CFileItemListPtr CPlexServerDataLoader::GetAllSharedSections() const
     for (int i = 0; i < pair.second->Size(); i++)
     {
       CFileItemPtr item = pair.second->Get(i);
-      item->SetProperty("serverName", pair.second->GetProperty("serverName"));
-      item->SetProperty("serverUUID", pair.second->GetProperty("serverUUID"));
-      list->Add(item);
+
+      CStdString uuid = pair.second->GetProperty("serverUUID").asString();
+      CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(uuid);
+      if (server)
+      {
+        item->SetProperty("serverName", server->GetName());
+        item->SetProperty("serverUUID", server->GetUUID());
+        if (server->GetActiveConnection() && g_plexApplication.myPlexManager && g_plexApplication.myPlexManager->IsSignedIn() && g_plexApplication.myPlexManager->GetCurrentUserInfo().secure)
+          item->SetProperty("isSecure", server->GetActiveConnection()->isSSL() ? "1" : "");
+        list->Add(item);
+      }
     }
   }
 
@@ -280,17 +298,24 @@ CFileItemListPtr CPlexServerDataLoader::GetAllSections() const
       CFileItemPtr item = pair.second->Get(i);
       if (item)
       {
-        item->SetProperty("serverName", pair.second->GetProperty("serverName"));
-        item->SetProperty("serverUUID", pair.second->GetProperty("serverUUID"));
-        list->Add(item);
-
-        if (sectionNameMap.find(item->GetLabel()) != sectionNameMap.end())
+        CStdString serverUUID = pair.second->GetProperty("serverUUID").asString();
+        CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(serverUUID);
+        if (server)
         {
-          sectionNameMap[item->GetLabel()]->SetProperty("SectionNameCollision", "yes");
-          item->SetProperty("sectionNameCollision", "yes");
-        }
+          item->SetProperty("serverName", server->GetName());
+          item->SetProperty("serverUUID", server->GetUUID());
+          if (server->GetActiveConnection() && g_plexApplication.myPlexManager && g_plexApplication.myPlexManager->IsSignedIn() && g_plexApplication.myPlexManager->GetCurrentUserInfo().secure)
+            item->SetProperty("isSecure", server->GetActiveConnection()->isSSL() ? "1" : "");
+          list->Add(item);
 
-        sectionNameMap[item->GetLabel()] = item;
+          if (sectionNameMap.find(item->GetLabel()) != sectionNameMap.end())
+          {
+            sectionNameMap[item->GetLabel()]->SetProperty("SectionNameCollision", "yes");
+            item->SetProperty("sectionNameCollision", "yes");
+          }
+
+          sectionNameMap[item->GetLabel()] = item;
+        }
       }
     }
   }

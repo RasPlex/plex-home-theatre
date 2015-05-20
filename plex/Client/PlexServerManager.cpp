@@ -41,7 +41,7 @@ CPlexServerManager::CPlexServerManager() : m_stopped(false)
 {
   CPlexConnectionPtr conn;
   
-  _myPlexServer = CPlexServerPtr(new CPlexServer("myplex", "myPlex", true));
+  _myPlexServer = CPlexServerPtr(new CPlexServer("myplex", "plex.tv", true));
   conn = CPlexConnectionPtr(new CMyPlexConnection);
   _myPlexServer->AddConnection(conn);
   _myPlexServer->SetActiveConnection(conn);
@@ -151,6 +151,8 @@ bool CPlexServerManager::HasAnyServerWithActiveConnection() const
 void CPlexServerManager::RemoveAllServers()
 {
   CSingleLock lk(m_serverManagerLock);
+
+  CLog::Log(LOGDEBUG, "CPlexServerManager::RemoveAllServers nuclear remove.");
 
   // The "nuclear" option. We probably have changed users
   // or something like that.

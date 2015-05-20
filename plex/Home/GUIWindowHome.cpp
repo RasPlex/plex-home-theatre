@@ -422,6 +422,12 @@ bool CGUIWindowHome::OnMessage(CGUIMessage& message)
       break;
     }
       
+    case GUI_MSG_PLEX_PLAYLIST_STATUS_CHANGED:
+    {
+      UpdateSections();
+      break;
+    }
+
     case GUI_MSG_WINDOW_RESET:
     case GUI_MSG_UPDATE:
     {
@@ -690,6 +696,7 @@ CGUIStaticItemPtr CGUIWindowHome::ItemToSection(CFileItemPtr item)
   newItem->SetProperty("sectionNameCollision", item->GetProperty("sectionNameCollision"));
   newItem->SetProperty("plex", true);
   newItem->SetProperty("sectionPath", item->GetPath());
+  newItem->SetProperty("isSecure", item->GetProperty("isSecure"));
   newItem->SetPlexDirectoryType(item->GetPlexDirectoryType());
   newItem->m_bIsFolder = true;
 
@@ -801,7 +808,7 @@ void CGUIWindowHome::UpdateSections()
       else if (item->HasProperty("playlists"))
       {
         havePlaylists = true;
-        if (g_plexApplication.serverManager->GetBestServer() && g_plexApplication.dataLoader->AnyOwendServerHasPlaylists())
+        if (g_plexApplication.serverManager->GetBestServer() && g_plexApplication.dataLoader->AnyOwnedServerHasPlaylists())
           newList.push_back(item);
         else
           listUpdated = true;
@@ -913,11 +920,8 @@ void CGUIWindowHome::UpdateSections()
 
   if (!havePlaylists &&
       g_plexApplication.serverManager->GetBestServer() &&
-      g_plexApplication.dataLoader->AnyOwendServerHasPlaylists())
+      g_plexApplication.dataLoader->AnyOwnedServerHasPlaylists())
     AddPlaylists(newList, listUpdated);
-  
-  if ((!havePlayqueues) && g_plexApplication.playQueueManager->getPlayQueuesCount())
-    AddPlayQueues(newList, listUpdated);
 
   if (listUpdated)
   {
@@ -945,24 +949,6 @@ void CGUIWindowHome::AddPlaylists(std::vector<CGUIListItemPtr>& list, bool& upda
 
   AddSection(path, CPlexSectionFanout::SECTION_TYPE_PLAYLISTS, true);
 
-  list.push_back(item);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void CGUIWindowHome::AddPlayQueues(std::vector<CGUIListItemPtr>& list, bool& updated)
-{
-  updated = true;
-  
-  CGUIStaticItemPtr item = CGUIStaticItemPtr(new CGUIStaticItem);
-  CStdString path("plexserver://playQueues/");
-  
-  item->SetLabel("Now Playing");
-  item->SetProperty("playqueues", true);
-  item->SetProperty("sectionPath", path);
-  item->SetProperty("navigateDirectly", true);
-  
-  AddSection(path, CPlexSectionFanout::SECTION_TYPE_PLAYQUEUES, true);
-  
   list.push_back(item);
 }
 

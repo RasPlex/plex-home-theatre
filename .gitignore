@@ -1248,6 +1248,7 @@ plex/Dependencies/*darwin-i686
 plex/build
 plex/build_xc
 plex/Dependencies/built-depends/*
+.idea
 
 *.autosave
 /plex-home-theater

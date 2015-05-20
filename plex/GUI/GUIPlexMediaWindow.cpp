@@ -51,6 +51,8 @@
 
 #define XMIN(a,b) ((a)<(b)?(a):(b))
 
+#define EXTRAS_LIST_CONTROL_ID   3  // preplay window Extras list control ID
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
 {
@@ -132,6 +134,10 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
         AddFilters();
 
         g_plexApplication.filterManager->saveFiltersToDisk();
+
+        // make sure we update the window, as update might already have occured
+        CGUIMessage msg(GUI_MSG_UPDATE, 0, 0, 0, 0);
+        g_windowManager.SendThreadMessage(msg);
       }
       break;
     }
@@ -188,6 +194,33 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
       UpdateButtons();
       break;
     }
+
+    case GUI_MSG_PLEX_EXTRA_DATA_LOADED :
+    {
+      CFileItemList extralist;
+      extralist.Copy(*(m_extraDataLoader.getItems()));
+      CLog::Log(LOGDEBUG,"CGUIPlexMediaWindow::OnMessage GUI_MSG_PLEX_EXTRA_DATA_LOADED (%d)", extralist.Size());
+
+      if (extralist.Size() > 0)
+      {
+        m_vecItems->Get(0)->SetProperty("PlexExtras", "1");
+
+        if (extralist.Size() > 1)
+          m_vecItems->SetProperty("PlexExtras", "extras");
+        else
+          m_vecItems->SetProperty("PlexExtras", "extra");
+      }
+      else
+      {
+        m_vecItems->SetProperty("PlexExtras", "");
+      }
+
+      // feed the preplay list with the items
+      CGUIMessage msg(GUI_MSG_LABEL_BIND, 0, EXTRAS_LIST_CONTROL_ID, 0, 0, &extralist);
+      OnMessage(msg);
+    }
+      break;
+
   }
 
   return ret;
@@ -205,7 +238,7 @@ void CGUIPlexMediaWindow::SaveSelection()
     int idx = m_viewControl.GetSelectedItem();
     if (idx >= 0)
     {
-      m_lastSelectedIndex[key] = m_vecItems->Get(idx)->GetProperty("index").asInteger();;
+      m_lastSelectedIndex[key] = m_vecItems->Get(idx)->GetProperty("index").asInteger();
       CLog::Log(LOGDEBUG, "SaveSelection index for %s is %d", key.c_str(), m_lastSelectedIndex[key]);
     }
   }
@@ -234,6 +267,7 @@ bool CGUIPlexMediaWindow::RestoreSelection()
       }
     }
   }
+  m_viewControl.SetSelectedItem(0);
   return false;
 }
 
@@ -545,6 +579,17 @@ bool CGUIPlexMediaWindow::OnAction(const CAction &action)
     }
   }
 
+  if (action.GetID() == ACTION_SELECT_ITEM)
+  {
+    // if we pick an extra, play it !
+    CFileItemPtr extraItem = getSelectedExtraItem();
+    if (extraItem)
+    {
+      g_application.PlayFile(*extraItem, extraItem->GetProperty("extratype").asInteger() == 1);
+      return true;
+    }
+  }
+
   if (g_plexApplication.defaultActionHandler->OnAction(WINDOW_VIDEO_NAV, action, m_vecItems->Get(m_viewControl.GetSelectedItem()), m_vecItems))
     return true;
   
@@ -609,19 +654,32 @@ bool CGUIPlexMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItem
     }
   }
   
+  CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(u.GetHostName());
+
+  if (server)
+  {
+    // we eventually add music extras request if the server allows it.
+    CPlexServerVersion serverVersion(server->GetVersion());
+    CPlexServerVersion needVersion("0.9.11.17.9999-ffffff");
+    if ((serverVersion > needVersion) && IsMusicContainer())
+      u.SetOption("includeRelated", "1");
+  }
+
   bool ret = CGUIMediaWindow::GetDirectory(u.Get(), items);
 
 #ifndef TARGET_RASPBERRY_PI
   m_thumbCache.Load(items);
 #endif
 
-  CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(u.GetHostName());
   if (server && server->GetActiveConnection() && server->GetActiveConnection()->IsLocal())
     g_directoryCache.ClearDirectory(u.Get());
   
 #ifdef USE_PAGING
   if (items.HasProperty("totalSize"))
   {
+    if (NeededRangeEnd > items.GetProperty("totalSize").asInteger())
+      NeededRangeEnd = items.GetProperty("totalSize").asInteger() - 1;
+
     if (items.GetProperty("totalSize").asInteger() > items.Size())
     {
      
@@ -653,7 +711,7 @@ bool CGUIPlexMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItem
         }
       }
       
-      for (int i = NeededRangeStart - 1; i >= 0; i--)
+      for (int i = NeededRangeStart-1; i >= 0; i--)
       {
         CFileItemPtr item = CFileItemPtr(new CFileItem);
         item->SetPath(boost::lexical_cast<std::string>(i));
@@ -662,7 +720,7 @@ bool CGUIPlexMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItem
         items.AddFront(item, 0);
       }
 
-      for (int i = NeededRangeEnd; i < items.GetProperty("totalSize").asInteger(); i++)
+      for (int i = NeededRangeEnd; i < (items.GetProperty("totalSize").asInteger() - 1); i++)
       {
         CFileItemPtr item = CFileItemPtr(new CFileItem);
         item->SetPath(boost::lexical_cast<std::string>(i));
@@ -853,6 +911,13 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
 {
   CSingleLock lock(m_fetchMapsSection);
   m_fetchedPages.clear();
+
+  // make sure we clear any pending job on an update
+  BOOST_FOREACH(FetchJobPair p, m_fetchJobs)
+  {
+    CJobManager::GetInstance().CancelJob(p.second);
+  }
+
   m_fetchJobs.clear();
   lock.Leave();
 
@@ -862,6 +927,8 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
 
   SaveSelection();
   
+  EPlexDirectoryType oldDirType = m_vecItems->GetPlexDirectoryType();
+
   if (strDirectory == m_startDirectory)
   {
     m_sectionRoot = strDirectory;
@@ -899,6 +966,20 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
 
   g_plexApplication.extraInfo->LoadExtraInfoForItem(m_vecItems);
 
+  // make sure we force the filters to reload if section type changed
+  if (oldDirType != m_vecItems->GetPlexDirectoryType())
+  {
+    g_plexApplication.filterManager->loadFilterForSection(m_sectionRoot.Get(), true);
+  }
+
+  // clear eventual extras
+  CFileItemList extralist;
+  CGUIMessage msg(GUI_MSG_LABEL_BIND, 0, EXTRAS_LIST_CONTROL_ID, 0, 0, &extralist);
+  OnMessage(msg);
+
+  // load new ones
+  m_extraDataLoader.loadDataForItem(m_vecItems);
+
   if (!updateFromFilter)
     g_plexApplication.themeMusicPlayer->playForItem(*m_vecItems);
 
@@ -907,6 +988,13 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
   if (RestoreSelection())
   {
     FetchItemPage(m_viewControl.GetSelectedItem());
+  }
+
+  // if the update failed we want to get back up
+  if (!ret)
+  {
+    CLog::Log(LOGDEBUG, "Update failed, going to previous window.");
+    g_windowManager.PreviousWindow();
   }
 
   return ret;
@@ -1420,4 +1508,21 @@ CStdString CGUIPlexMediaWindow::GetLevelURL()
     levelUrl += "/user/" + userName;
 
   return  levelUrl;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+CFileItemPtr CGUIPlexMediaWindow::getSelectedExtraItem()
+{
+  int focusedControl = GetFocusedControlID();
+  if (focusedControl == EXTRAS_LIST_CONTROL_ID)
+  {
+    CGUIBaseContainer* container = (CGUIBaseContainer*)(GetControl(focusedControl));
+    if (container)
+    {
+      CGUIListItemPtr listItem = container->GetListItem(0);
+      if (listItem && listItem->IsFileItem())
+        return boost::static_pointer_cast<CFileItem>(listItem);
+    }
+  }
+  return CFileItemPtr();
 }

@@ -158,7 +158,7 @@ namespace XFILE
       void SetCommonOptions(CReadState* state);
       void SetRequestHeaders(CReadState* state);
       void SetCorrectHeaders(CReadState* state);
-      bool Service(const CStdString& strURL, CStdString& strHTML);
+      virtual bool Service(const CStdString& strURL, CStdString& strHTML);
 
     protected:
       CReadState*     m_state;
@@ -206,6 +206,7 @@ namespace XFILE
       /* PLEX */
       CStdString      m_verb;
       bool            m_clearCookies;
+      struct XCURL::curl_slist* m_dnsLookupList;
       /* END PLEX */
   };
 }

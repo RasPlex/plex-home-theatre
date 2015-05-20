@@ -383,6 +383,7 @@ class CAdvancedSettings
     bool m_bEnableKeyboardBacklightControl;
     bool m_bEnablePlexTokensInLogs;
     bool m_bCollapseSingleSeason;
+    bool m_bRequireEncryptedConnection;
 
     unsigned int m_smartCacheUpperLimit;
     int m_iShowFirstRun;
