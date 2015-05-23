@@ -320,7 +320,9 @@ void CPeripherals::OnDeviceAdded(const CPeripheralBus &bus, const CPeripheral &p
   CGUIMessage msg(GUI_MSG_UPDATE, WINDOW_SETTINGS_SYSTEM, 0);
   g_windowManager.SendThreadMessage(msg, WINDOW_SETTINGS_SYSTEM);
 
-  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, g_localizeStrings.Get(35005), peripheral.DeviceName());
+  // don't show a notification for devices detected during the initial scan
+  if (bus.IsInitialised())
+    CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, g_localizeStrings.Get(35005), peripheral.DeviceName());
 }
 
 void CPeripherals::OnDeviceDeleted(const CPeripheralBus &bus, const CPeripheral &peripheral)
@@ -603,12 +605,12 @@ bool CPeripherals::OnAction(const CAction &action)
       for (unsigned int iPeripheralPtr = 0; iPeripheralPtr < peripherals.size(); iPeripheralPtr++)
       {
         CPeripheralCecAdapter *cecDevice = (CPeripheralCecAdapter *) peripherals.at(iPeripheralPtr);
-        if (cecDevice && cecDevice->HasConnectedAudioSystem())
+        if (cecDevice && cecDevice->HasAudioControl())
         {
           if (action.GetID() == ACTION_VOLUME_UP)
-            cecDevice->ScheduleVolumeUp();
+            cecDevice->VolumeUp();
           else
-            cecDevice->ScheduleVolumeDown();
+            cecDevice->VolumeDown();
           return true;
         }
       }
@@ -642,9 +644,9 @@ bool CPeripherals::ToggleMute(void)
     for (unsigned int iPeripheralPtr = 0; iPeripheralPtr < peripherals.size(); iPeripheralPtr++)
     {
       CPeripheralCecAdapter *cecDevice = (CPeripheralCecAdapter *) peripherals.at(iPeripheralPtr);
-      if (cecDevice && cecDevice->HasConnectedAudioSystem())
+      if (cecDevice && cecDevice->HasAudioControl())
       {
-        cecDevice->ScheduleMute();
+        cecDevice->ToggleMute();
         return true;
       }
     }

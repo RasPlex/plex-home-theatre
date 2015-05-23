@@ -3819,7 +3819,8 @@ void CApplication::Stop(int exitCode)
 {
   try
   {
-    CVariant vExitCode(exitCode);
+    CVariant vExitCode(CVariant::VariantTypeObject);
+    vExitCode["exitcode"] = exitCode;
     CAnnouncementManager::Announce(System, "xbmc", "OnQuit", vExitCode);
 
 #ifndef __PLEX__
@@ -5097,7 +5098,8 @@ bool CApplication::WakeUpScreenSaverAndDPMS(bool bPowerOffKeyPressed /* = false 
   if(result)
   {
     // allow listeners to ignore the deactivation if it preceeds a powerdown/suspend etc
-    CVariant data(bPowerOffKeyPressed);
+    CVariant data(CVariant::VariantTypeObject);
+    data["shuttingdown"] = bPowerOffKeyPressed;
     CAnnouncementManager::Announce(GUI, "xbmc", "OnScreensaverDeactivated", data);
   }
 
