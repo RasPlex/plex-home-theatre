@@ -362,16 +362,24 @@ void CGUISettings::Initialize()
   CSettingsCategory* aocat = ao;
 #endif
   AddBool(aocat, "audiooutput.ac3passthrough"   , 364, true);
+  AddBool(aocat, "audiooutput.eac3passthrough"  , 472, true);
   AddBool(aocat, "audiooutput.dtspassthrough"   , 254, true);
 #if !defined(TARGET_DARWIN) && !defined(TARGET_RASPBERRY_PI)
   AddBool(aocat, "audiooutput.passthroughaac"   , 299, true);
+#else
+  AddBool(NULL, "audiooutput.passthroughaac"   , 299, false);
 #endif
 #if !defined(TARGET_DARWIN_IOS) && !defined(TARGET_RASPBERRY_PI)
   AddBool(aocat, "audiooutput.multichannellpcm" , 348, true );
+#else
+  AddBool(NULL, "audiooutput.multichannellpcm" , 348, false );
 #endif
 #if !defined(TARGET_DARWIN) && !defined(TARGET_RASPBERRY_PI)
   AddBool(aocat, "audiooutput.truehdpassthrough", 349, false );
   AddBool(aocat, "audiooutput.dtshdpassthrough" , 347, false );
+#else
+  AddBool(NULL, "audiooutput.truehdpassthrough", 349, false );
+  AddBool(NULL, "audiooutput.dtshdpassthrough" , 347, false );
 #endif
 
   AddBool(ao, "audiooutput.normalizelevels", 346, true);
@@ -1387,6 +1395,7 @@ void CGUISettings::LoadXML(TiXmlElement *pRootElement, bool hideSettings /* = fa
   //SetBool("audiooutput.dtspassthrough", g_audioConfig.GetDTSEnabled());
   CLog::Log(LOGINFO, "Using %s output", GetInt("audiooutput.mode") == AUDIO_ANALOG ? "analog" : "digital");
   CLog::Log(LOGINFO, "AC3 pass through is %s", GetBool("audiooutput.ac3passthrough") ? "enabled" : "disabled");
+  CLog::Log(LOGINFO, "EAC3 pass through is %s", GetBool("audiooutput.eac3passthrough") ? "enabled" : "disabled");
   CLog::Log(LOGINFO, "DTS pass through is %s", GetBool("audiooutput.dtspassthrough") ? "enabled" : "disabled");
   CLog::Log(LOGINFO, "AAC pass through is %s", GetBool("audiooutput.passthroughaac") ? "enabled" : "disabled");
 
