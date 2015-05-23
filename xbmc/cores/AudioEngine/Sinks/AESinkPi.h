@@ -31,7 +31,7 @@
 class CAESinkPi : public IAESink
 {
 public:
-  virtual const char *GetName() { return "SinkPi"; }
+  virtual const char *GetName() { return "PI"; }
 
   CAESinkPi();
   virtual ~CAESinkPi();
