@@ -27,6 +27,7 @@
 #include "threads/Thread.h"
 #include "threads/CriticalSection.h"
 #include "threads/SharedSection.h"
+#include "threads/SystemClock.h"
 
 #include "Interfaces/ThreadedAE.h"
 #include "Utils/AEBuffer.h"
@@ -140,7 +141,7 @@ private:
   bool             m_sinkIsSuspended; /* The sink is in unusable state, e.g. SoftSuspended */
   bool             m_isSuspended;      /* engine suspended by external function to release audio context */
   bool             m_softSuspend;      /* latches after last stream or sound played for timer below for idle */
-  unsigned int     m_softSuspendTimer; /* time in milliseconds to hold sink open before soft suspend for idle */
+  XbmcThreads::EndTime m_softSuspendTimeout; /* timer to hold sink open before soft suspend for idle */
   CEvent           m_reOpenEvent;
   CEvent           m_wake;
   CEvent           m_saveSuspend;
@@ -165,6 +166,7 @@ private:
   AEAudioFormat             m_sinkFormat;
   double                    m_sinkFormatSampleRateMul;
   unsigned int              m_sinkBlockSize;
+  unsigned int              m_sinkBlockTime;
   bool                      m_sinkHandlesVolume;
   AEAudioFormat             m_encoderFormat;
   double                    m_encoderFrameSizeMul;
@@ -245,5 +247,7 @@ private:
 
   void         RemoveStream(StreamList &streams, CSoftAEStream *stream);
   void         PrintSinks();
+
+  unsigned int WriteSink(CAEBuffer& src, unsigned int src_len, uint8_t *data, bool hasAudio);
 };
 
