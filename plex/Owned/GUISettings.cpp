@@ -355,7 +355,6 @@ void CGUISettings::Initialize()
 #endif
 
   AddInt(ao, "audiooutput.defaultdelay", 297, 0, (int)(-g_advancedSettings.m_videoAudioDelayRange*1000), 25, (int)(g_advancedSettings.m_videoAudioDelayRange*1000), SPIN_CONTROL_INT_PLUS, MASK_MS, TEXT_OFF);
-  AddBool(NULL, "audiooutput.stereoupmix", 252, false);
 #if defined(TARGET_DARWIN_IOS)
   CSettingsCategory* aocat = g_sysinfo.IsAppleTV2() ? ao : NULL;
 #else
@@ -382,6 +381,7 @@ void CGUISettings::Initialize()
   AddBool(NULL, "audiooutput.dtshdpassthrough" , 347, false );
 #endif
 
+  AddBool(ao, "audiooutput.stereoupmix", 252, false);
   AddBool(ao, "audiooutput.normalizelevels", 346, true);
 
   map<int,int> channelLayout;
@@ -389,7 +389,6 @@ void CGUISettings::Initialize()
     channelLayout.insert(make_pair(34100 + layout, layout));
   AddInt(ao, "audiooutput.channels", 18110, AE_CH_LAYOUT_2_0, channelLayout, SPIN_CONTROL_TEXT);
 
-#if !defined(TARGET_RASPBERRY_PI)
 #if defined(TARGET_DARWIN)
 #if defined(TARGET_DARWIN_IOS)
   CStdString defaultDeviceName = "Default";
@@ -405,13 +404,12 @@ void CGUISettings::Initialize()
   AddString   (ao, "audiooutput.passthroughdevice", 546, CStdString(CAEFactory::GetDefaultDevice(true )), SPIN_CONTROL_TEXT);
   AddSeparator(ao, "audiooutput.sep2");
 #endif
-#endif
 
   map<int,int> guimode;
   guimode.insert(make_pair(34121, AE_SOUND_IDLE  ));
   guimode.insert(make_pair(34122, AE_SOUND_ALWAYS));
   guimode.insert(make_pair(34123, AE_SOUND_OFF   ));
-  AddInt(NULL, "audiooutput.guisoundmode", 34120, AE_SOUND_ALWAYS, guimode, SPIN_CONTROL_TEXT);
+  AddInt(ao, "audiooutput.guisoundmode", 34120, AE_SOUND_IDLE, guimode, SPIN_CONTROL_TEXT);
 
 
 

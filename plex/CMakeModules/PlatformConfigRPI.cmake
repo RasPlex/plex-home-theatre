@@ -36,6 +36,7 @@ set(LINK_PKG
   Avahi
   LibDl
   LibRt
+  FLAC
   DBUS
 )
 
