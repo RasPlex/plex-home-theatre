@@ -742,7 +742,7 @@ inline bool PAPlayer::ProcessStream(StreamInfo *si, double &freeBufferTime)
     if (!si->m_isSlaved)
       si->m_stream->Resume();
     // PLEX 1.0 -> Getmax
-    si->m_stream->FadeVolume(0.0f, GetMaxVolume(), m_upcomingCrossfadeMS ? m_upcomingCrossfadeMS : FAST_XFADE_TIME);
+    si->m_stream->FadeVolume(0.0f, GetMaxVolume(), m_upcomingCrossfadeMS);
     m_callback.OnPlayBackStarted();
   }
 
