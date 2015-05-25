@@ -34,22 +34,7 @@ class CDVDInputStream;
 #if (defined HAVE_CONFIG_H) && (!defined WIN32)
   #include "config.h"
 #endif
-#ifndef _LINUX
-enum CodecID;
-#include <libavcodec/avcodec.h>
-#else
-extern "C" {
-#if (defined USE_EXTERNAL_FFMPEG)
-  #if (defined HAVE_LIBAVCODEC_AVCODEC_H)
-    #include <libavcodec/avcodec.h>
-  #elif (defined HAVE_FFMPEG_AVCODEC_H)
-    #include <ffmpeg/avcodec.h>
-  #endif
-#else
-  #include "libavcodec/avcodec.h"
-#endif
-}
-#endif
+#include "DllAvCodec.h"
 
 #ifndef __GNUC__
 #pragma warning(pop)
@@ -109,7 +94,10 @@ public:
 
   }
 
-  virtual ~CDemuxStream() {}
+  virtual ~CDemuxStream()
+  {
+    delete [] ExtraData;
+  }
 
   virtual void GetStreamInfo(std::string& strInfo)
   {
@@ -132,7 +120,7 @@ public:
 
   int iDuration; // in mseconds
   void* pPrivate; // private pointer for the demuxer
-  void* ExtraData; // extra data for codec to use
+  uint8_t*     ExtraData; // extra data for codec to use
   unsigned int ExtraSize; // size of extra data
 
   char language[4]; // ISO 639 3-letter language code (empty string if undefined)
@@ -220,11 +208,8 @@ class CDemuxStreamSubtitle : public CDemuxStream
 public:
   CDemuxStreamSubtitle() : CDemuxStream()
   {
-    identifier = 0;
     type = STREAM_SUBTITLE;
   }
-
-  int identifier;
 };
 
 class CDemuxStreamTeletext : public CDemuxStream

@@ -101,6 +101,7 @@ void CDemuxStreamSubtitleFFmpeg::GetStreamInfo(std::string& strInfo)
 
 // these need to be put somewhere that are compiled, we should have some better place for it
 
+int DllAvFormat::m_avformat_refcnt = 0;
 CCriticalSection DllAvCodec::m_critSection;
 static CCriticalSection m_logSection;
 std::map<uintptr_t, CStdString> g_logbuffer;
@@ -568,11 +569,7 @@ void CDVDDemuxFFmpeg::Dispose()
   for (int i = 0; i < MAX_STREAMS; i++)
   {
     if (m_streams[i])
-    {
-      if (m_streams[i]->ExtraData)
-        delete[] (BYTE*)(m_streams[i]->ExtraData);
       delete m_streams[i];
-    }
     m_streams[i] = NULL;
   }
   m_pInput = NULL;
@@ -1149,7 +1146,6 @@ void CDVDDemuxFFmpeg::AddStream(int iId)
         {
           CDemuxStreamSubtitleFFmpeg* st = new CDemuxStreamSubtitleFFmpeg(this, pStream);
           m_streams[iId] = st;
-          st->identifier = pStream->codec->sub_id;
 	    
           if(m_dllAvUtil.av_dict_get(pStream->metadata, "title", NULL, 0))
             st->m_description = m_dllAvUtil.av_dict_get(pStream->metadata, "title", NULL, 0)->value;
@@ -1196,10 +1192,7 @@ void CDVDDemuxFFmpeg::AddStream(int iId)
     // since dvdplayer uses the pointer to know
     // if something changed in the demuxer
     if (old)
-    {
-      if( old->ExtraData ) delete[] (BYTE*)(old->ExtraData);
       delete old;
-    }
 
     // generic stuff
     if (pStream->duration != (int64_t)AV_NOPTS_VALUE) m_streams[iId]->iDuration = (int)((pStream->duration / AV_TIME_BASE) & 0xFFFFFFFF);

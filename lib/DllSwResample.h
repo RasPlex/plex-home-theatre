@@ -37,15 +37,10 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 #if (defined USE_EXTERNAL_FFMPEG)
-  #if HAVE_LIBSWRESAMPLE_SWRESAMPLE_H
-    #include <libswresample/swresample.h>
-  #elif HAVE_LIBAVRESAMPLE_AVRESAMPLE_H
-    #include <libavresample/avresample.h>
-    #include <libavutil/opt.h>
-    #include <libavutil/samplefmt.h>
-    #define SwrContext AVAudioResampleContext
+  #if (defined USE_LIBAV_HACKS)
+    #include "xbmc-libav-hacks/libav_hacks.h"
   #else
-    #error "Either libswresample or libavresample is needed!"
+    #include <libswresample/swresample.h>
   #endif
 #else
   #include "libswresample/swresample.h"
@@ -60,11 +55,14 @@ public:
   virtual int swr_init(struct SwrContext *s)=0;
   virtual void swr_free(struct SwrContext **s)=0;
   virtual int swr_convert(struct SwrContext *s, uint8_t **out, int out_count, const uint8_t **in , int in_count)=0;
+  virtual int64_t swr_get_delay(struct SwrContext *s, int64_t base) = 0;
+  virtual int swr_set_channel_mapping(struct SwrContext *s, const int *channel_map) = 0;
+  virtual int swr_set_matrix(struct SwrContext *s, const double *matrix, int stride) = 0;
+  virtual int swr_set_compensation(struct SwrContext *s, int sample_delta, int compensation_distance) = 0;
 };
 
-#if (defined USE_EXTERNAL_FFMPEG) || (defined TARGET_DARWIN) 
+#if (defined USE_EXTERNAL_FFMPEG) || (defined TARGET_DARWIN) || (defined USE_STATIC_FFMPEG)
 
-#if HAVE_LIBSWRESAMPLE_SWRESAMPLE_H || (defined TARGET_DARWIN)
 // Use direct mapping
 class DllSwResample : public DllDynamic, DllSwResampleInterface
 {
@@ -74,7 +72,7 @@ public:
   // DLL faking.
   virtual bool ResolveExports() { return true; }
   virtual bool Load() {
-#if !defined(TARGET_DARWIN)
+#if !defined(TARGET_DARWIN) && !defined(USE_STATIC_FFMPEG)
     CLog::Log(LOGDEBUG, "DllAvFormat: Using libswresample system library");
 #endif
     return true;
@@ -84,38 +82,11 @@ public:
   virtual int swr_init(struct SwrContext *s) { return ::swr_init(s); }
   virtual void swr_free(struct SwrContext **s){ return ::swr_free(s); }
   virtual int swr_convert(struct SwrContext *s, uint8_t **out, int out_count, const uint8_t **in , int in_count){ return ::swr_convert(s, out, out_count, in, in_count); }
+  virtual int64_t swr_get_delay(struct SwrContext *s, int64_t base) { return ::swr_get_delay(s, base); }
+  virtual int swr_set_channel_mapping (struct SwrContext *s, const int *channel_map) { return ::swr_set_channel_mapping(s, channel_map); }
+  virtual int swr_set_matrix(struct SwrContext *s, const double *matrix, int stride) { return ::swr_set_matrix(s, matrix, stride); }
+  virtual int swr_set_compensation(struct SwrContext *s, int sample_delta, int compensation_distance) { return ::swr_set_compensation(s, sample_delta, compensation_distance); }
 };
-#else
-// Wrap the same API through libavresample.
-class DllSwResample : public DllDynamic, DllSwResampleInterface
-{
-public:
-  virtual ~DllSwResample() {}
-
-  // DLL faking.
-  virtual bool ResolveExports() { return true; }
-  virtual bool Load() {
-#if !defined(TARGET_DARWIN)
-    CLog::Log(LOGDEBUG, "DllAvFormat: Using libavresample system library");
-#endif
-    return true;
-  }
-  virtual void Unload() {}
-  virtual struct SwrContext *swr_alloc_set_opts(struct SwrContext *s, int64_t out_ch_layout, enum AVSampleFormat out_sample_fmt, int out_sample_rate, int64_t in_ch_layout, enum AVSampleFormat in_sample_fmt, int in_sample_rate, int log_offset, void *log_ctx) {
-          AVAudioResampleContext *ret = ::avresample_alloc_context();
-          av_opt_set_int(ret, "out_channel_layout", out_ch_layout  , 0);
-          av_opt_set_int(ret, "out_sample_fmt"    , out_sample_fmt , 0);
-          av_opt_set_int(ret, "out_sample_rate"   , out_sample_rate, 0);
-          av_opt_set_int(ret, "in_channel_layout" , in_ch_layout   , 0);
-          av_opt_set_int(ret, "in_sample_fmt"     , in_sample_fmt  , 0);
-          av_opt_set_int(ret, "in_sample_rate"    , in_sample_rate , 0);
-          return ret;
-  }
-  virtual int swr_init(struct SwrContext *s) { return ::avresample_open(s); }
-  virtual void swr_free(struct SwrContext **s){ ::avresample_close(*s); *s = NULL; }
-  virtual int swr_convert(struct SwrContext *s, uint8_t **out, int out_count, const uint8_t **in , int in_count){ return ::avresample_convert(s, (void**)out, 0, out_count, (void**)in, 0,in_count); }
-};
-#endif
 
 #else
 
@@ -129,12 +100,20 @@ class DllSwResample : public DllDynamic, DllSwResampleInterface
   DEFINE_METHOD1(int, swr_init, (struct SwrContext *p1))
   DEFINE_METHOD1(void, swr_free, (struct SwrContext **p1))
   DEFINE_METHOD5(int, swr_convert, (struct SwrContext *p1, uint8_t **p2, int p3, const uint8_t **p4, int p5))
+  DEFINE_METHOD2(int64_t, swr_get_delay, (struct SwrContext *p1, int64_t p2))
+  DEFINE_METHOD2(int, swr_set_channel_mapping, (struct SwrContext *p1, const int *p2))
+  DEFINE_METHOD3(int, swr_set_matrix, (struct SwrContext *p1, const double *p2, int p3))
+  DEFINE_METHOD3(int, swr_set_compensation, (struct SwrContext *p1, int p2, int p3))
 
   BEGIN_METHOD_RESOLVE()
     RESOLVE_METHOD(swr_alloc_set_opts)
     RESOLVE_METHOD(swr_init)
     RESOLVE_METHOD(swr_free)
     RESOLVE_METHOD(swr_convert)
+    RESOLVE_METHOD(swr_get_delay)
+    RESOLVE_METHOD(swr_set_channel_mapping)
+    RESOLVE_METHOD(swr_set_matrix)
+    RESOLVE_METHOD(swr_set_compensation)
   END_METHOD_RESOLVE()
 
   /* dependencies of libavformat */
