@@ -27,6 +27,7 @@
 #include "DllAvUtil.h"
 #include "DllSwScale.h"
 #include "DllAvFilter.h"
+#include "DllPostProc.h"
 
 class CVDPAU;
 class CCriticalSection;
@@ -96,7 +97,11 @@ protected:
   AVFilterGraph*   m_pFilterGraph;
   AVFilterContext* m_pFilterIn;
   AVFilterContext* m_pFilterOut;
+#if defined(LIBAVFILTER_AVFRAME_BASED)
+  AVFrame*         m_pFilterFrame;
+#else
   AVFilterBufferRef* m_pBufferRef;
+#endif
 
   int m_iPictureWidth;
   int m_iPictureHeight;
@@ -111,6 +116,7 @@ protected:
   DllAvUtil  m_dllAvUtil;
   DllSwScale m_dllSwScale;
   DllAvFilter m_dllAvFilter;
+  DllPostProc m_dllPostProc;
 
   std::string m_name;
   bool              m_bSoftware;
