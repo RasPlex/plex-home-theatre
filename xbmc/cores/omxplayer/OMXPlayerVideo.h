@@ -40,8 +40,6 @@
 #include "linux/DllBCM.h"
 #include "cores/VideoRenderers/RenderManager.h"
 
-using namespace std;
-
 class OMXPlayerVideo : public CThread
 {
 protected:
@@ -68,10 +66,10 @@ protected:
   float                     m_fForcedAspectRatio;
   unsigned                  m_flags;
 
+  CRect                     m_src_rect;
   CRect                     m_dst_rect;
   int                       m_view_mode;
 
-  uint32_t                  m_history_valid_pts;
   DllBcmHost                m_DllBcmHost;
 
   CDVDOverlayContainer  *m_pOverlayContainer;
@@ -79,8 +77,9 @@ protected:
 
   BitstreamStats m_videoStats;
 
-  void ProcessOverlays(int iGroupId, double pts);
+  void ProcessOverlays(double pts);
   double NextOverlay(double pts);
+  bool OpenStream(CDVDStreamInfo &hints, COMXVideo *codec);
 
   virtual void OnStartup();
   virtual void OnExit();
@@ -90,17 +89,18 @@ public:
   OMXPlayerVideo(OMXClock *av_clock, CDVDOverlayContainer* pOverlayContainer, CDVDMessageQueue& parent);
   ~OMXPlayerVideo();
   bool OpenStream(CDVDStreamInfo &hints);
-  bool OpenStream(CDVDStreamInfo &hints, COMXVideo *codec);
   void SendMessage(CDVDMsg* pMsg, int priority = 0) { m_messageQueue.Put(pMsg, priority); }
+  void FlushMessages()                              { m_messageQueue.Flush(); }
   bool AcceptsData() const                          { return !m_messageQueue.IsFull(); }
   bool HasData() const                              { return m_messageQueue.GetDataSize() > 0; }
   bool IsInited() const                             { return m_messageQueue.IsInited(); }
   void WaitForBuffers()                             { m_messageQueue.WaitUntilEmpty(); }
   int  GetLevel() const                             { return m_messageQueue.GetLevel(); }
-  bool IsStalled()                                  { return m_stalled;  }
+  bool IsStalled() const                            { return m_stalled;  }
   bool IsEOS();
   bool CloseStream(bool bWaitForBuffers);
-  void Output(int iGroupId, double pts, bool bDropPacket);
+  void Output(double pts, bool bDropPacket);
+  bool StepFrame();
   void Flush();
   bool OpenDecoder();
   int  GetDecoderBufferSize();
@@ -108,7 +108,7 @@ public:
   double GetCurrentPts() { return m_iCurrentPts; };
   double GetFPS() { return m_fFrameRate; };
   void  SubmitEOS();
-  bool SubmittedEOS();
+  bool SubmittedEOS() const { return m_omxVideo.SubmittedEOS(); }
   void SetDelay(double delay) { m_iVideoDelay = delay; }
   double GetDelay() { return m_iVideoDelay; }
   void SetSpeed(int iSpeed);
@@ -125,8 +125,8 @@ public:
   int GetFreeSpace();
   void  SetVideoRect(const CRect &SrcRect, const CRect &DestRect);
   static void RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect);
-  void ResolutionUpdateCallBack(uint32_t width, uint32_t height, float pixel_aspect);
-  static void ResolutionUpdateCallBack(void *ctx, uint32_t width, uint32_t height, float pixel_aspect);
+  void ResolutionUpdateCallBack(uint32_t width, uint32_t height, float framerate, float pixel_aspect);
+  static void ResolutionUpdateCallBack(void *ctx, uint32_t width, uint32_t height, float framerate, float pixel_aspect);
 
   inline int GetCacheLevel()
   {
@@ -136,11 +136,4 @@ public:
       return 0;
   }
 };
-
-/* PLEX */
-extern CEvent g_CacheSyncEvent;
-extern double g_VideoCachePts;
-extern double g_AudioCachePts;
-/* END PLEX */
-
 #endif

@@ -2873,7 +2873,7 @@ bool COMXPlayer::HasAudio() const
 
 bool COMXPlayer::IsPassthrough() const
 {
-  return m_omxPlayerAudio.Passthrough();
+  return m_omxPlayerAudio.IsPassthrough();
 }
 
 bool COMXPlayer::CanSeek()
