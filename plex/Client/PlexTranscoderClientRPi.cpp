@@ -13,10 +13,12 @@
 #include "Client/PlexTranscoderClientRPi.h"
 #include "plex/PlexUtils.h"
 #include "log.h"
+#include "settings/AdvancedSettings.h"
 #include "settings/GUISettings.h"
 #include "Client/PlexConnection.h"
 #include "dialogs/GUIDialogKaiToast.h"
 #include "PlexMediaDecisionEngine.h"
+#include "linux/RBP.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 CPlexTranscoderClientRPi::CPlexTranscoderClientRPi()
@@ -26,15 +28,15 @@ CPlexTranscoderClientRPi::CPlexTranscoderClientRPi()
 
   // Here is as list of audio / video codecs that we support natively on RPi
   m_knownVideoCodecs = boost::assign::list_of<std::string>  ("h264") ("mpeg4");
-  m_knownAudioCodecs = boost::assign::list_of<std::string>  ("") ("aac") ("ac3") ("mp3") ("mp2") ("dca") ("flac");
+  m_knownAudioCodecs = boost::assign::list_of<std::string>  ("") ("aac") ("ac3") ("eac3") ("mp3") ("mp2") ("dca") ("flac") ("pcm");
 
   // check if optionnal codecs are here
-  if ( CheckCodec("MPG2") )
+  if ( g_RBP.GetCodecMpg2() )
   {
     m_knownVideoCodecs.insert("mpeg2video");
   }
 
-  if ( CheckCodec("WVC1") )
+  if ( g_RBP.GetCodecWvc1() )
   {
     m_knownAudioCodecs.insert("wmav2");
     m_knownAudioCodecs.insert("wmapro");
@@ -43,45 +45,16 @@ CPlexTranscoderClientRPi::CPlexTranscoderClientRPi()
     m_knownVideoCodecs.insert("mjpeg");
     m_knownVideoCodecs.insert("wmv3");
   }
-}
 
-///////////////////////////////////////////////////////////////////////////////
-#if defined(_LINUX)
-bool CPlexTranscoderClientRPi::CheckCodec(std::string codec)
-{
-  FILE *fp;
-  char output[100];
-  std::string command,reply;
-
-  // check codec
-  command = "vcgencmd codec_enabled " + codec;
-  reply = codec + "=enabled";
-
-  fp = popen(command.c_str(), "r");
-  if (fp)
-  {
-      if (fgets(output, sizeof(output)-1, fp))
-      {
-        if (!strncmp(output, reply.c_str(),reply.length()))
-        {
-          CLog::Log(LOGDEBUG, "CPlexTranscoderClientRPi :  Codec %s was found.",codec.c_str());
-          return true;
-        }
-        else
-          CLog::Log(LOGDEBUG, "CPlexTranscoderClientRPi :  Codec %s was not found.",codec.c_str());
-      }
-      else
-        CLog::Log(LOGERROR, "CPlexTranscoderClientRPi : No reply in %s codec check",codec.c_str());
-
-      pclose(fp);
-  }
-  else CLog::Log(LOGERROR, "CPlexTranscoderClientRPi : Unable to check %s codec", codec.c_str());
-
-  return false;
-}
-#else
-bool CPlexTranscoderClientRPi::CheckCodec(std::string codec) { return false; }
+#ifdef TARGET_RASPBERRY_PI_2
+    m_knownAudioCodecs.insert("truehd");
 #endif
+
+  for (CStdStringArray::iterator it = g_advancedSettings.m_knownVideoCodecs.begin(); it != g_advancedSettings.m_knownVideoCodecs.end(); it++)
+    m_knownVideoCodecs.insert(it->c_str());
+  for (CStdStringArray::iterator it = g_advancedSettings.m_knownAudioCodecs.begin(); it != g_advancedSettings.m_knownAudioCodecs.end(); it++)
+    m_knownAudioCodecs.insert(it->c_str());
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 bool CPlexTranscoderClientRPi::ShouldTranscode(CPlexServerPtr server, const CFileItem& item)

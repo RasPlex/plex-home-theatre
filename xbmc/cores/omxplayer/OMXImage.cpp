@@ -153,7 +153,7 @@ bool COMXImage::DecodeJpeg(COMXImageFile *file, unsigned int width, unsigned int
 
 bool COMXImage::ClampLimits(unsigned int &width, unsigned int &height, unsigned int m_width, unsigned int m_height, bool transposed)
 {
-  RESOLUTION_INFO& res_info =  g_settings.m_ResInfo[g_graphicsContext.GetVideoResolution()];
+  RESOLUTION_INFO& res_info = g_settings.m_ResInfo[g_graphicsContext.GetVideoResolution()];
   unsigned int max_width = width;
   unsigned int max_height = height;
   const unsigned int gui_width = transposed ? res_info.iHeight:res_info.iWidth;
@@ -206,8 +206,8 @@ bool COMXImage::CreateThumb(const CStdString& srcFile, unsigned int maxHeight, u
   COMXImageReEnc reenc;
   void *pDestBuffer;
   unsigned int nDestSize;
-  if ((URIUtils::GetExtension(srcFile).Equals(".jpg") || URIUtils::GetExtension(srcFile).Equals(".tbn")) &&
-      file.ReadFile(srcFile) && reenc.ReEncode(file, maxWidth, maxHeight, pDestBuffer, nDestSize))
+  int orientation = additional_info == "flipped" ? 1:0;
+  if ((URIUtils::GetExtension(srcFile).Equals(".jpg") || URIUtils::GetExtension(srcFile).Equals(".tbn")) && file.ReadFile(srcFile, orientation) && reenc.ReEncode(file, maxWidth, maxHeight, pDestBuffer, nDestSize))
   {
     XFILE::CFile outfile;
     if (outfile.OpenForWrite(destFile, true))
@@ -1413,7 +1413,7 @@ bool COMXImageEnc::Encode(unsigned char *buffer, int size, unsigned width, unsig
     m_omx_encoder.DecoderFillBufferDone(m_omx_encoder.GetComponent(), m_encoded_buffer);
     return false;
   }
-  omx_err = m_omx_encoder.WaitForOutputDone(1000);
+  omx_err = m_omx_encoder.WaitForOutputDone(2000);
   if(omx_err != OMX_ErrorNone)
   {
     CLog::Log(LOGERROR, "%s::%s m_omx_encoder.WaitForOutputDone result(0x%x)\n", CLASSNAME, __func__, omx_err);

@@ -50,7 +50,6 @@ class OMXClock
 protected:
   bool              m_pause;
   pthread_mutex_t   m_lock;
-  double            m_fps;
   int               m_omx_speed;
   OMX_U32           m_WaitMask;
   OMX_TIME_CLOCKSTATE   m_eState;
@@ -58,6 +57,9 @@ protected:
   CDVDClock         *m_clock;
 private:
   COMXCoreComponent m_omx_clock;
+  double            m_last_media_time;
+  double            m_last_media_time_read;
+  double            m_speedAdjust;
 public:
   OMXClock();
   ~OMXClock();
@@ -81,16 +83,15 @@ public:
   bool OMXPause(bool lock = true);
   bool OMXResume(bool lock = true);
   bool OMXSetSpeed(int speed, bool lock = true, bool pause_resume = false);
+  void OMXSetSpeedAdjust(double adjust, bool lock = true);
   int  OMXPlaySpeed() { return m_omx_speed; };
+  bool OMXFlush(bool lock = true);
   COMXCoreComponent *GetOMXClock();
   bool OMXStateExecute(bool lock = true);
   void OMXStateIdle(bool lock = true);
   bool HDMIClockSync(bool lock = true);
   static int64_t CurrentHostCounter(void);
   static int64_t CurrentHostFrequency(void);
-
-  int     GetRefreshRate(double* interval = NULL);
-  void    SetRefreshRate(double fps) { m_fps = fps; };
 
   static double NormalizeFrameduration(double frameduration);
 };

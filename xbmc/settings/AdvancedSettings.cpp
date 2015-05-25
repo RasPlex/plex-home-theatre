@@ -62,7 +62,7 @@ void CAdvancedSettings::Initialize()
   m_limiterRelease = 0.1f;
 
   m_omxHWAudioDecode = false;
-  m_omxDecodeStartWithValidFrame = false;
+  m_omxDecodeStartWithValidFrame = true;
 
   m_karaokeSyncDelayCDG = 0.0f;
   m_karaokeSyncDelayLRC = 0.0f;
@@ -1155,6 +1155,25 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
   }
 
   /* PLEX */
+  pElement = pRootElement->FirstChildElement("codecs");
+  if (pElement)
+  {
+    TiXmlElement* element = pElement->FirstChildElement("video");
+    while (element)
+    {
+      if (element->GetText())
+        m_knownVideoCodecs.push_back(element->GetText());
+      element = element->NextSiblingElement("video");
+    }
+    element = pElement->FirstChildElement("audio");
+    while (element)
+    {
+      if (element->GetText())
+        m_knownAudioCodecs.push_back(element->GetText());
+      element = element->NextSiblingElement("audio");
+    }
+  }
+
   XMLUtils::GetInt(pRootElement, "nowplayingfliptime", m_nowPlayingFlipTime, 10, 6000);
   XMLUtils::GetBoolean(pRootElement, "enableviewrestricitons", m_bEnableViewRestrictions);
   XMLUtils::GetInt(pRootElement, "secondstovisualizer", m_secondsToVisualizer, 0, 6000);
