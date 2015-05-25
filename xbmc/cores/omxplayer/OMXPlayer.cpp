@@ -1054,7 +1054,6 @@ bool COMXPlayer::ReadPacket(DemuxPacket*& packet, CDemuxStream*& stream)
             OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_SUBTITLE, i);
             if (s.plexID == m_vobsubToDisplay && OpenSubtitleStream(s.id, s.source))
             {
-              OpenSubtitleStream(s.id, s.source);
               break;
             }
           }
@@ -2361,9 +2360,6 @@ void COMXPlayer::OnExit()
   {
     CLog::Log(LOGNOTICE, "COMXPlayer::OnExit()");
 
-    m_av_clock.OMXStop();
-    m_av_clock.OMXStateIdle();
-
     // set event to inform openfile something went wrong in case openfile is still waiting for this event
     SetCaching(CACHESTATE_DONE);
 
@@ -2416,6 +2412,9 @@ void COMXPlayer::OnExit()
     m_SelectionStreams.Clear(STREAM_NONE, STREAM_SOURCE_NONE);
 
     m_messenger.End();
+
+    m_av_clock.OMXStop();
+    m_av_clock.OMXStateIdle();
 
     m_av_clock.OMXDeinitialize();
 
@@ -2884,13 +2883,11 @@ bool COMXPlayer::CanSeek()
 
 void COMXPlayer::Seek(bool bPlus, bool bLargeStep)
 {
-  // Single step
   if( m_playSpeed == DVD_PLAYSPEED_PAUSE && bPlus && !bLargeStep)
   {
-    m_av_clock.OMXStep();
-    return;
+    if (m_omxPlayerVideo.StepFrame())
+      return;
   }
-
   if (!m_State.canseek)
     return;
 
@@ -3061,6 +3058,8 @@ void COMXPlayer::GetGeneralInfo(CStdString& strGeneralInfo)
 {
   if (!m_bStop)
   {
+    double dDelay = m_omxPlayerAudio.GetDelay();
+
     double apts = m_omxPlayerAudio.GetCurrentPts();
     double vpts = m_omxPlayerVideo.GetCurrentPts();
     double dDiff = 0;
@@ -3083,7 +3082,7 @@ void COMXPlayer::GetGeneralInfo(CStdString& strGeneralInfo)
     }
 
     strGeneralInfo.Format("C( ad:% 6.3f a/v:% 6.3f%s, dcpu:%2i%% acpu:%2i%% vcpu:%2i%%%s af:%d%% vf:%d%% amp:% 5.2f )"
-                         , m_omxPlayerAudio.GetDelay()
+                         , dDelay
                          , dDiff
                          , strEDL.c_str()
                          , (int)(CThread::GetRelativeUsage()*100)
@@ -4749,7 +4748,6 @@ void COMXPlayer::OpenDefaultStreams(bool reset)
         if (streamType == PLEX_STREAM_AUDIO && selected)
         {
           // ...see if we can match it up with our stream.
-          count = m_SelectionStreams.Count(STREAM_AUDIO);
           for (int i=0; i<count && !valid; i++)
           {
             OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_AUDIO, i);
@@ -4786,6 +4784,7 @@ void COMXPlayer::OpenDefaultStreams(bool reset)
     return;
 
   // open subtitle stream
+  count = m_SelectionStreams.Count(STREAM_SUBTITLE);
   valid = false;
   m_omxPlayerVideo.EnableSubtitle(true);
 
@@ -4798,8 +4797,6 @@ void COMXPlayer::OpenDefaultStreams(bool reset)
       // If we've found the selected subtitle stream...
       if (stream->GetProperty("streamType").asInteger() == PLEX_STREAM_SUBTITLE && stream->GetProperty("selected").asBoolean())
       {
-        count = m_SelectionStreams.Count(STREAM_SUBTITLE);
-
         for (int i = 0; i<count && !valid; i++)
         {
           OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_SUBTITLE, i);
