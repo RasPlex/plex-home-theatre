@@ -3777,7 +3777,6 @@ bool CApplication::Cleanup()
     CLastfmScrobbler::RemoveInstance();
     CLibrefmScrobbler::RemoveInstance();
     CLastFmManager::RemoveInstance();
-    COMXImage::RemoveInstance();
 #ifdef HAS_EVENT_SERVER
     CEventServer::RemoveInstance();
 #endif
