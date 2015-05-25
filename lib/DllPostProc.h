@@ -39,16 +39,8 @@ extern "C" {
 #endif
   
 #if (defined USE_EXTERNAL_FFMPEG)
-  #if (defined HAVE_LIBAVUTIL_AVUTIL_H)
-    #include <libavutil/avutil.h>
-  #elif (defined HAVE_FFMPEG_AVUTIL_H)
-    #include <ffmpeg/avutil.h>
-  #endif
-  #if (defined HAVE_LIBPOSTPROC_POSTPROCESS_H)
-    #include <libpostproc/postprocess.h>
-  #elif (defined HAVE_POSTPROC_POSTPROCESS_H)
-    #include <postproc/postprocess.h>
-  #endif
+  #include <libavutil/avutil.h>
+  #include <libpostproc/postprocess.h>
 #else
   #include "libavutil/avutil.h"
   #include "libpostproc/postprocess.h"
@@ -87,7 +79,7 @@ public:
   virtual void pp_free_context(pp_context *ppContext)=0;
 };
 
-#if (defined USE_EXTERNAL_FFMPEG) || (defined TARGET_DARWIN) 
+#if (defined USE_EXTERNAL_FFMPEG) || (defined TARGET_DARWIN) || (defined USE_STATIC_FFMPEG)
 
 // We call directly.
 class DllPostProc : public DllDynamic, DllPostProcInterface
@@ -106,7 +98,9 @@ public:
   // DLL faking.
   virtual bool ResolveExports() { return true; }
   virtual bool Load() {
+#if !defined(TARGET_DARWIN) && !defined(USE_STATIC_FFMPEG)
     CLog::Log(LOGDEBUG, "DllPostProc: Using libpostproc system library");
+#endif
     return true;
   }
   virtual void Unload() {}
