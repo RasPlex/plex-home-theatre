@@ -374,6 +374,9 @@ class CAdvancedSettings
     CStdString m_language;
     CStdString m_units;
 
+    CStdStringArray m_knownVideoCodecs;
+    CStdStringArray m_knownAudioCodecs;
+
     int m_secondsToVisualizer;
     bool m_bVisualizerOnPlay;
     int m_nowPlayingFlipTime;
