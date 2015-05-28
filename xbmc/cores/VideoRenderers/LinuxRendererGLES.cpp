@@ -153,6 +153,12 @@ bool CLinuxRendererGLES::ValidateRenderTarget()
   {
     CLog::Log(LOGNOTICE,"Using GL_TEXTURE_2D");
 
+    // function pointer for texture might change in
+    // call to LoadShaders
+    glFinish();
+    for (int i = 0 ; i < NUM_BUFFERS ; i++)
+      (this->*m_textureDelete)(i);
+
      // create the yuv textures
     LoadShaders();
 
@@ -259,8 +265,6 @@ int CLinuxRendererGLES::GetImage(YV12Image *image, int source, bool readonly)
   image->bpp      = 1;
 
   return source;
-
-  return -1;
 }
 
 void CLinuxRendererGLES::ReleaseImage(int source, bool preserve)
@@ -322,6 +326,20 @@ void CLinuxRendererGLES::CalculateTextureSourceRects(int source, int num_planes)
         p.rect.y1 /= 1 << im->cshift_y;
         p.rect.y2 /= 1 << im->cshift_y;
       }
+
+      // protect against division by zero
+      if (p.texheight == 0 || p.texwidth == 0 ||
+          p.pixpertex_x == 0 || p.pixpertex_y == 0)
+      {
+        continue;
+      }
+
+      p.height  /= p.pixpertex_y;
+      p.rect.y1 /= p.pixpertex_y;
+      p.rect.y2 /= p.pixpertex_y;
+      p.width   /= p.pixpertex_x;
+      p.rect.x1 /= p.pixpertex_x;
+      p.rect.x2 /= p.pixpertex_x;
 
       if (m_textureTarget == GL_TEXTURE_2D)
       {
@@ -415,22 +433,17 @@ void CLinuxRendererGLES::RenderUpdate(bool clear, DWORD flags, DWORD alpha)
     if (m_RenderUpdateCallBackFn)
       (*m_RenderUpdateCallBackFn)(m_RenderUpdateCallBackCtx, m_sourceRect, m_destRect);
 
-    RESOLUTION res = GetResolution();
-    int iWidth = g_settings.m_ResInfo[res].iWidth;
-    int iHeight = g_settings.m_ResInfo[res].iHeight;
+    CRect old = g_graphicsContext.GetScissors();
 
     g_graphicsContext.BeginPaint();
+    g_graphicsContext.SetScissors(m_destRect);
 
-    glScissor(m_destRect.x1, 
-              iHeight - m_destRect.y2, 
-              m_destRect.x2 - m_destRect.x1, 
-              m_destRect.y2 - m_destRect.y1);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glScissor(0, 0, iWidth, iHeight);
 
+    g_graphicsContext.SetScissors(old);
     g_graphicsContext.EndPaint();
     return;
   }
@@ -653,7 +666,7 @@ void CLinuxRendererGLES::LoadShaders(int field)
           UpdateVideoFilter();
           break;
         }
-        else
+        else if (m_pYUVShader)
         {
           m_pYUVShader->Free();
           delete m_pYUVShader;
@@ -1003,16 +1016,16 @@ void CLinuxRendererGLES::RenderMultiPass(int index, int field)
     CLog::Log(LOGERROR, "GL: Error enabling YUV shader");
   }
 
-  float imgwidth  = planes[0].rect.x2 - planes[0].rect.x1;
-  float imgheight = planes[0].rect.y2 - planes[0].rect.y1;
-  if (m_textureTarget == GL_TEXTURE_2D)
-  {
-    imgwidth  *= planes[0].texwidth;
-    imgheight *= planes[0].texheight;
-  }
-
-  // 1st Pass to video frame size
+// 1st Pass to video frame size
 //TODO
+//  float imgwidth  = planes[0].rect.x2 - planes[0].rect.x1;
+//  float imgheight = planes[0].rect.y2 - planes[0].rect.y1;
+//  if (m_textureTarget == GL_TEXTURE_2D)
+//  {
+//    imgwidth  *= planes[0].pixpertex_x;
+//    imgheight *= planes[0].pixpertex_y;
+//  }
+//  
 //  glBegin(GL_QUADS);
 //
 //  glMultiTexCoord2fARB(GL_TEXTURE0, planes[0].rect.x1, planes[0].rect.y1);
@@ -1080,10 +1093,10 @@ void CLinuxRendererGLES::RenderMultiPass(int index, int field)
 
   VerifyGLState();
 
-  imgwidth  /= m_sourceWidth;
-  imgheight /= m_sourceHeight;
-
 //TODO
+//  imgwidth  /= m_sourceWidth;
+//  imgheight /= m_sourceHeight;
+//
 //  glBegin(GL_QUADS);
 //
 //  glMultiTexCoord2fARB(GL_TEXTURE0, 0.0f    , 0.0f);
@@ -1595,6 +1608,12 @@ bool CLinuxRendererGLES::CreateYV12Texture(int index)
       planes[2].texheight = planes[0].texheight >> im.cshift_y;
     }
 
+    for (int p = 0; p < 3; p++)
+    {
+      planes[p].pixpertex_x = 1;
+      planes[p].pixpertex_y = 1;
+    }
+
     if(m_renderMethod & RENDER_POT)
     {
       for(int p = 0; p < 3; p++)
@@ -1697,6 +1716,8 @@ void CLinuxRendererGLES::UploadCVRefTexture(int index)
 
     plane.flipindex = m_buffers[index].flipindex;
   }
+
+  CalculateTextureSourceRects(index, 1);
 #endif
 }
 void CLinuxRendererGLES::DeleteCVRefTexture(int index)
@@ -1730,6 +1751,8 @@ bool CLinuxRendererGLES::CreateCVRefTexture(int index)
 
   plane.texwidth  = im.width;
   plane.texheight = im.height;
+  plane.pixpertex_x = 1;
+  plane.pixpertex_y = 1;
 
   if(m_renderMethod & RENDER_POT)
   {

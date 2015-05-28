@@ -235,6 +235,10 @@ protected:
     unsigned texwidth;
     unsigned texheight;
 
+    //pixels per texel
+    unsigned pixpertex_x;
+    unsigned pixpertex_y;
+
     unsigned flipindex;
   };
 
