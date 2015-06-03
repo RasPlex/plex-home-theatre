@@ -85,6 +85,8 @@ void CPlexBusyIndicator::OnJobComplete(unsigned int jobID, bool success, CJob* j
   if (m_callbackMap.find(jobID) != m_callbackMap.end())
   {
     IJobCallback* cb = m_callbackMap[jobID];
+    m_callbackMap.erase(jobID);
+
     if (cb)
     {
       lk.Leave();
@@ -101,7 +103,6 @@ void CPlexBusyIndicator::OnJobComplete(unsigned int jobID, bool success, CJob* j
       }
     }
 
-    m_callbackMap.erase(jobID);
     m_resultMap.erase(jobID);
 
     if (m_callbackMap.size() == 0)
