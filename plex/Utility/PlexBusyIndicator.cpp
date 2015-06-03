@@ -19,7 +19,7 @@ bool CPlexBusyIndicator::blockWaitingForJob(CJob* job, IJobCallback* callback, C
 {
   CSingleLock lk(m_section);
   m_blockEvent.Reset();
-  int id = CJobManager::GetInstance().AddJob(job, this);
+  int id = CJobManager::GetInstance().AddJob(job, this, CJob::PRIORITY_HIGH);
 
   m_callbackMap[id] = callback;
   m_resultMap[id] = result;
