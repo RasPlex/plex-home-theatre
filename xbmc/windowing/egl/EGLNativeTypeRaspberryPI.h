@@ -26,10 +26,6 @@
 #include <bcm_host.h>
 #endif
 
-/* PLEX */
-#include "interface/vmcs_host/vc_dispmanx.h" 
-/* END PLEX */
-
 class DllBcmHost;
 class CEGLNativeTypeRaspberryPI : public CEGLNativeType
 {
@@ -61,7 +57,6 @@ private:
   DllBcmHost                    *m_DllBcmHost;
   DISPMANX_ELEMENT_HANDLE_T     m_dispman_display;
   DISPMANX_ELEMENT_HANDLE_T     m_dispman_element;
-  DISPMANX_ELEMENT_HANDLE_T     m_dispman_element2;
   TV_GET_STATE_RESP_T           m_tv_state;
   sem_t                         m_tv_synced;
   bool                          m_fixedMode;
@@ -75,8 +70,7 @@ private:
   static void CallbackTvServiceCallback(void *userdata, uint32_t reason, uint32_t param1, uint32_t param2);
 
   void DestroyDispmaxWindow();
-  bool ClampToGUIDisplayLimits(int &width, int &height);
   int FindMatchingResolution(const RESOLUTION_INFO &res, const std::vector<RESOLUTION_INFO> &resolutions);
-  int AddUniqueResolution(const RESOLUTION_INFO &res, std::vector<RESOLUTION_INFO> &resolutions);
+  int AddUniqueResolution(RESOLUTION_INFO &res, std::vector<RESOLUTION_INFO> &resolutions);
 #endif
 };

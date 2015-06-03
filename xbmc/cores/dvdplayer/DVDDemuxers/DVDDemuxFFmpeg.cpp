@@ -470,8 +470,9 @@ bool CDVDDemuxFFmpeg::Open(CDVDInputStream* pInput)
   }
   
   // Avoid detecting framerate if advancedsettings.xml says so
-  m_pFormatContext->fps_probe_size = (g_advancedSettings.m_videoFpsDetect == 0) ? 0 : -1;
-
+  if (g_advancedSettings.m_videoFpsDetect == 0) 
+      m_pFormatContext->fps_probe_size = 0;
+  
   // analyse very short to speed up mjpeg playback start
   if (iformat && (strcmp(iformat->name, "mjpeg") == 0) && m_ioContext->seekable == 0)
     m_pFormatContext->max_analyze_duration = 500000;
@@ -934,12 +935,6 @@ bool CDVDDemuxFFmpeg::SeekTime(int time, bool backwords, double *startpts)
     else if (ret < 0 && m_pInput->IsEOF())
       ret = 0;
 
-    // demuxer will return failure, if you seek behind eof
-    if (ret < 0 && m_pFormatContext->duration && seek_pts >= (m_pFormatContext->duration + m_pFormatContext->start_time))
-      ret = 0;
-    else if (ret < 0 && m_pInput->IsEOF())
-      ret = 0;
-
     if(ret >= 0)
       UpdateCurrentPTS();
   }
@@ -1067,16 +1062,22 @@ void CDVDDemuxFFmpeg::AddStream(int iId)
         if (m_bAVI && pStream->codec->codec_id == CODEC_ID_H264)
           st->bPTSInvalid = true;
 
+#if defined(AVFORMAT_HAS_STREAM_GET_R_FRAME_RATE)
+        AVRational r_frame_rate = m_dllAvFormat.av_stream_get_r_frame_rate(pStream);
+#else
+        AVRational r_frame_rate = pStream->r_frame_rate;
+#endif
+
         //average fps is more accurate for mkv files
         if (m_bMatroska && pStream->avg_frame_rate.den && pStream->avg_frame_rate.num)
         {
           st->iFpsRate = pStream->avg_frame_rate.num;
           st->iFpsScale = pStream->avg_frame_rate.den;
         }
-        else if(pStream->r_frame_rate.den && pStream->r_frame_rate.num)
+        else if(r_frame_rate.den && r_frame_rate.num)
         {
-          st->iFpsRate = pStream->r_frame_rate.num;
-          st->iFpsScale = pStream->r_frame_rate.den;
+          st->iFpsRate = r_frame_rate.num;
+          st->iFpsScale = r_frame_rate.den;
         }
         else
         {

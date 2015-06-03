@@ -49,13 +49,13 @@ protected:
   SwrContext*         m_pConvert;
   enum AVSampleFormat m_iSampleFormat;  
   CAEChannelInfo      m_channelLayout;
-  bool                m_bLpcmMode;  
-  bool                m_bNeedConversion;
+  bool                m_bLpcmMode;
 
   AVFrame* m_pFrame1;
   int      m_iBufferSize1;
   BYTE*    m_pBuffer2;
   int      m_iBufferSize2;
+  int      m_iBufferTotalSize2;
 
   bool m_bOpenedCodec;
   int m_iBuffered;

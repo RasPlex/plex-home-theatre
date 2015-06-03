@@ -483,6 +483,9 @@ protected:
     ETIMESOURCE_MENU,
   };
 
+  friend class OMXPlayerVideo;
+  friend class OMXPlayerAudio;
+
   struct SPlayerState
   {
     SPlayerState() { Clear(); }
@@ -580,4 +583,6 @@ protected:
 
   bool m_HasVideo;
   bool m_HasAudio;
+
+  bool m_DemuxerPausePending;
 };
