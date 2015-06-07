@@ -27,6 +27,7 @@
   #include "Sinks/AESinkAUDIOTRACK.h"
 #elif defined(TARGET_RASPBERRY_PI)
   #include "Sinks/AESinkPi.h"
+  #include "Sinks/AESinkALSA.h"
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_ALSA)
     #include "Sinks/AESinkALSA.h"
@@ -59,6 +60,7 @@ void CAESinkFactory::ParseDevice(std::string &device, std::string &driver)
         driver == "AUDIOTRACK"  ||
 #elif defined(TARGET_RASPBERRY_PI)
         driver == "PI"          ||
+        driver == "ALSA"        ||
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_ALSA)
         driver == "ALSA"        ||
@@ -117,6 +119,10 @@ IAESink *CAESinkFactory::Create(std::string &device, AEAudioFormat &desiredForma
 #elif defined(TARGET_RASPBERRY_PI)
   if (driver.empty() || driver == "PI")
     TRY_SINK(Pi)
+  #if defined(HAS_ALSA)
+  if (driver.empty() || driver == "ALSA")
+    TRY_SINK(ALSA)
+  #endif
 
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_ALSA)
@@ -154,6 +160,9 @@ void CAESinkFactory::EnumerateEx(AESinkInfoList &list, bool force)
     ENUMERATE_SINK(AUDIOTRACK, force);
 #elif defined(TARGET_RASPBERRY_PI)
     ENUMERATE_SINK(Pi, force);
+  #if defined(HAS_ALSA)
+    ENUMERATE_SINK(ALSA, force);
+  #endif
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
   #if defined(HAS_ALSA)
     ENUMERATE_SINK(ALSA, force);

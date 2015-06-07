@@ -102,6 +102,7 @@ if(CMAKE_USE_PTHREADS_INIT)
   set(HAVE_LIBPTHREAD 1)
 endif()
 
+plex_find_package(Alsa 0 1)
 
 plex_find_package(LibUSB 0 1)
 plex_find_package(LibUDEV 0 1)
