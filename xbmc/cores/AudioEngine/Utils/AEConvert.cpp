@@ -75,11 +75,13 @@ CAEConvert::AEConvertToFn CAEConvert::ToFloat(enum AEDataFormat dataFormat)
     case AE_FMT_S16NE : return &S16BE_Float;
     case AE_FMT_S32NE : return &S32BE_Float;
     case AE_FMT_S24NE4: return &S24BE4_Float;
+    case AE_FMT_S24NE4MSB: return &S24BE4_Float;
     case AE_FMT_S24NE3: return &S24BE3_Float;
 #else
     case AE_FMT_S16NE : return &S16LE_Float;
     case AE_FMT_S32NE : return &S32LE_Float;
     case AE_FMT_S24NE4: return &S24LE4_Float;
+    case AE_FMT_S24NE4MSB: return &S24LE4_Float;
     case AE_FMT_S24NE3: return &S24LE3_Float;
 #endif
     case AE_FMT_S16LE : return &S16LE_Float;
@@ -118,6 +120,7 @@ CAEConvert::AEConvertFrFn CAEConvert::FrFloat(enum AEDataFormat dataFormat)
     case AE_FMT_S16LE : return &Float_S16LE;
     case AE_FMT_S16BE : return &Float_S16BE;
     case AE_FMT_S24NE4: return &Float_S24NE4;
+    case AE_FMT_S24NE4MSB: return &Float_S24NE4MSB;
     case AE_FMT_S24NE3: return &Float_S24NE3;
 #if defined(__ARM_NEON__)
     case AE_FMT_S32LE : return &Float_S32LE_Neon;
@@ -846,8 +849,18 @@ unsigned int CAEConvert::Float_S24NE4(float *data, const unsigned int samples, u
   _mm_empty();
   #else /* no SSE */
   for (uint32_t i = 0; i < samples; ++i)
-    *dst++ = (safeRound(*data++ * ((float)INT24_MAX+.5f)) & 0xFFFFFF) << 8;
+    *dst++ = (safeRound(*data++ * ((float)INT24_MAX+.5f)) & 0xFFFFFF);
   #endif
+
+  return samples << 2;
+}
+
+unsigned int CAEConvert::Float_S24NE4MSB(float *data, const unsigned int samples, uint8_t *dest)
+{
+  int32_t *dst = (int32_t*)dest;
+
+  for (uint32_t i = 0; i < samples; ++i)
+    *dst++ = (safeRound(*data++ * ((float)INT24_MAX+.5f)) & 0xFFFFFF) << 8;
 
   return samples << 2;
 }
