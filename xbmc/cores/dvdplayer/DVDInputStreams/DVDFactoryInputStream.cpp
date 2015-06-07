@@ -155,18 +155,10 @@ CDVDInputStream* CDVDFactoryInputStream::CreateInputStream(IDVDPlayer *pPlayer, 
   // our file interface handles all these types of streams
   #ifdef TARGET_RASPBERRY_PI
   /* PLEX */
-  if ((file.substr(0, 13) == "plexserver://") && (g_guiSettings.GetBool("videoplayer.useffmpegavio")))
-  {
-    // translte the url
-    CURL finalURL(file);
-    XFILE::CPlexFile::BuildHTTPURL(finalURL);
-
-    if (finalURL.GetProtocol() != "https" &&
-        !boost::starts_with(finalURL.GetFileName(), "services/iva/assets"))
-      return new CDVDInputStreamFFmpeg();
-    else
-      return new CDVDInputStreamFile();
-  }
+  if ((file.substr(0, 13) == "plexserver://"
+    || file.substr(0, 7) == "http://"
+    || file.substr(0, 8) == "https://") && (g_guiSettings.GetBool("videoplayer.useffmpegavio")))
+    return new CDVDInputStreamFFmpeg();
   else
   /* END PLEX */
   #endif
