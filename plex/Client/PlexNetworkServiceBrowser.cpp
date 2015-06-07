@@ -38,7 +38,7 @@ void CPlexNetworkServiceBrowser::handleServiceArrival(NetworkServicePtr& service
   //
   string uri = service->getParam("Host");
   CPlexConnectionPtr conn;
-  if (!uri.empty() && (g_plexApplication.myPlexManager && g_plexApplication.myPlexManager->IsSignedIn()))
+  if (!uri.empty() && !g_guiSettings.GetString("myplex.uid").IsEmpty())
   {
     string addr(address);
     StringUtils::Replace(addr, ".", "-");
