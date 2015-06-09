@@ -127,19 +127,23 @@ bool CPlexTranscoderClientRPi::ShouldTranscode(CPlexServerPtr server, const CFil
   CLog::Log(LOGDEBUG,"-%16s : %d", "audioChannels",audioChannels);
   CLog::Log(LOGDEBUG,"-%16s : %d", "audioBitRate",audioBitRate);
 
+  bool isLocal = server->GetActiveConnection()->IsLocal();
+  int localQuality = localBitrate();
+  int remoteQuality = remoteBitrate();
+
   // check if seetings are to transcoding for local media
-  if ( (g_guiSettings.GetInt("plexmediaserver.localquality") != 0) && (server->GetActiveConnection()->IsLocal()) )
+  if ( isLocal && localQuality > 0 && localQuality < videoBitRate )
   {
     bShouldTranscode = true;
-    m_maxVideoBitrate = g_guiSettings.GetInt("plexmediaserver.localquality");
-    ReasonWhy.Format("Settings require local transcoding to %d kbps",g_guiSettings.GetInt("plexmediaserver.localquality"));
+    m_maxVideoBitrate = localQuality;
+    ReasonWhy.Format("Settings require local transcoding to %d kbps",localQuality);
   }
   // check if seetings are to transcoding for remote media
-  else if ( (g_guiSettings.GetInt("plexmediaserver.remotequality") != 0) && (!server->GetActiveConnection()->IsLocal()) )
+  else if ( !isLocal && remoteQuality > 0 && remoteQuality < videoBitRate )
   {
     bShouldTranscode = true;
-    m_maxVideoBitrate = g_guiSettings.GetInt("plexmediaserver.remotequality");
-    ReasonWhy.Format("Settings require remote transcoding to %d kbps",g_guiSettings.GetInt("plexmediaserver.remotequality"));
+    m_maxVideoBitrate = remoteQuality;
+    ReasonWhy.Format("Settings require remote transcoding to %d kbps",remoteQuality);
   }
   // check if Video Codec is natively supported
   else if (m_knownVideoCodecs.find(videoCodec) == m_knownVideoCodecs.end())
@@ -157,6 +161,11 @@ bool CPlexTranscoderClientRPi::ShouldTranscode(CPlexServerPtr server, const CFil
   {
     bShouldTranscode = true;
     ReasonWhy.Format("Video bitDepth is too high : %d (max : %d)",bitDepth,maxBitDepth);
+  }
+  else if (transcodeForced())
+  {
+    bShouldTranscode = true;
+    ReasonWhy = "Settings require transcoding";
   }
 
   if (bShouldTranscode)
