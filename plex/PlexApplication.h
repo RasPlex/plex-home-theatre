@@ -123,8 +123,8 @@ public:
   CPlexGlobalTimerPtr timer;
   CPlexExtraInfoLoader* extraInfo;
   CPlexPlayQueueManagerPtr playQueueManager;
-  CPlexDirectoryCachePtr directoryCache;
   CPlexBusyIndicator busy;
+  CPlexDirectoryCachePtr directoryCache;
   CGUIPlexDefaultActionHandlerPtr defaultActionHandler;
 
   void setNetworkLogging(bool);

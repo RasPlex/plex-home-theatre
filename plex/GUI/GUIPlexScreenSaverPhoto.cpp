@@ -47,10 +47,6 @@ bool CGUIPlexScreenSaverPhoto::OnMessage(CGUIMessage &message)
         if (!server)
           return false;
 
-        CURL art = server->BuildPlexURL("/library/arts");
-
-        CJobManager::GetInstance().AddJob(new CPlexDirectoryFetchJob(art), this);
-
         CLabelInfo info;
         info.textColor = 0xfff5f5f5;
         info.font = g_fontManager.GetFont("Regular-30", true);
@@ -113,6 +109,7 @@ bool CGUIPlexScreenSaverPhoto::OnMessage(CGUIMessage &message)
         else
           m_showType = FANART;
 
+        CURL art = server->BuildPlexURL("/library/arts");
         art.SetOption("sort", "random");
 
         if (m_showType == PHOTOS)
