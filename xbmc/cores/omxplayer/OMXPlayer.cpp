@@ -3247,13 +3247,9 @@ void COMXPlayer::SetSubtitleVisible(bool bVisible)
 
   /* PLEX */
   // Send the change to the Media Server.
-  CFileItemPtr item = g_application.CurrentFileItemPtr();
-  int partID = GetPlexMediaPartID();
-  int subtitleStreamID = GetSubtitlePlexID();
-
   // Don't send the message over if we're just hiding the initial sub.
   if (m_hidingSub == false)
-    g_plexApplication.mediaServerClient->SelectStream(item, partID, g_settings.m_currentVideoSettings.m_SubtitleOn ? subtitleStreamID : 0, -1);
+    g_plexApplication.mediaServerClient->SelectStream(g_application.CurrentFileItemPtr(), GetPlexMediaPartID(), g_settings.m_currentVideoSettings.m_SubtitleOn ? GetSubtitlePlexID() : 0, -1);
   /* END PLEX */
 }
 
