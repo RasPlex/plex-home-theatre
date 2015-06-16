@@ -73,6 +73,7 @@ public:
   virtual void av_read_frame_flush(AVFormatContext *s)=0;
   virtual int av_read_play(AVFormatContext *s)=0;
   virtual int av_read_pause(AVFormatContext *s)=0;
+  virtual int av_find_default_stream_index(AVFormatContext *s)=0;
   virtual int av_seek_frame(AVFormatContext *s, int stream_index, int64_t timestamp, int flags)=0;
 #if (!defined USE_EXTERNAL_FFMPEG) && (!defined TARGET_DARWIN) && (!defined USE_STATIC_FFMPEG)
   virtual int avformat_find_stream_info_dont_call(AVFormatContext *ic, AVDictionary **options)=0;
@@ -134,6 +135,7 @@ public:
   virtual void av_read_frame_flush(AVFormatContext *s) { ::xbmc_read_frame_flush(s); }
   virtual int av_read_play(AVFormatContext *s) { return ::av_read_play(s); }
   virtual int av_read_pause(AVFormatContext *s) { return ::av_read_pause(s); }
+  virtual int av_find_default_stream_index(AVFormatContext *s) { return ::av_find_default_stream_index(s); }
   virtual int av_seek_frame(AVFormatContext *s, int stream_index, int64_t timestamp, int flags) { return ::av_seek_frame(s, stream_index, timestamp, flags); }
   virtual int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options)
   {
@@ -212,6 +214,7 @@ class DllAvFormat : public DllDynamic, DllAvFormatInterface
   DEFINE_METHOD1(void, avformat_close_input, (AVFormatContext **p1))
   DEFINE_METHOD1(int, av_read_play, (AVFormatContext *p1))
   DEFINE_METHOD1(int, av_read_pause, (AVFormatContext *p1))
+  DEFINE_METHOD1(int, av_find_default_stream_index, (AVFormatContext *p1))
   DEFINE_METHOD1(void, av_read_frame_flush, (AVFormatContext *p1))
   DEFINE_FUNC_ALIGNED2(int, __cdecl, av_read_frame, AVFormatContext *, AVPacket *)
   DEFINE_FUNC_ALIGNED4(int, __cdecl, av_seek_frame, AVFormatContext*, int, int64_t, int)
@@ -258,6 +261,7 @@ class DllAvFormat : public DllDynamic, DllAvFormatInterface
     RESOLVE_METHOD(av_read_frame)
     RESOLVE_METHOD(av_read_play)
     RESOLVE_METHOD(av_read_pause)
+    RESOLVE_METHOD(av_find_default_stream_index)
     RESOLVE_METHOD(av_read_frame_flush)
     RESOLVE_METHOD(av_seek_frame)
     RESOLVE_METHOD_RENAME(avformat_find_stream_info, avformat_find_stream_info_dont_call)
