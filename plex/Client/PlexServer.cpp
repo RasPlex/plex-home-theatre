@@ -174,7 +174,11 @@ bool CPlexServer::MarkUpdateFinished(int connType)
   {
     if (conn->GetRefreshed() == false)
     {
-      conn->m_type &= ~connType;
+      if ((conn->m_type & CPlexConnection::CONNECTION_DISCOVERED) == CPlexConnection::CONNECTION_DISCOVERED &&
+          (connType & CPlexConnection::CONNECTION_DISCOVERED) == CPlexConnection::CONNECTION_DISCOVERED)
+        conn->m_type = 0;
+      else
+        conn->m_type &= ~connType;
       if ((connType & CPlexConnection::CONNECTION_MYPLEX) == CPlexConnection::CONNECTION_MYPLEX && !conn->GetAccessToken().empty())
       {
         // When we remove a MyPlex connection type and still have a token we need to clear
