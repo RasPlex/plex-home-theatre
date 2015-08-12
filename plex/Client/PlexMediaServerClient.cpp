@@ -220,10 +220,6 @@ void CPlexMediaServerClient::SetItemRating(const CFileItemPtr &item, float ratin
 ////////////////////////////////////////////////////////////////////////////////////////
 void CPlexMediaServerClient::SendServerTimeline(const CFileItemPtr &item, const CUrlOptions &options)
 {
-  // PMS will return 400 Bad Request if state is missing, should only be missing if we're in a middle of a playlist
-  if (!options.HasOption("state"))
-    return;
-
   CURL u = GetItemURL(item);
 
   if (u.GetHostName() == "node")
