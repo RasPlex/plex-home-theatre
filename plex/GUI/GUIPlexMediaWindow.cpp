@@ -137,7 +137,7 @@ bool CGUIPlexMediaWindow::OnMessage(CGUIMessage &message)
 
         // make sure we update the window, as update might already have occured
         CGUIMessage msg(GUI_MSG_UPDATE, 0, 0, 0, 0);
-        g_windowManager.SendThreadMessage(msg);
+        g_windowManager.SendThreadMessage(msg, GetID());
       }
       break;
     }
@@ -776,7 +776,7 @@ void CGUIPlexMediaWindow::OnJobComplete(unsigned int jobID, bool success, CJob* 
     if (list)
     {
       CGUIMessage msg(GUI_MSG_PLEX_PAGE_LOADED, 0, GetID(), 0, rangeStart, list);
-      g_windowManager.SendThreadMessage(msg);
+      g_windowManager.SendThreadMessage(msg, GetID());
     }
   }
 
