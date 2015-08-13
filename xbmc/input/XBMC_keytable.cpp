@@ -173,12 +173,19 @@ static const XBMCKEYTABLE XBMCKeyTable[] =
 , { XBMCK_MEDIA_PREV_TRACK,       0,    0, XBMCVK_MEDIA_PREV_TRACK,    "prev_track" }
 , { XBMCK_MEDIA_STOP,             0,    0, XBMCVK_MEDIA_STOP,          "stop" }
 , { XBMCK_MEDIA_PLAY_PAUSE,       0,    0, XBMCVK_MEDIA_PLAY_PAUSE,    "play_pause" }
+, { XBMCK_MEDIA_REWIND,           0,    0, XBMCVK_MEDIA_REWIND,        "rewind" }
+, { XBMCK_MEDIA_FASTFORWARD,      0,    0, XBMCVK_MEDIA_FASTFORWARD,   "fastforward" }
 , { XBMCK_LAUNCH_MAIL,            0,    0, XBMCVK_LAUNCH_MAIL,         "launch_mail" }
 , { XBMCK_LAUNCH_MEDIA_SELECT,    0,    0, XBMCVK_LAUNCH_MEDIA_SELECT, "launch_media_select" }
 , { XBMCK_LAUNCH_APP1,            0,    0, XBMCVK_LAUNCH_APP1,         "launch_app1_pc_icon" }
 , { XBMCK_LAUNCH_APP2,            0,    0, XBMCVK_LAUNCH_APP2,         "launch_app2_pc_icon" }
 , { XBMCK_LAUNCH_FILE_BROWSER,    0,    0, XBMCVK_LAUNCH_FILE_BROWSER, "launch_file_browser" }
 , { XBMCK_LAUNCH_MEDIA_CENTER,    0,    0, XBMCVK_LAUNCH_MEDIA_CENTER, "launch_media_center" }
+, { XBMCK_PLAY,                   0,    0, XBMCVK_MEDIA_PLAY_PAUSE,    "play_pause" }
+, { XBMCK_STOP,                   0,    0, XBMCVK_MEDIA_STOP,          "stop" }
+, { XBMCK_REWIND,                 0,    0, XBMCVK_MEDIA_REWIND,        "rewind" }
+, { XBMCK_FASTFORWARD,            0,    0, XBMCVK_MEDIA_FASTFORWARD,   "fastforward" }
+, { XBMCK_RECORD,                 0,    0, XBMCVK_MEDIA_RECORD,        "record" }
 
 // Function keys
 , { XBMCK_F1,                     0,    0, XBMCVK_F1,            "f1"}
@@ -187,6 +194,7 @@ static const XBMCKEYTABLE XBMCKeyTable[] =
 , { XBMCK_F4,                     0,    0, XBMCVK_F4,            "f4"}
 , { XBMCK_F5,                     0,    0, XBMCVK_F5,            "f5"}
 , { XBMCK_F6,                     0,    0, XBMCVK_F6,            "f6"}
+, { XBMCK_F7,                     0,    0, XBMCVK_F7,            "f7"}
 , { XBMCK_F8,                     0,    0, XBMCVK_F8,            "f8"}
 , { XBMCK_F9,                     0,    0, XBMCVK_F9,            "f9"}
 , { XBMCK_F10,                    0,    0, XBMCVK_F10,           "f10"}
