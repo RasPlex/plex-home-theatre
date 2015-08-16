@@ -480,7 +480,6 @@ std::wstring CVariant::asWideString(const std::wstring &fallback /* = L"" */) co
       else
         strStream << m_data.dvalue;
       return strStream.str();
-      break;
     }
     default:
       return fallback;
@@ -530,7 +529,7 @@ const CVariant &CVariant::operator[](unsigned int position) const
 
 CVariant &CVariant::operator=(const CVariant &rhs)
 {
-  if (m_type == VariantTypeConstNull)
+  if (m_type == VariantTypeConstNull || this == &rhs)
     return *this;
 
   cleanup();
