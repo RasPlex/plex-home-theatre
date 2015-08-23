@@ -414,17 +414,18 @@ void CGUIPlexMediaWindow::OnFilterButton(int filterButtonId)
         m_filterValuesEvent.Set();
         m_waitingForFilter.clear();
       }
-
-      CGUIDialogFilterSort* dialog = (CGUIDialogFilterSort*)g_windowManager.GetWindow(WINDOW_DIALOG_FILTER_SORT);
-      if (dialog)
+      else
       {
-        dialog->SetFilter(currentFilter, filterButtonId);
-        dialog->DoModal();
+        CGUIDialogFilterSort* dialog = (CGUIDialogFilterSort*)g_windowManager.GetWindow(WINDOW_DIALOG_FILTER_SORT);
+        if (dialog)
+        {
+          dialog->SetFilter(currentFilter, filterButtonId);
+          dialog->DoModal();
+        }
 
+        if (radio)
+          radio->SetSelected(currentFilter->isSelected());
       }
-
-      if (radio)
-        radio->SetSelected(currentFilter->isSelected());
     }
   }
   else
@@ -457,8 +458,8 @@ void CGUIPlexMediaWindow::OnFilterButton(int filterButtonId)
     m_sectionFilter->setSortOrderAscending(state == CGUIFilterOrderButtonControl::ASCENDING);
   }
 
-  Update(m_sectionRoot.Get(), false, true);
   g_plexApplication.filterManager->saveFiltersToDisk();
+  Update(m_sectionRoot.Get(), false, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -470,8 +471,6 @@ void CGUIPlexMediaWindow::OnFilterSelected(const std::string &filterKey, int fil
   CPlexSecondaryFilterPtr filter = m_sectionFilter->addSecondaryFilter(filterKey);
   if (!filter)
     return;
-
-  Update(m_sectionRoot.Get(), false, true);
 
   CGUIButtonControl* button = (CGUIButtonControl*)GetControl(filterButtonId);
   if (button)
@@ -487,6 +486,7 @@ void CGUIPlexMediaWindow::OnFilterSelected(const std::string &filterKey, int fil
     m_clearFilterButton->SetVisible(m_sectionFilter->hasActiveSecondaryFilters());
 
   g_plexApplication.filterManager->saveFiltersToDisk();
+  Update(m_sectionRoot.Get(), false, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -955,6 +955,13 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
 
   bool ret = CGUIMediaWindow::Update(newUrl.Get(), updateFilterPath);
 
+  // if the update failed we want to get back up
+  if (!ret)
+  {
+    CLog::Log(LOGDEBUG, "Update failed, going to previous window.");
+    g_windowManager.PreviousWindow();
+  }
+
   m_vecItems->SetProperty("PlexContent", PlexUtils::GetPlexContent(*m_vecItems));
 
   m_vecItems->SetProperty("PlexFilter", "all");
@@ -985,13 +992,6 @@ bool CGUIPlexMediaWindow::Update(const CStdString &strDirectory, bool updateFilt
   if (RestoreSelection())
   {
     FetchItemPage(m_viewControl.GetSelectedItem());
-  }
-
-  // if the update failed we want to get back up
-  if (!ret)
-  {
-    CLog::Log(LOGDEBUG, "Update failed, going to previous window.");
-    g_windowManager.PreviousWindow();
   }
 
   return ret;
@@ -1330,10 +1330,6 @@ void CGUIPlexMediaWindow::AddFilters()
       }
     }
   }
-
-#ifdef USE_PAGING
-  FetchItemPage(m_viewControl.GetSelectedItem());
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
