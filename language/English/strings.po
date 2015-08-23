@@ -1251,7 +1251,7 @@ msgid "Audio output"
 msgstr ""
 
 msgctxt "#338"
-msgid "Analog"
+msgid "Analogue"
 msgstr ""
 
 msgctxt "#339"
