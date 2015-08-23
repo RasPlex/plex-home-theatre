@@ -650,7 +650,6 @@
 					<texturenofocus>b-pp-play2.png</texturenofocus>
 					<onclick>Plex.PlayAll()</onclick>
 					<include>leftMenuBarButton</include>
-					<visible>!Container.PlexFilter(recentlyViewedShows)</visible>
 				</control>
 				<!-- Shuffle All -->
 				<control type="button" id="105">
@@ -658,7 +657,6 @@
 					<texturenofocus>left-menu-shuffle-icon-u2.png</texturenofocus>
 					<onclick>Plex.ShuffleAll()</onclick>
 					<include>leftMenuBarButton</include>
-					<visible>!Container.PlexFilter(recentlyViewedShows)</visible>
 				</control>
 				<!-- Now Playing -->
 				<control type="button" id="106">
