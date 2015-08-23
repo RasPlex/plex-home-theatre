@@ -158,7 +158,13 @@ CDVDInputStream* CDVDFactoryInputStream::CreateInputStream(IDVDPlayer *pPlayer, 
   if ((file.substr(0, 13) == "plexserver://"
     || file.substr(0, 7) == "http://"
     || file.substr(0, 8) == "https://") && (g_guiSettings.GetBool("videoplayer.useffmpegavio")))
-    return new CDVDInputStreamFFmpeg();
+  {
+    CURL url(file);
+    if (!boost::starts_with(url.GetFileName(), "sync/exchange/google/"))
+      return new CDVDInputStreamFFmpeg();
+    else
+      return new CDVDInputStreamFile();
+  }
   else
   /* END PLEX */
   #endif
