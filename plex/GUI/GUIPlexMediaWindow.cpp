@@ -1212,6 +1212,7 @@ void CGUIPlexMediaWindow::AddFilters()
   if (primaryFilters)
   {
     int primaryFiltersEndId = FILTER_PRIMARY_CONTAINER;
+    int selectedPrimaryFilterId = 0;
     primaryFilters->SetNavigationAction(ACTION_MOVE_DOWN, CGUIAction(m_hasAdvancedFilters ? FILTER_CLEAR_FILTER_BUTTON : FILTER_PRIMARY_BUTTONS_START));
     primaryFilters->ClearAll();
 
@@ -1227,11 +1228,24 @@ void CGUIPlexMediaWindow::AddFilters()
 
         primaryFilters->AddControl(button);
         if (p.first == m_sectionFilter->currentPrimaryFilter())
+        {
           button->SetSelected(true);
+          selectedPrimaryFilterId = button->GetID();
+        }
         else
           button->SetSelected(false);
       }
     }
+
+    CGUIControlGroup *filtersContainer = (CGUIControlGroup*)GetControl(1300);
+    if (filtersContainer)
+    {
+      CGUIMessage msg1(GUI_MSG_ITEM_SELECT, GetID(), filtersContainer->GetID(), 0);
+      filtersContainer->OnMessage(msg1);
+    }
+
+    CGUIMessage msg2(GUI_MSG_ITEM_SELECT, GetID(), primaryFilters->GetID(), selectedPrimaryFilterId);
+    primaryFilters->OnMessage(msg2);
 
     int secondaryFiltersEndId = FILTER_SECONDARY_CONTAINER;
 
