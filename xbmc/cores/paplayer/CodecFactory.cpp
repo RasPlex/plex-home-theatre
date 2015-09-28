@@ -20,10 +20,8 @@
 
 #include "system.h"
 #include "CodecFactory.h"
-#include "MP3codec.h"
 #include "CDDAcodec.h"
 #include "OGGcodec.h"
-#include "FLACcodec.h"
 #include "WAVcodec.h"
 #include "ModplugCodec.h"
 #include "NSFCodec.h"
@@ -45,7 +43,7 @@
 ICodec* CodecFactory::CreateCodec(const CStdString& strFileType)
 {
   if (strFileType.Equals("mp3") || strFileType.Equals("mp2"))
-    return new MP3Codec();
+    return new DVDPlayerCodec();
   else if (strFileType.Equals("pcm") || strFileType.Equals("l16"))
     return new PCMCodec();
   else if (strFileType.Equals("ape") || strFileType.Equals("mac"))
@@ -59,7 +57,7 @@ ICodec* CodecFactory::CreateCodec(const CStdString& strFileType)
   else if (strFileType.Equals("mka"))
     return new DVDPlayerCodec();
   else if (strFileType.Equals("flac"))
-    return new FLACCodec();
+    return new DVDPlayerCodec();
   else if (strFileType.Equals("wav"))
     return new DVDPlayerCodec();
   else if (strFileType.Equals("dts") || strFileType.Equals("ac3") ||
@@ -109,6 +107,12 @@ ICodec* CodecFactory::CreateCodec(const CStdString& strFileType)
 #endif
   else if (strFileType.Equals("tta"))
     return new DVDPlayerCodec();
+  else if (strFileType.Equals("tak"))
+    return new DVDPlayerCodec();
+  else if (strFileType.Equals("opus"))
+    return new DVDPlayerCodec();
+  else if (strFileType.Equals("dff") || strFileType.Equals("dsf"))
+    return new DVDPlayerCodec();
 
   return NULL;
 }
@@ -117,26 +121,29 @@ ICodec* CodecFactory::CreateCodecDemux(const CStdString& strFile, const CStdStri
 {
   CURL urlFile(strFile);
   if( strContent.Equals("audio/mpeg")
+  ||  strContent.Equals("audio/mpeg3")
   ||  strContent.Equals("audio/mp3") )
-    return new MP3Codec();
+  {
+    DVDPlayerCodec *dvdcodec = new DVDPlayerCodec();
+    dvdcodec->SetContentType(strContent);
+    return dvdcodec;
+  }
   else if (strContent.Left(9).Equals("audio/l16"))
   {
     PCMCodec * pcm_codec = new PCMCodec();
     pcm_codec->SetMimeParams(strContent);
     return pcm_codec;
   }
-  else if( strContent.Equals("audio/aac")
-    || strContent.Equals("audio/aacp") )
+  else if( strContent.Equals("audio/aac") ||
+           strContent.Equals("audio/aacp") ||
+           strContent.Equals("audio/x-ms-wma") ||
+           strContent.Equals("audio/x-ape") ||
+           strContent.Equals("audio/ape") )
   {
     DVDPlayerCodec *pCodec = new DVDPlayerCodec;
-    if (urlFile.GetProtocol() == "shout" )
-      pCodec->SetContentType(strContent);
+    pCodec->SetContentType(strContent);
     return pCodec;
   }
-  else if( strContent.Equals("audio/x-ms-wma") )
-    return new DVDPlayerCodec();
-  else if( strContent.Equals("audio/x-ape") || strContent.Equals("audio/ape") )
-    return new DVDPlayerCodec();
   else if( strContent.Equals("application/ogg") || strContent.Equals("audio/ogg"))
     return CreateOGGCodec(strFile,filecache);
   else if (strContent.Equals("audio/x-xbmc-pcm"))
@@ -148,11 +155,17 @@ ICodec* CodecFactory::CreateCodecDemux(const CStdString& strFile, const CStdStri
     return dvdcodec;
   }
   else if (strContent.Equals("audio/flac") || strContent.Equals("audio/x-flac") || strContent.Equals("application/x-flac"))
-    return new FLACCodec();
+  {
+    DVDPlayerCodec *dvdcodec = new DVDPlayerCodec();
+    dvdcodec->SetContentType(strContent);
+    return dvdcodec;
+  }
 
   if (urlFile.GetProtocol() == "lastfm" || urlFile.GetProtocol() == "shout")
   {
-    return new MP3Codec(); // if we got this far with internet radio - content-type was wrong. gamble on mp3.
+    DVDPlayerCodec *dvdcodec = new DVDPlayerCodec();
+    dvdcodec->SetContentType("audio/mp3");
+    return dvdcodec; // if we got this far with internet radio - content-type was wrong. gamble on mp3.
   }
 
   if (urlFile.GetFileType().Equals("wav") || strContent.Equals("audio/wav") || strContent.Equals("audio/x-wav"))
