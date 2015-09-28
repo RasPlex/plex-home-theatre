@@ -625,7 +625,6 @@ bool CGUIPlexMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItem
   if (!boost::ends_with(u.GetFileName(), "url/lookup") &&
       !boost::starts_with(u.GetFileName(), "library/metadata"))
   {
-    CLog::Log(LOGDEBUG,"CGUIPlexMediaWindow::GetDirectory for index = %d, Page (%d-%d)", Index, startPage, endPage);
     u.SetOption("X-Plex-Container-Start", boost::lexical_cast<std::string>(NeededRangeStart));
     u.SetOption("X-Plex-Container-Size", boost::lexical_cast<std::string>(NeededRangeEnd - NeededRangeStart));
   }
