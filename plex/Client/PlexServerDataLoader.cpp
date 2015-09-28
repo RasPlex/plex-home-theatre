@@ -267,12 +267,11 @@ CFileItemListPtr CPlexServerDataLoader::GetAllSharedSections() const
 
       CStdString uuid = pair.second->GetProperty("serverUUID").asString();
       CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(uuid);
-      if (server)
+      if (server && server->GetActiveConnection())
       {
         item->SetProperty("serverName", server->GetName());
         item->SetProperty("serverUUID", server->GetUUID());
-        if (server->GetActiveConnection())
-          item->SetProperty("isSecure", server->GetActiveConnection()->isSSL() ? "1" : "");
+        item->SetProperty("isSecure", server->GetActiveConnection()->isSSL() ? "1" : "");
         list->Add(item);
       }
     }
@@ -300,12 +299,11 @@ CFileItemListPtr CPlexServerDataLoader::GetAllSections() const
       {
         CStdString serverUUID = pair.second->GetProperty("serverUUID").asString();
         CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(serverUUID);
-        if (server)
+        if (server && server->GetActiveConnection())
         {
           item->SetProperty("serverName", server->GetName());
           item->SetProperty("serverUUID", server->GetUUID());
-          if (server->GetActiveConnection())
-            item->SetProperty("isSecure", server->GetActiveConnection()->isSSL() ? "1" : "");
+          item->SetProperty("isSecure", server->GetActiveConnection()->isSSL() ? "1" : "");
           list->Add(item);
 
           if (sectionNameMap.find(item->GetLabel()) != sectionNameMap.end())
@@ -334,9 +332,17 @@ CFileItemListPtr CPlexServerDataLoader::GetAllChannels() const
     for (int i = 0; i < pair.second->Size(); i++)
     {
       CFileItemPtr item = pair.second->Get(i);
-      item->SetProperty("serverName", pair.second->GetProperty("serverName"));
-      item->SetProperty("serverUUID", pair.second->GetProperty("serverUUID"));
-      list->Add(item);
+      if (item)
+      {
+        CStdString serverUUID = pair.second->GetProperty("serverUUID").asString();
+        CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(serverUUID);
+        if (server && server->GetActiveConnection())
+        {
+          item->SetProperty("serverName", server->GetName());
+          item->SetProperty("serverUUID", server->GetUUID());
+          list->Add(item);
+        }
+      }
     }
   }
 
