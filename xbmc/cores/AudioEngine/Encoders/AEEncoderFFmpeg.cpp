@@ -279,7 +279,7 @@ int CAEEncoderFFmpeg::Encode(float *data, unsigned int frames)
    * sadly, we have to alloc/dealloc it everytime since we have no guarantee the
    * data argument will be constant over iterated calls and the frame needs to
    * setup pointers inside data */
-  frame = m_dllAvCodec.avcodec_alloc_frame();
+  frame = m_dllAvUtil.av_frame_alloc();
   if (!frame)
     return 0;
 
@@ -295,7 +295,7 @@ int CAEEncoderFFmpeg::Encode(float *data, unsigned int frames)
       if (!m_ResampBuffer)
       {
         CLog::Log(LOGERROR, "CAEEncoderFFmpeg::Encode - Failed to allocate %i bytes buffer for resampling", buf_size);
-        m_dllAvCodec.avcodec_free_frame(&frame);
+        m_dllAvUtil.av_frame_free(&frame);
         return 0;
       }
       m_ResampBufferSize = buf_size;
@@ -310,7 +310,7 @@ int CAEEncoderFFmpeg::Encode(float *data, unsigned int frames)
     if (m_dllSwResample.swr_convert(m_SwrCtx, frame->extended_data, frames, &input, frames) < 0)
     {
       CLog::Log(LOGERROR, "CAEEncoderFFmpeg::Encode - Resampling failed");
-      m_dllAvCodec.avcodec_free_frame(&frame);
+      m_dllAvUtil.av_frame_free(&frame);
       return 0;
     }
   }
@@ -327,7 +327,7 @@ int CAEEncoderFFmpeg::Encode(float *data, unsigned int frames)
   int ret = m_dllAvCodec.avcodec_encode_audio2(m_CodecCtx, &m_Pkt, frame, &got_output);
 
   /* free temporary data */
-  m_dllAvCodec.avcodec_free_frame(&frame);
+  m_dllAvUtil.av_frame_free(&frame);
 
   if (ret < 0 || !got_output)
   {

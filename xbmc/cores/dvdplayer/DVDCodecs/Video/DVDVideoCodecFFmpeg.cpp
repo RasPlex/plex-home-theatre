@@ -310,7 +310,7 @@ bool CDVDVideoCodecFFmpeg::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
     return false;
   }
 
-  m_pFrame = m_dllAvCodec.avcodec_alloc_frame();
+  m_pFrame = m_dllAvUtil.av_frame_alloc();
   if (!m_pFrame) return false;
 
 #if defined(LIBAVFILTER_AVFRAME_BASED)
@@ -324,9 +324,7 @@ bool CDVDVideoCodecFFmpeg::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
 
 void CDVDVideoCodecFFmpeg::Dispose()
 {
-  if (m_pFrame) m_dllAvUtil.av_free(m_pFrame);
-  m_pFrame = NULL;
-
+  if (m_pFrame) m_dllAvUtil.av_frame_free(&m_pFrame);
 #if defined(LIBAVFILTER_AVFRAME_BASED)
   m_dllAvUtil.av_frame_free(&m_pFilterFrame);
 #endif
@@ -578,6 +576,9 @@ void CDVDVideoCodecFFmpeg::Reset()
 
 bool CDVDVideoCodecFFmpeg::GetPictureCommon(DVDVideoPicture* pDvdVideoPicture)
 {
+  if (!m_pFrame)
+    return false;
+
   pDvdVideoPicture->iWidth = m_pFrame->width;
   pDvdVideoPicture->iHeight = m_pFrame->height;
 
@@ -627,9 +628,6 @@ bool CDVDVideoCodecFFmpeg::GetPictureCommon(DVDVideoPicture* pDvdVideoPicture)
 
   pDvdVideoPicture->pts = DVD_NOPTS_VALUE;
 
-  if (!m_pFrame)
-    return false;
-
   pDvdVideoPicture->iRepeatPicture = 0.5 * m_pFrame->repeat_pict;
   pDvdVideoPicture->iFlags = DVP_FLAG_ALLOCATED;
   pDvdVideoPicture->iFlags |= m_pFrame->interlaced_frame ? DVP_FLAG_INTERLACED : 0;
@@ -638,6 +636,7 @@ bool CDVDVideoCodecFFmpeg::GetPictureCommon(DVDVideoPicture* pDvdVideoPicture)
   pDvdVideoPicture->chroma_position = m_pCodecContext->chroma_sample_location;
   pDvdVideoPicture->color_primaries = m_pCodecContext->color_primaries;
   pDvdVideoPicture->color_transfer = m_pCodecContext->color_trc;
+  pDvdVideoPicture->color_matrix = m_pCodecContext->colorspace;
   if(m_pCodecContext->color_range == AVCOL_RANGE_JPEG
   || m_pCodecContext->pix_fmt     == PIX_FMT_YUVJ420P)
     pDvdVideoPicture->color_range = 1;
@@ -736,10 +735,10 @@ int CDVDVideoCodecFFmpeg::FilterOpen(const CStdString& filters, bool scale)
     m_pCodecContext->width,
     m_pCodecContext->height,
     m_pCodecContext->pix_fmt,
-    m_pCodecContext->time_base.num,
-    m_pCodecContext->time_base.den,
-    m_pCodecContext->sample_aspect_ratio.num,
-    m_pCodecContext->sample_aspect_ratio.den);
+    m_pCodecContext->time_base.num ? m_pCodecContext->time_base.num : 1,
+    m_pCodecContext->time_base.num ? m_pCodecContext->time_base.den : 1,
+    m_pCodecContext->sample_aspect_ratio.num != 0 ? m_pCodecContext->sample_aspect_ratio.num : 1,
+    m_pCodecContext->sample_aspect_ratio.num != 0 ? m_pCodecContext->sample_aspect_ratio.den : 1);
 
   if ((result = m_dllAvFilter.avfilter_graph_create_filter(&m_pFilterIn, srcFilter, "src", args, NULL, m_pFilterGraph)) < 0)
   {

@@ -228,7 +228,7 @@ bool FFmpegVideoDecoder::open( const CStdString& filename )
   }
   
   // Allocate video frames
-  m_pFrame = m_dllAvCodec->avcodec_alloc_frame();
+  m_pFrame = m_dllAvUtil->av_frame_alloc();
 
   if ( !m_pFrame )
   {

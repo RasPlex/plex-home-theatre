@@ -278,7 +278,7 @@ bool CDVDDemuxFFmpeg::Open(CDVDInputStream* pInput)
       iformat = m_dllAvFormat.av_find_input_format("mpeg");
     else if( content.compare("video/x-dvd-mpeg") == 0 )
       iformat = m_dllAvFormat.av_find_input_format("mpeg");
-    else if( content.compare("video/x-mpegts") == 0 )
+    else if( content.compare("video/mp2t") == 0 )
       iformat = m_dllAvFormat.av_find_input_format("mpegts");
     else if( content.compare("multipart/x-mixed-replace") == 0 )
       iformat = m_dllAvFormat.av_find_input_format("mjpeg");
@@ -459,15 +459,24 @@ bool CDVDDemuxFFmpeg::Open(CDVDInputStream* pInput)
 
     m_pFormatContext->pb = m_ioContext;
 
+    AVDictionary *options = NULL;
+    if (iformat->name && (strcmp(iformat->name, "mp3") == 0 || strcmp(iformat->name, "mp2") == 0))
+    {
+      CLog::Log(LOGDEBUG, "%s - setting usetoc to 0 for accurate VBR MP3 seek", __FUNCTION__);
+      m_dllAvUtil.av_dict_set(&options, "usetoc", "0", 0);
+    }
+
     /* PLEX changed the seterror and friends */
     int res;
-    if ((res=m_dllAvFormat.avformat_open_input(&m_pFormatContext, strFile.c_str(), iformat, NULL) < 0))
+    if ((res=m_dllAvFormat.avformat_open_input(&m_pFormatContext, strFile.c_str(), iformat, &options) < 0))
     {
       SetError(GetErrorString(res));
       CLog::Log(LOGERROR, "%s - Error, could not open file %s", __FUNCTION__, strFile.c_str());
       Dispose();
+      m_dllAvUtil.av_dict_free(&options);
       return false;
     }
+    m_dllAvUtil.av_dict_free(&options);
     /* END PLEX */
   }
   
@@ -477,7 +486,7 @@ bool CDVDDemuxFFmpeg::Open(CDVDInputStream* pInput)
   
   // analyse very short to speed up mjpeg playback start
   if (iformat && (strcmp(iformat->name, "mjpeg") == 0) && m_ioContext->seekable == 0)
-    m_pFormatContext->max_analyze_duration = 500000;
+    m_dllAvUtil.av_opt_set_int(m_pFormatContext, "analyzeduration", 500000, 0);
 
   // we need to know if this is matroska or avi later
   m_bMatroska = strncmp(m_pFormatContext->iformat->name, "matroska", 8) == 0;	// for "matroska.webm"
@@ -487,7 +496,7 @@ bool CDVDDemuxFFmpeg::Open(CDVDInputStream* pInput)
   {
     /* too speed up dvd switches, only analyse very short */
     if(m_pInput->IsStreamType(DVDSTREAM_TYPE_DVD))
-      m_pFormatContext->max_analyze_duration = 500000;
+      m_dllAvUtil.av_opt_set_int(m_pFormatContext, "analyzeduration", 500000, 0);
 
 
     CLog::Log(LOGDEBUG, "%s - avformat_find_stream_info starting", __FUNCTION__);
@@ -934,7 +943,8 @@ bool CDVDDemuxFFmpeg::SeekTime(int time, bool backwords, double *startpts)
   }
 
   int64_t seek_pts = (int64_t)time * (AV_TIME_BASE / 1000);
-  if (m_pFormatContext->start_time != (int64_t)AV_NOPTS_VALUE)
+  bool ismp3 = m_pFormatContext->iformat && (strcmp(m_pFormatContext->iformat->name, "mp3") == 0);
+  if (m_pFormatContext->start_time != (int64_t)AV_NOPTS_VALUE && !ismp3)
     seek_pts += m_pFormatContext->start_time;
 
   int ret;

@@ -111,7 +111,7 @@ bool CDVDAudioCodecFFmpeg::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
     return false;
   }
 
-  m_pFrame1 = m_dllAvCodec.avcodec_alloc_frame();
+  m_pFrame1 = m_dllAvUtil.av_frame_alloc();
   m_bOpenedCodec = true;
   m_iSampleFormat = AV_SAMPLE_FMT_NONE;
 
@@ -354,8 +354,6 @@ void CDVDAudioCodecFFmpeg::BuildChannelMap()
   {
     CLog::Log(LOGINFO, "CDVDAudioCodecFFmpeg::GetChannelMap - FFmpeg reported %d channels, but the layout contains %d ignoring", m_pCodecContext->channels, bits);
     layout = m_dllAvUtil.av_get_default_channel_layout(m_pCodecContext->channels);
-    while(layout == 0 && m_pCodecContext->channels > 2)
-      layout = m_dllAvUtil.av_get_default_channel_layout(--m_pCodecContext->channels);
   }
 
   m_channelLayout.Reset();
