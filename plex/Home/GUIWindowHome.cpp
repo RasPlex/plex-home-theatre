@@ -87,6 +87,7 @@
 #include "settings/GUISettings.h"
 #include "GUI/GUIPlexDefaultActionHandler.h"
 #include "GUI/GUIDialogPlexError.h"
+#include "settings/GUISettings.h"
 
 
 using namespace std;
@@ -770,18 +771,10 @@ void CGUIWindowHome::UpdateSections()
   bool havePlaylists = false;
   bool havePlayqueues = false;
 
-  if (g_advancedSettings.m_bSharedSectionsOnHome && g_plexApplication.dataLoader->HasSharedSections())
+  if (g_guiSettings.GetBool("myplex.sharedsectionsonhome") && g_plexApplication.dataLoader->HasSharedSections())
   {
     CFileItemListPtr sharedSections = g_plexApplication.dataLoader->GetAllSharedSections();
-    for (int i = 0; i < sharedSections->Size(); i++)
-    {
-      CFileItemPtr sectionItem = sharedSections->Get(i);
-      CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(sectionItem->GetProperty("serverUUID").asString());
-      if (!server) continue;
-      sectionItem->SetProperty("serverOwner", server->GetOwner());
-      sectionItem->SetProperty("sectionNameCollision", "yes");
-      sections->Add(sectionItem);
-    }
+	sections->Append(*sharedSections.get());
   }
 
   for (int i = 0; i < oldList.size(); i ++)
@@ -905,7 +898,7 @@ void CGUIWindowHome::UpdateSections()
   }
 
 
-  if (!g_advancedSettings.m_bSharedSectionsOnHome && g_plexApplication.dataLoader->HasSharedSections() && !haveShared)
+  if (!g_guiSettings.GetBool("myplex.sharedsectionsonhome") && g_plexApplication.dataLoader->HasSharedSections() && !haveShared)
   {
     CGUIStaticItemPtr item = CGUIStaticItemPtr(new CGUIStaticItem);
     item->SetLabel(g_localizeStrings.Get(44020));
