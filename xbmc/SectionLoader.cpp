@@ -29,6 +29,7 @@
 using namespace std;
 
 #define g_sectionLoader XBMC_GLOBAL_USE(CSectionLoader)
+bool g_sectionLoaderDeinitialized = false;
 
 //  delay for unloading dll's
 #define UNLOAD_DELAY 30*1000 // 30 sec.
@@ -41,11 +42,13 @@ CSectionLoader::CSectionLoader(void)
 
 CSectionLoader::~CSectionLoader(void)
 {
+  g_sectionLoaderDeinitialized = true;
   UnloadAll();
 }
 
 LibraryLoader *CSectionLoader::LoadDLL(const CStdString &dllname, bool bDelayUnload /*=true*/, bool bLoadSymbols /*=false*/)
 {
+  if (g_sectionLoaderDeinitialized) return NULL;
   CSingleLock lock(g_sectionLoader.m_critSection);
 
   if (!dllname) return NULL;
@@ -78,6 +81,7 @@ LibraryLoader *CSectionLoader::LoadDLL(const CStdString &dllname, bool bDelayUnl
 
 void CSectionLoader::UnloadDLL(const CStdString &dllname)
 {
+  if (g_sectionLoaderDeinitialized) return;
   CSingleLock lock(g_sectionLoader.m_critSection);
 
   if (!dllname) return;
@@ -94,20 +98,19 @@ void CSectionLoader::UnloadDLL(const CStdString &dllname)
           dll.m_unloadDelayStartTick = XbmcThreads::SystemClockMillis();
         else
         {
-          CLog::Log(LOGDEBUG,"SECTION:UnloadDll(%s)", dllname.c_str());
           if (dll.m_pDll)
             DllLoaderContainer::ReleaseModule(dll.m_pDll);
           g_sectionLoader.m_vecLoadedDLLs.erase(g_sectionLoader.m_vecLoadedDLLs.begin() + i);
         }
-
-        return;
       }
+      return;
     }
   }
 }
 
 void CSectionLoader::UnloadDelayed()
 {
+  if (g_sectionLoaderDeinitialized) return;
   CSingleLock lock(g_sectionLoader.m_critSection);
 
   // check if we can unload any unreferenced dlls
@@ -134,9 +137,9 @@ void CSectionLoader::UnloadAll()
   while (it != g_sectionLoader.m_vecLoadedDLLs.end())
   {
     CDll& dll = *it;
-    CLog::Log(LOGDEBUG,"SECTION:UnloadAll(DLL: %s)", dll.m_strDllName.c_str());
     if (dll.m_pDll)
       DllLoaderContainer::ReleaseModule(dll.m_pDll);
     it = g_sectionLoader.m_vecLoadedDLLs.erase(it);
   }
+  g_sectionLoader.m_vecLoadedDLLs.clear();
 }

@@ -3747,7 +3747,6 @@ bool CApplication::Cleanup()
     g_windowManager.Remove(WINDOW_DIALOG_VOLUME_BAR);
 
 
-#ifndef __PLEX__
     CAddonMgr::Get().DeInit();
 
 #if defined(HAS_LIRC) || defined(HAS_IRSERVERSUITE)
@@ -3785,7 +3784,6 @@ bool CApplication::Cleanup()
     g_settings.Clear();
     g_guiSettings.Clear();
     g_advancedSettings.Clear();
-#endif // __PLEX__
 
 #ifdef _LINUX
     CXHandle::DumpObjectTracker();
@@ -3823,6 +3821,9 @@ void CApplication::Stop(int exitCode)
     vExitCode["exitcode"] = exitCode;
     CAnnouncementManager::Announce(System, "xbmc", "OnQuit", vExitCode);
 
+    // Abort any active screensaver
+    WakeUpScreenSaverAndDPMS();
+
 #ifndef __PLEX__
     SaveFileState(true);
 #else
@@ -3840,9 +3841,6 @@ void CApplication::Stop(int exitCode)
     if (m_pLaunchHost)
       m_pLaunchHost->OnShutdown();
     /* END PLEX */
-
-    // cancel any jobs from the jobmanager
-    CJobManager::GetInstance().CancelJobs();
 
     g_alarmClock.StopThread();
 
@@ -3867,6 +3865,13 @@ void CApplication::Stop(int exitCode)
     m_ExitCode = exitCode;
     CLog::Log(LOGNOTICE, "stop all");
 
+    /* PLEX */
+    g_plexApplication.preShutdown();
+    /* END PLEX */
+
+    // cancel any jobs from the jobmanager
+    CJobManager::GetInstance().CancelJobs();
+
     // stop scanning before we kill the network and so on
     if (m_musicInfoScanner->IsScanning())
       m_musicInfoScanner->Stop();
@@ -3876,13 +3881,11 @@ void CApplication::Stop(int exitCode)
 
     CApplicationMessenger::Get().Cleanup();
 
+    CAnnouncementManager::Deinitialize();
+
     StopPVRManager();
     StopServices();
     //Sleep(5000);
-
-    /* PLEX */
-    g_plexApplication.preShutdown();
-    /* END PLEX */
 
 #ifdef HAS_WEB_SERVER
   CWebServer::UnregisterRequestHandler(&m_httpImageHandler);
@@ -3920,6 +3923,12 @@ void CApplication::Stop(int exitCode)
     g_sapsessions.StopThread();
 #endif
 #ifdef HAS_ZEROCONF
+    if(CZeroconf::IsInstantiated())
+    {
+      CLog::Log(LOGNOTICE, "stopping zeroconf publishing");
+      CZeroconf::GetInstance()->Stop();
+      CZeroconf::ReleaseInstance();
+    }
     if(CZeroconfBrowser::IsInstantiated())
     {
       CLog::Log(LOGNOTICE, "stop zeroconf browser");
@@ -3937,10 +3946,8 @@ void CApplication::Stop(int exitCode)
     CSFTPSessionManager::DisconnectAllSessions();
 #endif
 
-#ifndef __PLEX__
     CLog::Log(LOGNOTICE, "unload skin");
     UnloadSkin();
-#endif
 
 #if defined(TARGET_DARWIN_OSX)
 #ifndef __PLEX__
@@ -3982,6 +3989,7 @@ void CApplication::Stop(int exitCode)
     g_Windowing.DestroyWindow();
     g_Windowing.DestroyWindowSystem();
 
+    g_audioManager.DeInitialize();
     // shutdown the AudioEngine
     CAEFactory::Shutdown();
     CAEFactory::UnLoadEngine();
