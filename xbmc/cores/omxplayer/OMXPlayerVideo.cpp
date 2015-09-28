@@ -444,7 +444,7 @@ void OMXPlayerVideo::Process()
         if (pts != DVD_NOPTS_VALUE)
           pts += m_iVideoDelay;
 
-        m_omxVideo.Decode(pPacket->pData, pPacket->iSize, dts, dts == DVD_NOPTS_VALUE ? pts : DVD_NOPTS_VALUE);
+        m_omxVideo.Decode(pPacket->pData, pPacket->iSize, dts, m_hints.ptsinvalid ? DVD_NOPTS_VALUE : pts);
 
         if (pts == DVD_NOPTS_VALUE)
           pts = dts;
@@ -484,6 +484,7 @@ void OMXPlayerVideo::Flush()
 {
   m_flush = true;
   m_messageQueue.Flush();
+  m_messageQueue.Flush(CDVDMsg::GENERAL_EOF);
   m_messageQueue.Put(new CDVDMsg(CDVDMsg::GENERAL_FLUSH), 1);
 }
 

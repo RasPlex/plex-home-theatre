@@ -96,9 +96,17 @@ bool COMXAudioCodecOMX::Open(CDVDStreamInfo &hints)
   if (hints.codec == AV_CODEC_ID_TRUEHD)
   {
     if (g_guiSettings.GetInt("audiooutput.channels") == AE_CH_LAYOUT_2_0)
+    {
       m_pCodecContext->request_channel_layout = AV_CH_LAYOUT_STEREO;
-    else if (g_guiSettings.GetInt("audiooutput.channels") == AE_CH_LAYOUT_5_1)
+      m_pCodecContext->channels = 2;
+      m_pCodecContext->channel_layout = m_dllAvUtil.av_get_default_channel_layout(m_pCodecContext->channels);
+    }
+    else if (g_guiSettings.GetInt("audiooutput.channels") <= AE_CH_LAYOUT_5_1)
+    {
       m_pCodecContext->request_channel_layout = AV_CH_LAYOUT_5POINT1;
+      m_pCodecContext->channels = 6;
+      m_pCodecContext->channel_layout = m_dllAvUtil.av_get_default_channel_layout(m_pCodecContext->channels);
+    }
   }
   if (m_pCodecContext->request_channel_layout)
     CLog::Log(LOGNOTICE,"COMXAudioCodecOMX::Open() Requesting channel layout of %x", (unsigned)m_pCodecContext->request_channel_layout);

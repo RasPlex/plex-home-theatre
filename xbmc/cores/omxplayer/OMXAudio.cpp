@@ -759,16 +759,6 @@ bool COMXAudio::Initialize(AEAudioFormat format, OMXClock *clock, CDVDStreamInfo
   m_wave_header.Format.cbSize               = 0;
   m_wave_header.SubFormat                   = KSDATAFORMAT_SUBTYPE_PCM;
 
-  OMX_INIT_STRUCTURE(m_pcm_input);
-  memcpy(m_pcm_input.eChannelMapping, m_input_channels, sizeof(m_input_channels));
-  m_pcm_input.eNumData              = OMX_NumericalDataSigned;
-  m_pcm_input.eEndian               = OMX_EndianLittle;
-  m_pcm_input.bInterleaved          = OMX_TRUE;
-  m_pcm_input.nBitPerSample         = m_BitsPerSample;
-  m_pcm_input.ePCMMode              = OMX_AUDIO_PCMModeLinear;
-  m_pcm_input.nChannels             = m_InputChannels;
-  m_pcm_input.nSamplingRate         = m_format.m_sampleRate;
-
   if(!m_omx_decoder.Initialize("OMX.broadcom.audio_decode", OMX_IndexParamAudioInit))
     return false;
 
@@ -916,6 +906,17 @@ bool COMXAudio::Initialize(AEAudioFormat format, OMXClock *clock, CDVDStreamInfo
   if(m_omx_decoder.BadState())
     return false;
 
+  OMX_INIT_STRUCTURE(m_pcm_input);
+  m_pcm_input.nPortIndex            = m_omx_decoder.GetInputPort();
+  memcpy(m_pcm_input.eChannelMapping, m_input_channels, sizeof(m_input_channels));
+  m_pcm_input.eNumData              = OMX_NumericalDataSigned;
+  m_pcm_input.eEndian               = OMX_EndianLittle;
+  m_pcm_input.bInterleaved          = OMX_TRUE;
+  m_pcm_input.nBitPerSample         = m_BitsPerSample;
+  m_pcm_input.ePCMMode              = OMX_AUDIO_PCMModeLinear;
+  m_pcm_input.nChannels             = m_InputChannels;
+  m_pcm_input.nSamplingRate         = m_format.m_sampleRate;
+
   m_Initialized   = true;
   m_settings_changed = false;
   m_setStartTime = true;
@@ -1062,6 +1063,8 @@ bool COMXAudio::ApplyVolume(void)
     return false;
 
   float fVolume = m_Mute ? VOLUME_MINIMUM : m_CurrentVolume;
+  // need to convert a log scale of 0.0=-60dB, 1.0=0dB to a linear scale (0.0=silence, 1.0=full)
+  fVolume = CAEUtil::GainToScale(CAEUtil::PercentToGain(fVolume));
 
   // the analogue volume is too quiet for some. Allow use of an advancedsetting to boost this (at risk of distortion) (deprecated)
   double gain = pow(10, (g_advancedSettings.m_ac3Gain - 12.0f) / 20.0);

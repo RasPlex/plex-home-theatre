@@ -381,6 +381,9 @@ void CGUISettings::Initialize()
 
   AddBool(ao, "audiooutput.stereoupmix", 252, false);
   AddBool(ao, "audiooutput.normalizelevels", 346, true);
+#if defined(TARGET_RASPBERRY_PI)
+  AddBool(ao, "audiooutput.boostcenter", 36043, false);
+#endif
 
   map<int,int> channelLayout;
   for(int layout = AE_CH_LAYOUT_2_0; layout < AE_CH_LAYOUT_MAX; ++layout)
