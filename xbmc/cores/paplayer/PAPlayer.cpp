@@ -788,6 +788,7 @@ inline bool PAPlayer::ProcessStream(StreamInfo *si, double &freeBufferTime)
   if (status == STATUS_ENDED   ||
       status == STATUS_NO_FILE ||
       si->m_decoder.ReadSamples(PACKET_SIZE) == RET_ERROR ||
+      si->m_decoder.ReadSamples(PACKET_SIZE) == RET_ERROR ||
       ((si->m_endOffset) && (si->m_framesSent / si->m_sampleRate >= (si->m_endOffset - si->m_startOffset) / 1000)))
   {
     if (si == m_currentStream && m_continueStream)
@@ -852,6 +853,9 @@ bool PAPlayer::QueueData(StreamInfo *si)
   unsigned int samples = std::min(si->m_decoder.GetDataSize(), space / si->m_bytesPerSample);
   if (!samples)
     return true;
+
+  // we want complete frames
+  samples -= samples % si->m_channelInfo.Count();
 
   void* data = si->m_decoder.GetData(samples);
   if (!data)
@@ -1098,7 +1102,7 @@ void PAPlayer::UpdateGUIData(StreamInfo *si)
   const ICodec* codec = si->m_decoder.GetCodec();
 
   m_playerGUIData.m_audioBitrate = codec ? codec->m_Bitrate : 0;
-  strncpy(m_playerGUIData.m_codec,codec ? codec->m_CodecName : "",20);
+  strncpy(m_playerGUIData.m_codec,codec ? codec->m_CodecName.c_str() : "",20);
   m_playerGUIData.m_cacheLevel   = codec ? codec->GetCacheLevel() : 0;
   m_playerGUIData.m_bitsPerSample = (codec && codec->m_BitsPerCodedSample) ? codec->m_BitsPerCodedSample : si->m_bytesPerSample << 3;
 
