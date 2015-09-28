@@ -1535,8 +1535,9 @@ CStdString CPeripheralCecAdapterUpdateThread::UpdateAudioSystemStatus(void)
 
     // set amp present
     m_adapter->SetAudioSystemConnected(true);
-    g_settings.m_bMute = false;
-    g_settings.m_fVolumeLevel = VOLUME_MAXIMUM;
+    if (g_settings.m_bMute)
+      g_application.ToggleMute();
+    g_application.SetVolume(VOLUME_MAXIMUM, false);
   }
   else
   {

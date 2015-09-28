@@ -55,8 +55,6 @@ using namespace std;
 
 CPeripherals::CPeripherals(void)
 {
-  CDirectory::Create("special://profile/peripheral_data");
-
   Clear();
 }
 
@@ -77,6 +75,8 @@ void CPeripherals::Initialise(void)
   if (!m_bIsStarted)
   {
     m_bIsStarted = true;
+
+    CDirectory::Create("special://profile/peripheral_data");
 
     /* load mappings from peripherals.xml */
     LoadMappings();
