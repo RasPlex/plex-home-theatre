@@ -660,7 +660,11 @@ bool CDVDVideoCodecFFmpeg::GetPictureCommon(DVDVideoPicture* pDvdVideoPicture)
     pDvdVideoPicture->qscale_type = DVP_QSCALE_UNKNOWN;
   }
 
-  pDvdVideoPicture->dts = m_dts;
+  if (pDvdVideoPicture->iRepeatPicture)
+    pDvdVideoPicture->dts = DVD_NOPTS_VALUE;
+  else
+    pDvdVideoPicture->dts = m_dts;
+
   m_dts = DVD_NOPTS_VALUE;
   if (m_pFrame->reordered_opaque)
     pDvdVideoPicture->pts = pts_itod(m_pFrame->reordered_opaque);
