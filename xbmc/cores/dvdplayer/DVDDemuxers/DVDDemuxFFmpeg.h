@@ -151,6 +151,5 @@ protected:
   /* PLEX */
   bool m_bPlexTranscode;
   /* END PLEX */
-
 };
 
