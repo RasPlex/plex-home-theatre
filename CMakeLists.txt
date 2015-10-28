@@ -26,7 +26,7 @@ else()
   if (TARGET_RPI)
     file(STRINGS "${root}/GitRevision.txt" PLEX_FULL_GIT_REVISION)
   endif()
-  string(SUBSTRING ${PLEX_FULL_GIT_REVISION} 0 8 PLEX_GIT_REVISION)
+  string(SUBSTRING "${PLEX_FULL_GIT_REVISION}" 0 8 PLEX_GIT_REVISION)
 endif()
 
 set(PLEX_VERSION_MAJOR 1)
