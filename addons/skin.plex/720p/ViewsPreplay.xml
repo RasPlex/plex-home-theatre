@@ -1236,7 +1236,7 @@
 					<height>20</height>
 					<texture>$INFO[ListItem.StarRating]</texture>
 					<aspectratio align="right" aligny="center">keep</aspectratio>
-					<visible>IsEmpty(ListItem.Property(hasUserRating)) + [IsEmpty(ListItem.Property(ratingImage)) | Skin.HasSetting(HideRottenTomatoesRating)]</visible>
+					<visible>IsEmpty(ListItem.Property(hasUserRating)) + [IsEmpty(ListItem.Property(audienceRatingPercent)) | Skin.HasSetting(HideRottenTomatoesRating)]</visible>
 				</control>
 				<control type="image">
 					<posy>80</posy>
@@ -1250,7 +1250,7 @@
 				</control>
 				<!-- RT Rating -->
 				<control type="grouplist">
-					<visible>!IsEmpty(ListItem.Property(ratingImage)) + IsEmpty(ListItem.Property(hasUserRating)) + !Skin.HasSetting(HideRottenTomatoesRating)</visible>
+					<visible>!IsEmpty(ListItem.Property(audienceRatingPercent)) + IsEmpty(ListItem.Property(hasUserRating)) + !Skin.HasSetting(HideRottenTomatoesRating)</visible>
 					<posy>82</posy>
 					<posx>240r</posx>
 					<width>200</width>
