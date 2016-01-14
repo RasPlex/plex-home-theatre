@@ -1004,8 +1004,8 @@ void CGUIPlexMediaWindow::CheckPlexFilters(CFileItemList &list)
     list.SetContent("folders");
 
   /* check if we have gone deeper down or not */
-  CURL newPath(list.GetPath());
-  if (m_startDirectory != newPath.GetUrlWithoutOptions())
+  //CURL newPath(list.GetPath());
+  //if (m_startDirectory != newPath.GetUrlWithoutOptions())
   {
     if (list.Size())
       m_directoryType = list.GetPlexDirectoryType();
