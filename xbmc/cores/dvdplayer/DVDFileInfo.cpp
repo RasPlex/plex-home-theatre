@@ -154,7 +154,8 @@ bool CDVDFileInfo::ExtractThumb(const CStdString &strPath, CTextureDetails &deta
     pStream = pDemuxer->GetStream(i);
     if (pStream)
     {
-      if(pStream->type == STREAM_VIDEO)
+      // ignore if it's a picture attachment (e.g. jpeg artwork)
+      if(pStream->type == STREAM_VIDEO && !(pStream->flags & AV_DISPOSITION_ATTACHED_PIC))
         nVideoStream = i;
       else
         pStream->SetDiscard(AVDISCARD_ALL);
@@ -196,8 +197,8 @@ bool CDVDFileInfo::ExtractThumb(const CStdString &strPath, CTextureDetails &deta
 
         memset(&picture, 0, sizeof(picture));
 
-        // num streams * 80 frames, should get a valid frame, if not abort.
-        int abort_index = pDemuxer->GetNrOfStreams() * 80;
+        // num streams * 160 frames, should get a valid frame, if not abort.
+        int abort_index = pDemuxer->GetNrOfStreams() * 160;
         do
         {
           pPacket = pDemuxer->Read();
@@ -349,7 +350,7 @@ bool CDVDFileInfo::DemuxerToStreamDetails(CDVDInputStream *pInputStream, CDVDDem
   for (int iStream=0; iStream<pDemux->GetNrOfStreams(); iStream++)
   {
     CDemuxStream *stream = pDemux->GetStream(iStream);
-    if (stream->type == STREAM_VIDEO)
+    if (stream->type == STREAM_VIDEO && !(stream->flags & AV_DISPOSITION_ATTACHED_PIC))
     {
       CStreamDetailVideo *p = new CStreamDetailVideo();
       p->m_iWidth = ((CDemuxStreamVideo *)stream)->iWidth;

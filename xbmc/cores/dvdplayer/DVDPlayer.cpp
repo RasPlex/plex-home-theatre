@@ -2791,7 +2791,7 @@ void CDVDPlayer::GetAudioInfo(CStdString& strAudioInfo)
   { CSingleLock lock(m_StateSection);
     strAudioInfo.Format("D(%s)", m_State.demux_audio.c_str());
   }
-  strAudioInfo.AppendFormat(" P(%s)", m_dvdPlayerAudio.GetPlayerInfo().c_str());
+  strAudioInfo.AppendFormat("\nP(%s)", m_dvdPlayerAudio.GetPlayerInfo().c_str());
 }
 
 void CDVDPlayer::GetVideoInfo(CStdString& strVideoInfo)
@@ -2799,7 +2799,7 @@ void CDVDPlayer::GetVideoInfo(CStdString& strVideoInfo)
   { CSingleLock lock(m_StateSection);
     strVideoInfo.Format("D(%s)", m_State.demux_video.c_str());
   }
-  strVideoInfo.AppendFormat(" P(%s)", m_dvdPlayerVideo.GetPlayerInfo().c_str());
+  strVideoInfo.AppendFormat("\nP(%s)", m_dvdPlayerVideo.GetPlayerInfo().c_str());
 }
 
 void CDVDPlayer::GetGeneralInfo(CStdString& strGeneralInfo)
@@ -2822,7 +2822,7 @@ void CDVDPlayer::GetGeneralInfo(CStdString& strGeneralInfo)
     CSingleLock lock(m_StateSection);
     if(m_State.cache_bytes >= 0)
     {
-      strBuf.AppendFormat(" cache:%s %2.0f%%"
+      strBuf.AppendFormat(" forward:%s %2.0f%%"
                          , StringUtils::SizeToString(m_State.cache_bytes).c_str()
                          , m_State.cache_level * 100);
       if(m_playSpeed == 0 || m_caching == CACHESTATE_FULL)

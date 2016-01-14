@@ -3104,7 +3104,7 @@ void COMXPlayer::GetGeneralInfo(CStdString& strGeneralInfo)
     CSingleLock lock(m_StateSection);
     if(m_State.cache_bytes >= 0)
     {
-      strBuf.AppendFormat(" cache:%s %2.0f%%"
+      strBuf.AppendFormat(" forward:%s %2.0f%%"
                          , StringUtils::SizeToString(m_State.cache_bytes).c_str()
                          , m_State.cache_level * 100);
       if(m_playSpeed == 0 || m_caching == CACHESTATE_FULL)

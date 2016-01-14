@@ -44,7 +44,7 @@ enum AVDiscard;
 
 enum StreamType
 {
-  STREAM_NONE,    // if unknown
+  STREAM_NONE = 0,// if unknown
   STREAM_AUDIO,   // audio stream
   STREAM_VIDEO,   // video stream
   STREAM_DATA,    // data stream
