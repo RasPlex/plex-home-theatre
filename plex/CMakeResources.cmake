@@ -78,7 +78,7 @@ endfunction(set_bundle_dir)
 
 if(TARGET_COMMON_DARWIN)
   set_source_files_properties(${CONFIG_PLEX_INSTALL_LIBRARIES} PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks)
-  set_bundle_dir(SOURCES ${root}/media DEST Resources/XBMC/media EXCLUDE .*/Splash.png Credits.html)
+  set_bundle_dir(SOURCES ${root}/media DEST Resources/XBMC/media EXCLUDE .*/Splash.png .*/weather.zip Credits.html)
   set_bundle_dir(SOURCES ${root}/sounds DEST Resources/XBMC/sounds)
   set_bundle_dir(SOURCES ${root}/language DEST Resources/XBMC/language)
   set_bundle_dir(SOURCES ${root}/system DEST Resources/XBMC/system EXCLUDE .*/keymaps.* .*/python/.* .*/playercorefactory.xml .*/peripherals.xml)
@@ -94,6 +94,7 @@ if(TARGET_COMMON_DARWIN)
                          .*/metadata.*
                          .*/weather.*
                          .*/repository.*
+                         .*/visualization.*
                          .*/${EXCLUDE_TEXTURES}
                          .*/.git.*
                          .*/xbmc.python.*
@@ -126,6 +127,7 @@ else(TARGET_COMMON_DARWIN)
 
   install(DIRECTORY ${root}/media ${root}/sounds ${root}/language DESTINATION ${RESOURCEPATH} COMPONENT RUNTIME
           PATTERN ${PLEX_SPLASH} EXCLUDE
+          PATTERN weather.zip EXCLUDE
           PATTERN Credits.html EXCLUDE)
 
   install(DIRECTORY ${root}/system DESTINATION ${RESOURCEPATH} COMPONENT RUNTIME
@@ -141,7 +143,8 @@ else(TARGET_COMMON_DARWIN)
           REGEX library.* EXCLUDE
           REGEX metadata.* EXCLUDE
           REGEX weather.* EXCLUDE
-          PATTERN repository.xbmc.org EXCLUDE
+          REGEX repository.* EXCLUDE
+          REGEX visualization.* EXCLUDE
           REGEX ${EXCLUDE_TEXTURES} EXCLUDE
           PATTERN .git EXCLUDE
           PATTERN xbmc.python EXCLUDE

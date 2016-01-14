@@ -137,9 +137,9 @@
 #define HAS_AIRTUNES
 #define HAVE_LIBSHAIRPLAY
 #define HAVE_LIBCEC
+#ifndef __PLEX__
 #define HAVE_LIBMP3LAME
 #define HAVE_LIBVORBISENC
-#ifndef __PLEX__
 #define HAS_MYSQL
 #endif
 #define HAS_UPNP

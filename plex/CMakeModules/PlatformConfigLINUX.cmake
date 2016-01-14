@@ -14,7 +14,6 @@ set(LINK_PKG
   Freetype
   SDL
   SDL_image
-  SDL_mixer
   OpenGL
   ZLIB
   JPEG
@@ -41,7 +40,6 @@ set(LINK_PKG
 
 if(OPENELEC)
   list(REMOVE_ITEM LINK_PKG SDL_image)
-  list(REMOVE_ITEM LINK_PKG SDL_mixer)
   list(REMOVE_ITEM LINK_PKG FLAC)
   add_definitions(-DHAVE_DBUS)
 endif(OPENELEC)

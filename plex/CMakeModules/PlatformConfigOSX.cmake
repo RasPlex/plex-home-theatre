@@ -87,7 +87,6 @@ set(external_libs
   jpeg
   crypto
   SDL
-  SDL_mixer
   tinyxml
   boost_thread
   boost_system
