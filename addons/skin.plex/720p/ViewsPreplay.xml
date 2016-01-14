@@ -1281,7 +1281,7 @@
 					</control>
 				</control>
 				<control type="grouplist">
-					<visible>!IsEmpty(ListItem.Property(ratingImage)) + !IsEmpty(ListItem.Property(hasUserRating)) + !Skin.HasSetting(HideRottenTomatoesRating)</visible>
+					<visible>!IsEmpty(ListItem.Property(audienceRatingPercent)) + !IsEmpty(ListItem.Property(hasUserRating)) + !Skin.HasSetting(HideRottenTomatoesRating)</visible>
 					<posy>110</posy>
 					<posx>240r</posx>
 					<width>200</width>
