@@ -27,8 +27,8 @@ CPlexTranscoderClientRPi::CPlexTranscoderClientRPi()
   m_maxAudioBitrate = 0;
 
   // Here is as list of audio / video codecs that we support natively on RPi
-  m_knownVideoCodecs = boost::assign::list_of<std::string>  ("h264") ("mpeg4");
-  m_knownAudioCodecs = boost::assign::list_of<std::string>  ("") ("aac") ("ac3") ("eac3") ("mp3") ("mp2") ("dca") ("flac") ("pcm") ("aac_latm") ("vorbis");
+  m_knownVideoCodecs = boost::assign::list_of<std::string>  ("h264") ("mpeg4") ("theora") ("vp6") ("vp8") ("vp6f");
+  m_knownAudioCodecs = boost::assign::list_of<std::string>  ("") ("aac") ("ac3") ("eac3") ("mp3") ("mp2") ("dca") ("dca-ma") ("flac") ("pcm") ("aac_latm") ("vorbis");
 
   // check if optionnal codecs are here
   if ( g_RBP.GetCodecMpg2() )
@@ -51,9 +51,19 @@ CPlexTranscoderClientRPi::CPlexTranscoderClientRPi()
 #endif
 
   for (CStdStringArray::iterator it = g_advancedSettings.m_knownVideoCodecs.begin(); it != g_advancedSettings.m_knownVideoCodecs.end(); it++)
-    m_knownVideoCodecs.insert(it->c_str());
+  {
+    if (boost::starts_with(*it, "-") || boost::starts_with(*it, "!"))
+      m_knownVideoCodecs.erase(it->substr(1).c_str());
+    else
+      m_knownVideoCodecs.insert(it->c_str());
+  }
   for (CStdStringArray::iterator it = g_advancedSettings.m_knownAudioCodecs.begin(); it != g_advancedSettings.m_knownAudioCodecs.end(); it++)
-    m_knownAudioCodecs.insert(it->c_str());
+  {
+    if (boost::starts_with(*it, "-") || boost::starts_with(*it, "!"))
+      m_knownAudioCodecs.erase(it->substr(1).c_str());
+    else
+      m_knownAudioCodecs.insert(it->c_str());
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
