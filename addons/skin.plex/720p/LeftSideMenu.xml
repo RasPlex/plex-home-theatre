@@ -514,14 +514,14 @@
 						<label>$LOCALIZE[31961]</label>
 						<onclick>Dialog.Close(4998)</onclick>
 						<onclick>Plex.Powerdown</onclick>
-						<visible>!System.UserIsRestricted</visible>
+						<visible>!System.UserIsRestricted | Skin.HasSetting(ShowRestrictedPowerOptions)</visible>
 					</item>
 					<item id="114">
 						<description>Restart</description>
 						<label>$LOCALIZE[31072]</label>
 						<onclick>Dialog.Close(4998)</onclick>
 						<onclick>System.Exec(reboot)</onclick>
-						<visible>System.isSystem(openelec) + !System.UserIsRestricted</visible>
+						<visible>System.isSystem(openelec) + [ !System.UserIsRestricted | Skin.HasSetting(ShowRestrictedPowerOptions) ]</visible>
 					</item>
 				</content>
 			</control>
@@ -631,6 +631,13 @@
 						<onclick>Dialog.Close(4998)</onclick>
 						<onclick>Plex.Suspend</onclick>
 						<visible>!System.isSystem(rasplex)</visible>
+					</item>
+					<item id="114">
+						<description>Restart</description>
+						<label>$LOCALIZE[31072]</label>
+						<onclick>Dialog.Close(4998)</onclick>
+						<onclick>System.Exec(reboot)</onclick>
+						<visible>System.isSystem(openelec) + [ !System.UserIsRestricted | Skin.HasSetting(ShowRestrictedPowerOptions) ]</visible>
 					</item>
 				</content>
 			</control>
