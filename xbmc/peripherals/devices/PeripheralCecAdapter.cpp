@@ -1262,7 +1262,7 @@ void CPeripheralCecAdapter::SetConfigurationFromLibCEC(const CEC::libcec_configu
   bChanged |= SetSetting("double_tap_timeout_ms", (int)m_configuration.iDoubleTapTimeout50Ms * 50);
 #else
   m_configuration.iDoubleTapTimeoutMs = config.iDoubleTapTimeoutMs;
-  bChanged |= SetSetting("double_tap_timeout_ms", (int)m_configuration.iDoubleTapTimeoutMs;
+  bChanged |= SetSetting("double_tap_timeout_ms", (int)m_configuration.iDoubleTapTimeoutMs);
 #endif
 
   m_configuration.iButtonRepeatRateMs = config.iButtonRepeatRateMs;
