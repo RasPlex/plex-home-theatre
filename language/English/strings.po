@@ -11446,3 +11446,8 @@ msgstr ""
 msgctxt "#38052"
 msgid "Remote button press release time (ms)"
 msgstr ""
+
+#: system/settings/settings.xml
+msgctxt "#38118"
+msgid "Support 8 channel DTS-HD audio decoding"
+msgstr ""

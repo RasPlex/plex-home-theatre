@@ -55,7 +55,7 @@ CDVDAudioCodecFFmpeg::~CDVDAudioCodecFFmpeg()
 
 bool CDVDAudioCodecFFmpeg::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options)
 {
-  AVCodec* pCodec;
+  AVCodec* pCodec = NULL;
   m_bOpenedCodec = false;
 
   if (!m_dllAvUtil.Load() || !m_dllAvCodec.Load() || !m_dllSwResample.Load())
@@ -63,7 +63,12 @@ bool CDVDAudioCodecFFmpeg::Open(CDVDStreamInfo &hints, CDVDCodecOptions &options
 
   m_dllAvCodec.avcodec_register_all();
 
-  pCodec = m_dllAvCodec.avcodec_find_decoder(hints.codec);
+  if (hints.codec == AV_CODEC_ID_DTS && g_guiSettings.GetBool("audiooutput.supportdtshdcpudecoding"))
+    pCodec = m_dllAvCodec.avcodec_find_decoder_by_name("libdcadec");
+
+  if (!pCodec)
+    pCodec = m_dllAvCodec.avcodec_find_decoder(hints.codec);
+
   if (!pCodec)
   {
     CLog::Log(LOGDEBUG,"CDVDAudioCodecFFmpeg::Open() Unable to find codec %d", hints.codec);

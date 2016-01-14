@@ -380,6 +380,7 @@ void CGUISettings::Initialize()
   AddBool(NULL, "audiooutput.dtshdpassthrough" , 347, false );
 #endif
 
+  AddBool(ao, "audiooutput.supportdtshdcpudecoding", 38118, false);
   AddBool(ao, "audiooutput.stereoupmix", 252, false);
   AddBool(ao, "audiooutput.normalizelevels", 346, true);
 #if defined(TARGET_RASPBERRY_PI)
