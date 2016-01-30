@@ -5117,7 +5117,12 @@ msgctxt "#13434"
 msgid "Play only this"
 msgstr ""
 
-#empty strings from id 13435 to 13499
+#: system/settings/settings.xml
+msgctxt "#13435"
+msgid "Enable HQ Scalers for scalings above"
+msgstr ""
+
+#empty strings from id 13436 to 13499
 
 msgctxt "#13500"
 msgid "A/V sync method"
@@ -11427,9 +11432,49 @@ msgctxt "#36041"
 msgid "* Item folder"
 msgstr ""
 
+#: system/settings/settings.xml
+msgctxt "#36042"
+msgid "Use limited colour range (16-235)"
+msgstr ""
+
 #: system/settings/rbp.xml
 msgctxt "#36043"
 msgid "Boost center channel when downmixing"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37020"
+msgid "Enable higher colour depth artwork"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37021"
+msgid "Set GUI resolution limit"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37026"
+msgid "Auto"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37027"
+msgid "540"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37028"
+msgid "720"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37029"
+msgid "900"
+msgstr ""
+
+#: system/settings/rbp.xml
+msgctxt "#37030"
+msgid "Unlimited"
 msgstr ""
 
 #: system/peripherals.xml

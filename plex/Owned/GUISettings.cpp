@@ -566,6 +566,21 @@ void CGUISettings::Initialize()
 #endif
   AddSeparator(advs, "videoscreen.sep1");
 #endif
+#ifdef TARGET_RASPBERRY_PI_1
+  AddBool(advs, "videoscreen.textures32", 37020, false);
+#endif
+#ifdef TARGET_RASPBERRY_PI_2
+  AddBool(advs, "videoscreen.textures32", 37020, true);
+#endif
+#ifdef TARGET_RASPBERRY_PI
+  map<int,int> limitgui;
+  limitgui.insert(make_pair(37026,0));
+  limitgui.insert(make_pair(37027,540));
+  limitgui.insert(make_pair(37028,720));
+  limitgui.insert(make_pair(37029,900));
+  limitgui.insert(make_pair(37030,1080));
+  AddInt(advs, "videoscreen.limitgui", 37021, 0, limitgui, SPIN_CONTROL_TEXT);
+#endif
 
   map<int,int> vsync;
 #if defined(_LINUX) && !defined(TARGET_DARWIN)
@@ -580,6 +595,11 @@ void CGUISettings::Initialize()
 #if defined(HAS_GL)
   // Todo: Implement test pattern for DX
   AddString(advs, "videoscreen.testpattern",226,"", BUTTON_CONTROL_STANDARD);
+#endif
+#if defined(HAS_GL) || defined(HAS_DX)
+  AddBool(advs, "videoscreen.limitedrange", 36042, false);
+#else
+  AddBool(NULL, "videoscreen.limitedrange", 36042, false);
 #endif
 #if defined(HAS_LCD)
   AddBool(advs, "videoscreen.haslcd", 4501, false);
@@ -842,7 +862,7 @@ void CGUISettings::Initialize()
   AddSeparator(adv, "videoplayer.sep1.5");
 #ifdef HAVE_LIBVDPAU
   AddBool(NULL, "videoplayer.vdpauUpscalingLevel", 13121, false);
-  AddBool(adv, "videoplayer.vdpaustudiolevel", 13122, false);
+  AddBool(NULL, "videoplayer.vdpaustudiolevel", 0, false); //depreciated
 #endif
 #endif
   AddSeparator(NULL, "videoplayer.sep5");
@@ -885,6 +905,10 @@ void CGUISettings::Initialize()
   renderers.insert(make_pair(13419, RENDER_METHOD_SOFTWARE));
 #endif
   AddInt(adv, "videoplayer.rendermethod", 18109, RENDER_METHOD_AUTO, renderers, SPIN_CONTROL_TEXT);
+
+#if defined(HAS_GL) || defined(HAS_DX)
+  AddInt(adv, "videoplayer.hqscalers", 13435, 0, 0, 10, 100, SPIN_CONTROL_INT);
+#endif
 
 #ifdef HAVE_LIBVDPAU
   AddBool(adv, "videoplayer.usevdpau", 13425, true);

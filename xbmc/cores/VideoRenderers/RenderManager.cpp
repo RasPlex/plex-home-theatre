@@ -382,6 +382,9 @@ bool CXBMCRenderManager::Flush()
     else
       return true;
   }
+
+  m_presentsource = 0;
+
   return true;
 }
 

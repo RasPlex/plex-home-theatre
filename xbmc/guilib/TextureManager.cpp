@@ -471,6 +471,7 @@ void CGUITextureManager::FreeUnusedTextures()
 
 void CGUITextureManager::ReleaseHwTexture(unsigned int texture)
 {
+  CSingleLock lock(g_graphicsContext);
   m_unusedHwTextures.push_back(texture);
 }
 

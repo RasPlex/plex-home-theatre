@@ -42,7 +42,6 @@
 #endif
 /* END PLEX */
 
-
 class CRenderCapture;
 
 namespace DXVA { class CProcessor; }
@@ -156,7 +155,6 @@ public:
       m_pRenderer->SetRGB32Image(image, nHeight, nWidth, nPitch);
   }
   /* END PLEX */
-
 protected:
   void Render(bool clear, DWORD flags, DWORD alpha);
 
