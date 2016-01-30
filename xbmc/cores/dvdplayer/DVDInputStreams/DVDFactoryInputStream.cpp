@@ -153,7 +153,6 @@ CDVDInputStream* CDVDFactoryInputStream::CreateInputStream(IDVDPlayer *pPlayer, 
 #endif
 
   // our file interface handles all these types of streams
-  #ifdef TARGET_RASPBERRY_PI
   /* PLEX */
   if ((file.substr(0, 13) == "plexserver://"
     || file.substr(0, 7) == "http://"
@@ -167,7 +166,6 @@ CDVDInputStream* CDVDFactoryInputStream::CreateInputStream(IDVDPlayer *pPlayer, 
   }
   else
   /* END PLEX */
-  #endif
     return (new CDVDInputStreamFile());
 
 }
