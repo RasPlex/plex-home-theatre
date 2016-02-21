@@ -24,9 +24,10 @@
   #include "config.h"
 #endif
 #include "DynamicDll.h"
-#include "DllAvCodec.h"
-#include "DllAvFormat.h"
 #include "DllSwResample.h"
+#include "DllAvFormat.h"
+#include "DllSwScale.h"
+#include "DllPostProc.h"
 #include "utils/log.h"
 
 extern "C" {
@@ -35,6 +36,9 @@ extern "C" {
 #endif
 #ifndef __STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
+#endif
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
 #endif
 
 #ifndef __GNUC__
@@ -252,9 +256,10 @@ class DllAvFilter : public DllDynamic, DllAvFilterInterface
   END_METHOD_RESOLVE()
 
   /* dependencies of libavfilter */
-  DllAvUtil m_dllAvUtil;
   DllSwResample m_dllSwResample;
   DllAvFormat m_dllAvFormat;
+  DllSwScale m_dllSwScale;
+  DllPostProc m_dllPostProc;
 
 public:
   void avfilter_free(AVFilterContext *filter)
@@ -302,13 +307,23 @@ public:
   }
   virtual bool Load()
   {
-    if (!m_dllAvUtil.Load())
-      return false;
     if (!m_dllSwResample.Load())
       return false;
     if (!m_dllAvFormat.Load())
       return false;
+    if (!m_dllSwScale.Load())
+      return false;
+    if (!m_dllPostProc.Load())
+      return false;
     return DllDynamic::Load();
+  }
+  virtual void Unload()
+  {
+    DllDynamic::Unload();
+    m_dllPostProc.Unload();
+    m_dllSwScale.Unload();
+    m_dllAvFormat.Unload();
+    m_dllSwResample.Unload();
   }
 };
 #endif

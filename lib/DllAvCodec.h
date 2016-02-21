@@ -24,7 +24,7 @@
   #include "config.h"
 #endif
 #include "DynamicDll.h"
-#include "DllAvUtil.h"
+#include "DllSwResample.h"
 #include "utils/log.h"
 
 extern "C" {
@@ -255,8 +255,8 @@ class DllAvCodec : public DllDynamic, DllAvCodecInterface
     RESOLVE_METHOD(av_frame_get_metadata)
   END_METHOD_RESOLVE()
 
-  /* dependencies of libavcodec */
-  DllAvUtil m_dllAvUtil;
+  /* dependency of libavcodec */
+  DllSwResample m_dllSwResample;
 
 public:
     static CCriticalSection m_critSection;
@@ -275,12 +275,17 @@ public:
       CSingleLock lock(DllAvCodec::m_critSection);
       avcodec_register_all_dont_call();
     }
-    virtual bool Load()
-    {
-      if (!m_dllAvUtil.Load())
-	return false;
-      return DllDynamic::Load();
-    }
+  virtual bool Load()
+  {
+    if (!m_dllSwResample.Load())
+      return false;
+    return DllDynamic::Load();
+  }
+  virtual void Unload()
+  {
+    DllDynamic::Unload();
+    m_dllSwResample.Unload();
+  }
 };
 
 #endif

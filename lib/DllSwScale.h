@@ -149,6 +149,11 @@ public:
       return false;
     return DllDynamic::Load();
   }
+  virtual void Unload()
+  {
+    DllDynamic::Unload();
+    m_dllAvUtil.Unload();
+  }
 };
 
 #endif

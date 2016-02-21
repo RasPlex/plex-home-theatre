@@ -27,12 +27,21 @@
 #include "DynamicDll.h"
 #include "utils/log.h"
 
+extern "C" {
+#ifndef HAVE_MMX
+#define HAVE_MMX
+#endif
+#ifndef __STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS
+#endif
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
+
 #ifndef __GNUC__
-#pragma warning(push)
 #pragma warning(disable:4244)
 #endif
 
-extern "C" {
 #if (defined USE_EXTERNAL_FFMPEG)
   #include <libavutil/avutil.h>
   // for av_get_default_channel_layout
@@ -71,10 +80,6 @@ extern "C" {
 
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52,29,100)
 #define AVFRAME_IN_LAVU
-#endif
-
-#ifndef __GNUC__
-#pragma warning(pop)
 #endif
 
 // calback used for logging
