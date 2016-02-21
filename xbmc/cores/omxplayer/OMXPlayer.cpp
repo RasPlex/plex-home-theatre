@@ -657,7 +657,7 @@ bool COMXPlayer::OpenInputStream()
       maxrate = INT_MAX;
 
     /* PLEX */
-    if (m_item.GetProperty("plexDidTranscode").asBoolean())
+    if (IsTranscoded())
       maxrate = INT_MAX;
     else
       maxrate = CPlexTranscoderClient::getBandwidthForQuality(g_guiSettings.GetInt("plexmediaserver.onlinemediaquality"));
@@ -722,7 +722,7 @@ bool COMXPlayer::OpenInputStream()
     } // end loop over all subtitle files
 #else
     CFileItemPtr part = m_item.m_selectedMediaPart;
-    if (part)
+    if (part && !(IsTranscoded() && g_guiSettings.GetBool("plexmediaserver.transcodesubtitles")))
     {
       OMXSelectionStream idx;
       BOOST_FOREACH(const CFileItemPtr &stream, part->m_mediaPartStreams)
@@ -894,7 +894,7 @@ void COMXPlayer::OpenDefaultStreams(bool reset)
     CloseAudioStream(true);
 
   // If user have selected to transcode subtitles we should not show it again here
-  if (m_item.GetProperty("plexDidTranscode").asBoolean() && g_guiSettings.GetBool("plexmediaserver.transcodesubtitles"))
+  if (IsTranscoded() && g_guiSettings.GetBool("plexmediaserver.transcodesubtitles"))
   {
     m_omxPlayerVideo.EnableSubtitle(false);
     CloseSubtitleStream(true);
@@ -1605,7 +1605,7 @@ void COMXPlayer::Process()
 
   /* PLEX */
   // We're done, if we transcoded we need to stop that now
-  if (m_item.GetProperty("plexDidTranscode").asBoolean() && g_plexApplication.serverManager)
+  if (IsTranscoded() && g_plexApplication.serverManager)
   {
     CPlexServerPtr server = g_plexApplication.serverManager->FindByUUID(m_item.GetProperty("plexserver").asString());
     if (server)
@@ -3444,7 +3444,7 @@ bool COMXPlayer::OpenVideoStream(int iStream, int source, bool reset)
 bool COMXPlayer::OpenSubtitleStream(int iStream, int source)
 {
   /* PLEX */
-  if (g_guiSettings.GetBool("plexmediaserver.transcodesubtitles") && m_item.GetProperty("plexDidTranscode").asBoolean())
+  if (IsTranscoded() && g_guiSettings.GetBool("plexmediaserver.transcodesubtitles"))
   {
     CLog::Log(LOGNOTICE, "Skipping Subtitle stream: %i source: %i, subtitles are transcoded", iStream, source);
     return true;

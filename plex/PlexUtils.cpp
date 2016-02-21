@@ -364,6 +364,7 @@ bool PlexUtils::PlexMediaStreamCompare(CFileItemPtr stream1, CFileItemPtr stream
       stream1->GetProperty("language").asString() == stream2->GetProperty("language").asString() &&
       stream1->GetProperty("codec").asString() == stream2->GetProperty("codec").asString() &&
       stream1->GetProperty("index").asInteger() == stream2->GetProperty("index").asInteger() &&
+      stream1->GetProperty("subIndex").asInteger() == stream2->GetProperty("subIndex").asInteger() &&
       stream1->GetProperty("channels").asInteger() == stream2->GetProperty("channels").asInteger())
     return true;
   return false;
@@ -418,12 +419,12 @@ void PlexUtils::SetSelectedStream(CFileItemPtr item, CFileItemPtr stream)
           g_plexApplication.mediaServerClient->SelectStream(item, part->GetProperty("id").asInteger(), subId, audioId);
           
           str->Select(true);
-          str->SetProperty("select", true);
+          str->SetProperty("selected", true);
         }
         else if (stream->GetProperty("streamType").asInteger() == str->GetProperty("streamType").asInteger())
         {
           str->Select(false);
-          str->SetProperty("select", false);
+          str->SetProperty("selected", false);
         }
       }
     }
