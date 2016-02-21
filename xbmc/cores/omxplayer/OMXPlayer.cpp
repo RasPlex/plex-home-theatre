@@ -175,8 +175,8 @@ void COMXSelectionStreams::Clear(StreamType type, StreamSource source)
 void COMXPlayer::GetAudioStreamLanguage(int iStream, CStdString &strLanguage)
 {
   strLanguage = "";
-  OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_AUDIO, iStream);
-  if(s.language.length() > 0)
+  OMXSelectionStream s = m_SelectionStreams.Get(STREAM_AUDIO, iStream);
+  if (!s.language.empty())
     strLanguage = s.language;
 }
 
@@ -3137,22 +3137,22 @@ int COMXPlayer::GetSubtitle()
 
 void COMXPlayer::GetSubtitleName(int iStream, CStdString &strStreamName)
 {
-  strStreamName = "";
-  OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_SUBTITLE, iStream);
-  if(s.name.length() > 0)
+  OMXSelectionStream s = m_SelectionStreams.Get(STREAM_SUBTITLE, iStream);
+  if (!s.name.empty())
     strStreamName = s.name;
   else
     strStreamName = g_localizeStrings.Get(13205); // Unknown
 
   if(s.type == STREAM_NONE)
-    strStreamName += "(Invalid)";
+    strStreamName += " (Invalid)";
 }
 
 void COMXPlayer::GetSubtitleLanguage(int iStream, CStdString &strStreamLang)
 {
-  OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_SUBTITLE, iStream);
-  if (!g_LangCodeExpander.Lookup(strStreamLang, s.language))
-    strStreamLang = g_localizeStrings.Get(13205); // Unknown
+  strStreamLang = "";
+  OMXSelectionStream s = m_SelectionStreams.Get(STREAM_SUBTITLE, iStream);
+  if (!s.language.empty())
+    strStreamLang = s.language;
 }
 
 void COMXPlayer::SetSubtitle(int iStream)
@@ -3203,12 +3203,11 @@ int COMXPlayer::GetAudioStream()
 
 void COMXPlayer::GetAudioStreamName(int iStream, CStdString &strStreamName)
 {
-  strStreamName = "";
-  OMXSelectionStream& s = m_SelectionStreams.Get(STREAM_AUDIO, iStream);
-  if(s.name.length() > 0)
-    strStreamName += s.name;
+  OMXSelectionStream s = m_SelectionStreams.Get(STREAM_AUDIO, iStream);
+  if (!s.name.empty())
+    strStreamName = s.name;
   else
-    strStreamName += "Unknown";
+    strStreamName = g_localizeStrings.Get(13205); // Unknown
 
   if(s.type == STREAM_NONE)
     strStreamName += " (Invalid)";
