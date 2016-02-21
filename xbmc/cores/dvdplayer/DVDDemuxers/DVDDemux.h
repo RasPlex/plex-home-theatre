@@ -137,6 +137,9 @@ public:
   , FLAG_LYRICS   = 0x0010
   , FLAG_KARAOKE  = 0x0020
   , FLAG_FORCED   = 0x0040
+  /* PLEX */
+  , FLAG_SELECTED = 0x0080
+  /* END PLEX */
   } flags;
 
   /* PLEX */
